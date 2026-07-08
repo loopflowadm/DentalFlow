@@ -110,6 +110,16 @@ serve(async (req) => {
       });
     }
 
+    // Validação de Segurança: Verificar se o token de validação (apikey) coincide
+    const requestApiKey = req.headers.get("apikey") || req.headers.get("x-api-key") || req.headers.get("authorization");
+    if (waConfig.api_key && requestApiKey !== waConfig.api_key) {
+      console.warn(`[Segurança] Tentativa de chamada não autorizada ao webhook para a instância: ${instanceName}`);
+      return new Response(JSON.stringify({ error: "Não autorizado. Token de validação inválido." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Se a automação estiver desativada na clínica, ignoramos
     if (!waConfig.is_active) {
       return new Response(JSON.stringify({ message: "Automação desativada para esta clínica." }), {
