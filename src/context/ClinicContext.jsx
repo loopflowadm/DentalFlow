@@ -777,7 +777,7 @@ export function ClinicProvider({ children }) {
             is_bot_paused: isPaused,
             updated_at: new Date().toISOString()
           }, {
-            onConflict: 'clinic_id,patient_id'
+            onConflict: 'patient_id'
           });
         if (error) throw error;
       } catch (err) {
