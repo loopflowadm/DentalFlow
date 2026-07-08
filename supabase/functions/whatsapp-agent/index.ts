@@ -52,7 +52,26 @@ serve(async (req) => {
       });
     }
 
+    // Ignorar mensagens de grupos ou transmissões (broadcast)
+    if (remoteJid && (remoteJid.endsWith("@g.us") || remoteJid.endsWith("@broadcast"))) {
+      return new Response(JSON.stringify({ message: "Mensagem de grupo ou broadcast. Ignorado." }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const senderPhone = remoteJid.split("@")[0];
+    
+    // Restringir a resposta APENAS para o número de teste homologado
+    const allowedTestPhone = "558399274420";
+    if (senderPhone !== allowedTestPhone) {
+      console.log(`Mensagem recebida de ${senderPhone}. Ignorando pois não é o número homologado de teste.`);
+      return new Response(JSON.stringify({ message: `Ignorado. Somente o número ${allowedTestPhone} está habilitado na fase de testes.` }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const senderName = body.data.pushName || "Paciente";
     const instanceName = body.instance;
 
@@ -183,20 +202,24 @@ serve(async (req) => {
 
     // 5. Módulo do Agente de IA: Chamar Gemini com suporte a Function Calling
     const systemPrompt = `
-Você é a Sofia, assistente virtual inteligente da clínica "${clinic.name}".
-Seu objetivo é interagir com o paciente de forma simpática, profissional e prestativa via WhatsApp.
+Você é a Sofia, assistente virtual da clínica "${clinic.name}".
+Seu objetivo é interagir com o paciente de forma extremamente profissional, acolhedora, humana e prestativa via WhatsApp.
 Seu foco principal é auxiliar com agendamentos, confirmações ou cancelamentos de consultas odontológicas.
 
-Instruções Operacionais:
-- O nome do paciente é "${patient?.name || senderName}".
-- A data e hora atual do servidor é: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Fuso São Paulo).
+Instruções Operacionais e de Tom de Voz:
+- O nome do paciente é "${patient?.name || senderName}". Trate-o com respeito e de forma personalizada.
+- A data e hora atual do servidor é: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Fuso São Paulo). Use isso como referência para responder sobre "amanhã", "depois de amanhã", dias da semana, etc.
 - Horário de funcionamento da clínica: Segunda a Sexta, das 08:00h às 18:00h.
-- A clínica trabalha com intervalos de 1 hora por consulta (slots cheios, ex: 09:00, 10:00, 14:00).
-- Seja breve e amigável nas respostas, evite blocos gigantes de texto. Sempre use emojis combinando com a clínica (🦷, ✨).
+- A clínica trabalha com intervalos de 1 hora por consulta (slots cheios, ex: 08:00, 09:00, 10:00, 14:00, 15:00, 16:00, 17:00).
+- Tom de Voz: Seja extremamente profissional, polida, prestativa e calorosa. Evite expressões excessivamente formais ou robóticas, mas mantenha um tom de atendimento sênior e acolhedor.
+- Emojis: Use emojis com extrema moderação. No máximo 1 emoji discreto por mensagem (ex: 🦷 ou 😊) para dar um toque amigável sem poluir visualmente o texto. Nunca use vários emojis na mesma mensagem.
+- Clareza: Seja concisa nas respostas, respondendo diretamente ao que foi solicitado e mantendo as mensagens curtas para facilitar a leitura no celular.
 
-Ferramentas Disponíveis (Tool Calling):
-Se o paciente solicitar um agendamento ou perguntar quais horários estão livres, chame a função "get_available_slots" para a data solicitada antes de responder.
-Se o paciente escolher um horário livre e você tiver a data e a hora confirmadas, chame a função "book_appointment" para registrar o agendamento no banco de dados.
+Fluxo de Coleta de Dados e Agendamento:
+1. Confirmação de Cadastro: Se o cadastro inicial estiver com um nome incompleto, apelido ou for a primeira vez que fala com o número, confirme gentilmente o nome completo do paciente para cadastro no CRM.
+2. Consulta de Horários: Se o paciente solicitar horários livres, chame "get_available_slots" para a data correspondente e informe de forma organizada quais estão disponíveis.
+3. Confirmação do Slot: Assim que o paciente escolher um horário e uma data livres, confirme os dados com ele antes de realizar a reserva.
+4. Agendamento: Quando ele der o aceite explícito (ex: "pode marcar", "confirmado"), chame a função "book_appointment" para registrar a consulta na agenda do CRM e confirme informando que o agendamento foi concluído com sucesso.
 
 Instruções base personalizadas da clínica:
 "${waConfig.agent_prompt}"
@@ -255,13 +278,27 @@ Instruções base personalizadas da clínica:
         const startTime = new Date(`${date}T${hour}:00`);
         const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hora
 
+        // Buscar o primeiro profissional/dentista cadastrado na clínica
+        const { data: profiles, error: profError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("clinic_id", clinic.id)
+          .limit(1);
+
+        if (profError || !profiles || profiles.length === 0) {
+          console.error("Nenhum profissional cadastrado na clínica:", profError);
+          return { error: "Nenhum dentista/profissional cadastrado na clínica para realizar o agendamento." };
+        }
+
+        const doctorId = profiles[0].id;
+
         // Criar registro na tabela appointments
         const { data: newApp, error } = await supabase
           .from("appointments")
           .insert({
             clinic_id: clinic.id,
             patient_id: patient.id,
-            doctor_id: "21541fb0-d40d-4df6-9d41-410c3b88b0a9", // Doutor padrão (UUID simulado) ou outro se cadastrado
+            doctor_id: doctorId,
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
             status: "CONFIRMED" // Confirmado automaticamente pela IA
@@ -320,7 +357,7 @@ Instruções base personalizadas da clínica:
               properties: {
                 date: {
                   type: "STRING",
-                  description: "A data a ser pesquisada (ex: 2026-06-19)."
+                  description: "A data a ser pesquisada (ex: 2026-07-09)."
                 }
               },
               required: ["date"]
@@ -349,27 +386,66 @@ Instruções base personalizadas da clínica:
             description: "Pausa o bot de atendimento inteligente para este paciente, encaminhando a conversa para atendimento humano. Chame quando o paciente demonstrar dor forte, urgência odontológica, irritação/descontentamento grave ou solicitar falar com um humano.",
             parameters: {
               type: "OBJECT",
-              properties: {},
-              required: []
+              properties: {}
             }
           }
         ]
       }
     ];
 
-    // Preparar payload de requisição ao Gemini API
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-    
-    // Corpo da requisição com a conversa do usuário
+    // Buscar as últimas 10 mensagens do histórico de conversa para dar contexto ao Gemini
+    const { data: historyData } = await supabase
+      .from("chat_messages")
+      .select("sender, message_text")
+      .eq("patient_id", patient.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const contents = [];
+
+    if (historyData && historyData.length > 0) {
+      // Reverter o histórico para ficar na ordem cronológica (antigas primeiro)
+      const sortedHistory = [...historyData].reverse();
+      for (const msg of sortedHistory) {
+        contents.push({
+          role: msg.sender === "PATIENT" ? "user" : "model",
+          parts: [{ text: msg.message_text }]
+        });
+      }
+    } else {
+      // Se não houver histórico, adiciona pelo menos a mensagem atual
+      contents.push({
+        role: "user",
+        parts: [{ text: messageText }]
+      });
+    }
+
+    // Certificar de que a última mensagem do array de conteúdos é a do usuário atual
+    if (contents.length > 0 && contents[contents.length - 1].role !== "user") {
+      contents.push({
+        role: "user",
+        parts: [{ text: messageText }]
+      });
+    }
+
+    // 4. Chamar a Gemini API (gemini-1.5-flash)
+    if (!geminiApiKey) {
+      console.error("Variável GEMINI_API_KEY não definida.");
+      return new Response(JSON.stringify({ error: "Configuração do servidor de IA (Gemini) ausente" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Adicionar instrução de segurança contra Code Execution no prompt
+    const geminiSystemPrompt = `${systemPrompt}\n\nIMPORTANTE: Você NÃO possui suporte a ferramentas de execução de código Python (code execution). Não tente escrever código, programar ou chamar funções como print(). Suas únicas ferramentas são as declaradas na estrutura 'tools' (get_available_slots, book_appointment, pause_bot).`;
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+
     const requestPayload = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: messageText }]
-        }
-      ],
+      contents: contents,
       systemInstruction: {
-        parts: [{ text: systemPrompt }]
+        parts: [{ text: geminiSystemPrompt }]
       },
       tools: toolsDeclaration,
       generationConfig: {
@@ -379,8 +455,7 @@ Instruções base personalizadas da clínica:
       }
     };
 
-    // Chamada à API do Gemini
-    console.log("Enviando requisição ao Gemini...");
+    console.log("Enviando requisição ao Gemini (1.5-flash)...");
     let response = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -390,11 +465,14 @@ Instruções base personalizadas da clínica:
     let resultJson = await response.json();
     console.log("Resposta Gemini:", JSON.stringify(resultJson));
 
+    if (!response.ok) {
+      throw new Error(`Erro na API Gemini: ${resultJson.error?.message || response.statusText}`);
+    }
+
     let responseText = "";
     const candidate = resultJson.candidates?.[0];
     const functionCall = candidate?.content?.parts?.[0]?.functionCall;
 
-    // Se o Gemini solicitou execução de Tool (Function Calling)
     if (functionCall) {
       const toolName = functionCall.name;
       const toolArgs = functionCall.args;
@@ -403,42 +481,33 @@ Instruções base personalizadas da clínica:
       const toolResult = await executeTool(toolName, toolArgs);
 
       // Alimentar o resultado de volta para o Gemini gerar o diálogo final
-      const followUpPayload = {
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: messageText }]
-          },
-          {
-            role: "model",
-            parts: [{ functionCall: functionCall }]
-          },
-          {
-            role: "function",
-            parts: [{
-              functionResponse: {
-                name: toolName,
-                response: { output: toolResult }
-              }
-            }]
+      contents.push(candidate.content);
+      contents.push({
+        role: "function",
+        parts: [{
+          functionResponse: {
+            name: toolName,
+            response: { output: toolResult }
           }
-        ],
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        tools: toolsDeclaration,
-        generationConfig: {
-          temperature: 0.3,
-          topP: 0.95,
-          maxOutputTokens: 150
-        }
-      };
+        }]
+      });
 
       console.log("Enviando resultado da Tool de volta para o Gemini...");
       response = await fetch(geminiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(followUpPayload)
+        body: JSON.stringify({
+          contents: contents,
+          systemInstruction: {
+            parts: [{ text: geminiSystemPrompt }]
+          },
+          tools: toolsDeclaration,
+          generationConfig: {
+            temperature: 0.3,
+            topP: 0.95,
+            maxOutputTokens: 150
+          }
+        })
       });
 
       resultJson = await response.json();
@@ -473,13 +542,11 @@ Instruções base personalizadas da clínica:
     console.log("Enviando resposta via Evolution API para:", sendUrl);
 
     const messagePayload = {
-      number: senderPhone,
+      number: remoteJid,
+      text: responseText,
       options: {
         delay: 1000,
         presence: "composing"
-      },
-      textMessage: {
-        text: responseText
       }
     };
 

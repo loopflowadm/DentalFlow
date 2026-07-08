@@ -6,10 +6,20 @@ import { useTheme } from './ThemeContext';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [clinic, setClinic] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('df_session_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [clinic, setClinic] = useState(() => {
+    const saved = localStorage.getItem('df_session_clinic');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
-  const [supabaseActive, setSupabaseActive] = useState(isSupabaseConfigured);
+  const [supabaseActive, setSupabaseActive] = useState(() => {
+    const saved = localStorage.getItem('df_supabase_active');
+    if (saved !== null) return saved === 'true';
+    return isSupabaseConfigured;
+  });
   const { applyTheme, resetTheme } = useTheme();
 
   // Função para carregar as informações da clínica baseada no ID
@@ -34,6 +44,11 @@ export function AuthProvider({ children }) {
       return mockDb.getClinics().find(c => c.id === clinicId) || null;
     }
   };
+
+  // O efeito para persistir a escolha de supabaseActive no localStorage
+  useEffect(() => {
+    localStorage.setItem('df_supabase_active', supabaseActive ? 'true' : 'false');
+  }, [supabaseActive]);
 
   // Função para carregar as informações da clínica baseada no subdomínio
   const fetchClinicBySubdomain = async (subdomain) => {
@@ -85,11 +100,13 @@ export function AuthProvider({ children }) {
         };
 
         setUser(sessionUser);
+        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
 
         if (profile.clinic_id) {
           const clinicData = await fetchClinicData(profile.clinic_id);
           setClinic(clinicData);
           if (clinicData) {
+            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
             applyTheme({
               name: clinicData.name,
               primary_color: clinicData.primary_color,
@@ -99,6 +116,7 @@ export function AuthProvider({ children }) {
           }
         } else {
           setClinic(null);
+          localStorage.removeItem('df_session_clinic');
           resetTheme();
         }
         setLoading(false);
@@ -123,11 +141,13 @@ export function AuthProvider({ children }) {
         };
         
         setUser(sessionUser);
+        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
         
         if (matchedUser.clinic_id) {
           const clinicData = await fetchClinicData(matchedUser.clinic_id);
           setClinic(clinicData);
           if (clinicData) {
+            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
             applyTheme({
               name: clinicData.name,
               primary_color: clinicData.primary_color,
@@ -137,6 +157,7 @@ export function AuthProvider({ children }) {
           }
         } else {
           setClinic(null);
+          localStorage.removeItem('df_session_clinic');
           resetTheme();
         }
         setLoading(false);
@@ -156,6 +177,8 @@ export function AuthProvider({ children }) {
     setUser(null);
     setClinic(null);
     resetTheme();
+    localStorage.removeItem('df_session_user');
+    localStorage.removeItem('df_session_clinic');
     setLoading(false);
   };
 
@@ -186,10 +209,11 @@ export function AuthProvider({ children }) {
       }
     }
 
+    // Verificar se há uma sessão válida no Supabase
     if (supabaseActive && supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        try {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
@@ -205,10 +229,13 @@ export function AuthProvider({ children }) {
               clinic_id: profile.clinic_id
             };
             setUser(sessionUser);
+            localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+
             if (profile.clinic_id) {
               const clinicData = await fetchClinicData(profile.clinic_id);
               setClinic(clinicData);
               if (clinicData) {
+                localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
                 applyTheme({
                   name: clinicData.name,
                   primary_color: clinicData.primary_color,
@@ -217,10 +244,22 @@ export function AuthProvider({ children }) {
                 });
               }
             }
+          } else {
+            // Limpar se o perfil não existe
+            setUser(null);
+            setClinic(null);
+            localStorage.removeItem('df_session_user');
+            localStorage.removeItem('df_session_clinic');
           }
-        } catch (e) {
-          console.error(e);
+        } else {
+          // Limpar se não há sessão ativa no Supabase
+          setUser(null);
+          setClinic(null);
+          localStorage.removeItem('df_session_user');
+          localStorage.removeItem('df_session_clinic');
         }
+      } catch (e) {
+        console.error('Erro ao verificar sessão Supabase:', e);
       }
     }
     setLoading(false);

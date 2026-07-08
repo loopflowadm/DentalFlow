@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DentalFlow | WhatsApp Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #10B981; /* Emerald */
+            --primary-glow: rgba(16, 185, 129, 0.2);
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --accent: #6366F1; /* Indigo */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFF 0%, #A5B4FC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel-left {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-group input {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: white;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.9rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        button.btn-primary {
+            background: var(--primary);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        button.btn-primary:hover {
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        button.btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        button.btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: none;
+        }
+
+        .panel-right {
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            min-height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qr-placeholder {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .qr-placeholder svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.2;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .qr-image {
+            max-width: 250px;
+            width: 100%;
+            border-radius: 12px;
+            background: white;
+            padding: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+            animation: blink 1.5s infinite;
+        }
+
+        .console {
+            margin-top: 2rem;
+            background: #05070B;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            height: 150px;
+            overflow-y: auto;
+            color: #10B981;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .console-line {
+            line-height: 1.4;
+        }
+
+        .console-line.info { color: #9CA3AF; }
+        .console-line.success { color: #10B981; }
+        .console-line.error { color: #EF4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>DentalFlow WhatsApp Connector</h1>
+            <p>Configure a sua VPS, conecte o seu WhatsApp e ative a IA Sofia em tempo real.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Coluna de Configuração -->
+            <div class="panel-left">
+                <div class="input-group">
+                    <label>URL base da API (VPS)</label>
+                    <input type="text" id="apiUrl" value="https://api.dentalflow.clinic">
+                </div>
+
+                <div class="input-group">
+                    <label>Chave da API Global (ApiKey)</label>
+                    <input type="password" id="apiKey" value="dentalflow_key_secure_123456">
+                </div>
+
+                <div class="input-group">
+                    <label>Nome da Instância</label>
+                    <input type="text" id="instanceName" value="dentalflow-instance">
+                </div>
+
+                <div class="input-group">
+                    <label>Webhook URL (Supabase Sofia Agent)</label>
+                    <input type="text" id="webhookUrl" value="https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="createInstance()">
+                        1. Criar Instância
+                    </button>
+                    <button class="btn-primary" onclick="getQrCode()">
+                        2. Gerar QR Code
+                    </button>
+                    <button class="btn-secondary" onclick="configureWebhook()">
+                        3. Configurar Webhook da IA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coluna do QR Code -->
+            <div class="panel-right">
+                <div class="qr-placeholder" id="qrPlaceholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.875 12h.008v.008h-.008V12zM19.875 12h.008v.008h-.008V12zM19.875 14.625h.008v.008h-.008v-.008zM16.875 15.375h.008v.008h-.008v-.008zM12 16.875h.008v.008H12v-.008zM14.625 16.875h.008v.008h-.008v-.008zM14.625 19.875h.008v.008h-.008v-.008zM17.625 18.75h.008v.008h-.008v-.008zM19.875 18.75h.008v.008h-.008v-.008zM12 12h.008v.008H12V12zM12 14.625h.008v.008H12v-.008zM14.625 12h.008v.008h-.008V12z" />
+                    </svg>
+                    <p style="font-size: 0.85rem;">Clique em "Gerar QR Code" para conectar</p>
+                </div>
+
+                <img src="" alt="WhatsApp QR Code" class="qr-image" id="qrImage">
+
+                <div class="status-container">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Instância Não Conectada</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal de logs -->
+        <div class="console" id="console">
+            <div class="console-line info">[SISTEMA] Pronto para conexão. Preencha as chaves e clique nos botões acima.</div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            const time = new Date().toLocaleTimeString();
+            line.innerText = `[${time}] ${message}`;
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        async function createInstance() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const name = document.getElementById('instanceName').value.trim();
+
+            log(`Iniciando criação da instância "${name}"...`, 'info');
+
+            try {
+                const response = await fetch(`${url}/instance/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': key
+                    },
+                    body: JSON.stringify({
+                        instanceName: name,
+                        token: key,
+                        qrcode: true,
+                        integration: "WHATSAPP-BAILEYS"
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok || response.status === 201) {
+                    log(`Sucesso: Instância "${name}" criada ou já existente.`, 'success');
+                    document.getElementById('statusDot').className = 'status-dot active';
+                    document.getElementById('statusText').innerText = 'Instância Ativa (Pronta para QR Code)';
+                } else {
+                    log(`Erro (${response.status}): ${JSON.stringify(data.message || data)}`, 'error');
+                }
+            } catch (err) {
+                log(`Falha na requisição: ${err.message}`, 'error');
+            }
+        }
+
+        async function getQrCode() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const name = document.getElementById('instanceName').value.trim();
+
+            log(`Buscando QR Code para a instância "${name}"...`, 'info');
+
+            try {
+                const response = await fetch(`${url}/instance/connect/${name}`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': key
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const qrCodeBase64 = data.base64 || (data.qrcode && data.qrcode.base64);
+                    
+                    if (qrCodeBase64) {
+                        log(`QR Code obtido com sucesso! Carregando imagem...`, 'success');
+                        
+                        document.getElementById('qrPlaceholder').style.display = 'none';
+                        const img = document.getElementById('qrImage');
+                        img.src = qrCodeBase64;
+                        img.style.display = 'block';
+                        
+                        document.getElementById('statusDot').className = 'status-dot active';
+                        document.getElementById('statusText').innerText = 'Aguardando Leitura do QR Code';
+                    } else if (data.status === 'open' || data.instance?.status === 'open') {
+                        log(`WhatsApp já conectado nesta instância!`, 'success');
+                        document.getElementById('qrPlaceholder').innerHTML = '<p style="color: #10B981; font-weight: bold;">WhatsApp Conectado com Sucesso! 🎉</p>';
+                        document.getElementById('qrPlaceholder').style.display = 'flex';
+                        document.getElementById('qrImage').style.display = 'none';
+                        document.getElementById('statusText').innerText = 'WhatsApp Conectado';
+                    } else {
+                        log(`Nenhum QR Code gerado. Status atual: ${data.status || JSON.stringify(data)}`, 'info');
+                    }
+                } else {
+                    log(`Erro ao buscar QR Code: ${JSON.stringify(data.message || data)}`, 'error');
+                }
+            } catch (err) {
+                log(`Falha na requisição: ${err.message}`, 'error');
+            }
+        }
+
+        async function configureWebhook() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const name = document.getElementById('instanceName').value.trim();
+            const webhook = document.getElementById('webhookUrl').value.trim();
+
+            log(`Configurando Webhook na Evolution para apontar para o Supabase...`, 'info');
+
+            try {
+                const response = await fetch(`${url}/webhook/set/${name}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': key
+                    },
+                    body: JSON.stringify({
+                        webhook: {
+                            enabled: true,
+                            url: webhook,
+                            byEvents: false,
+                            events: ["MESSAGES_UPSERT"]
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log(`Sucesso: Webhook configurado para responder em ${webhook}`, 'success');
+                } else {
+                    log(`Erro ao definir Webhook: ${JSON.stringify(data.message || data)}`, 'error');
+                }
+            } catch (err) {
+                log(`Falha na requisição: ${err.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -404,22 +404,71 @@ export function ClinicProvider({ children }) {
     if (!cachedPrescriptions) localStorage.setItem(`prescriptions_${clinicId}`, JSON.stringify(defaultPrescriptions));
   };
 
-  const loadChatsState = (patList) => {
+  const loadChatsState = async (patList) => {
     const clinicId = clinic.id;
     const defaultChats = patList.map((p, index) => ({
       patientId: p.id,
       name: p.name,
-      unreadCount: index === 0 ? 1 : 0,
-      status: index === 0 ? 'online' : 'offline',
+      unreadCount: 0,
+      status: 'offline',
       tags: p.stage !== null ? ['Lead'] : ['Paciente'],
       notes: '',
-      messages: [
-        { id: 'm-1', sender: 'PATIENT', text: `Olá! Eu sou o ${p.name}.`, time: '14:20', type: 'text' }
-      ]
+      messages: []
     }));
 
-    const cachedChats = localStorage.getItem(`wa_chats_${clinicId}`);
-    setWhatsappChats(cachedChats ? JSON.parse(cachedChats) : defaultChats);
+    if (supabaseActive && supabase) {
+      try {
+        const { data: messagesData, error } = await supabase
+          .from('chat_messages')
+          .select('id, patient_id, sender, message_text, created_at')
+          .eq('clinic_id', clinicId)
+          .order('created_at', { ascending: true });
+
+        if (!error && messagesData) {
+          const messagesByPatient = {};
+          messagesData.forEach(msg => {
+            if (!messagesByPatient[msg.patient_id]) {
+              messagesByPatient[msg.patient_id] = [];
+            }
+            messagesByPatient[msg.patient_id].push({
+              id: msg.id,
+              sender: msg.sender,
+              text: msg.message_text,
+              time: new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              type: 'text'
+            });
+          });
+
+          defaultChats.forEach(chat => {
+            if (messagesByPatient[chat.patientId]) {
+              chat.messages = messagesByPatient[chat.patientId];
+              chat.status = 'online';
+            } else {
+              chat.messages = [
+                { id: 'm-default', sender: 'PATIENT', text: `Olá! Eu sou o ${chat.name}.`, time: '14:20', type: 'text' }
+              ];
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao carregar mensagens do Supabase:', err);
+      }
+    } else {
+      defaultChats.forEach((chat, index) => {
+        chat.unreadCount = index === 0 ? 1 : 0;
+        chat.status = index === 0 ? 'online' : 'offline';
+        chat.messages = [
+          { id: 'm-1', sender: 'PATIENT', text: `Olá! Eu sou o ${chat.name}.`, time: '14:20', type: 'text' }
+        ];
+      });
+      const cachedChats = localStorage.getItem(`wa_chats_${clinicId}`);
+      if (cachedChats) {
+        setWhatsappChats(JSON.parse(cachedChats));
+        return;
+      }
+    }
+
+    setWhatsappChats(defaultChats);
   };
 
   useEffect(() => {
@@ -599,6 +648,18 @@ export function ClinicProvider({ children }) {
       return next;
     });
 
+    // Salvar no Supabase se ativo
+    if (supabaseActive && supabase) {
+      supabase.from('chat_messages').insert({
+        clinic_id: clinicId,
+        patient_id: patientId,
+        sender: sender,
+        message_text: text
+      }).then(({ error }) => {
+        if (error) console.error('[Supabase] Erro ao persistir chat_message:', error);
+      });
+    }
+
     // DISPARAR INTEGRAÇÃO REAL COM EVOLUTION API (SE CONFIGURADA)
     if (sender === 'USER' || sender === 'BOT') {
       const savedUrl = localStorage.getItem(`evolution_url_${clinicId}`);
@@ -616,7 +677,7 @@ export function ClinicProvider({ children }) {
             formattedNumber = '55' + formattedNumber;
           }
 
-          console.log(`[Evolution API] Enviando mensagem para ${formattedNumber}...`);
+          console.log(`[Evolution API] Enviando mensagem manual para ${formattedNumber}...`);
 
           fetch(`${savedUrl.replace(/\/$/, '')}/message/sendText/${savedInstance}`, {
             method: 'POST',
@@ -626,12 +687,10 @@ export function ClinicProvider({ children }) {
             },
             body: JSON.stringify({
               number: formattedNumber,
+              text: text,
               options: {
                 delay: 1200,
                 presence: "composing"
-              },
-              textMessage: {
-                text: text
               }
             })
           }).then(response => {
@@ -647,8 +706,8 @@ export function ClinicProvider({ children }) {
       }
     }
 
-    // Simulação do Chatbot de IA se Sofia estiver ativa
-    if (sender === 'PATIENT' && aiConfig.isActive) {
+    // Simulação do Chatbot de IA apenas se o Supabase (produção) estiver inativo
+    if (!supabaseActive && sender === 'PATIENT' && aiConfig.isActive) {
       setTimeout(() => {
         const botResponseText = `[Sofia IA] Recebido! Estarei registrando suas observações no sistema ou encaminhando para o Dr. Pedro. 🦷🤖`;
         const botMsg = {

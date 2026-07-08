@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Send, Phone, User, Check, ShieldAlert, Tag, FileText, 
   Smile, Mic, Image, Paperclip, MoreVertical, Search, Bot, Zap,
-  Smartphone, Key, Globe, Plus, AlertCircle 
+  Smartphone, Key, Globe, Plus, AlertCircle, CheckCircle2 
 } from 'lucide-react';
 
 export default function WhatsApp() {
@@ -24,17 +24,22 @@ export default function WhatsApp() {
 
   // Carregar configurações da Evolution API do localStorage
   const [evolutionUrl, setEvolutionUrl] = useState(() => {
-    return localStorage.getItem(`evolution_url_${clinicId}`) || 'https://api.evolution.odontocrm.com';
+    return localStorage.getItem(`evolution_url_${clinicId}`) || 'https://api.dentalflow.clinic';
   });
   const [evolutionInstance, setEvolutionInstance] = useState(() => {
-    return localStorage.getItem(`evolution_instance_${clinicId}`) || 'sorriso-perfeito-instance';
+    return localStorage.getItem(`evolution_instance_${clinicId}`) || 'dentalflow-prod';
   });
   const [evolutionToken, setEvolutionToken] = useState(() => {
-    return localStorage.getItem(`evolution_token_${clinicId}`) || 'apikey_live_evo_998877abc';
+    return localStorage.getItem(`evolution_token_${clinicId}`) || 'dentalflow_key_secure_123456';
   });
   const [evolutionStatus, setEvolutionStatus] = useState(() => {
-    return localStorage.getItem(`evolution_status_${clinicId}`) || 'CONNECTED';
+    return localStorage.getItem(`evolution_status_${clinicId}`) || 'DISCONNECTED';
   });
+
+  // Novos estados para a conexão real
+  const [qrCode, setQrCode] = useState('');
+  const [connectionLogs, setConnectionLogs] = useState([]);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Salvar no localStorage sempre que mudar
   useEffect(() => {
@@ -52,6 +57,128 @@ export default function WhatsApp() {
   useEffect(() => {
     localStorage.setItem(`evolution_status_${clinicId}`, evolutionStatus);
   }, [evolutionStatus, clinicId]);
+
+  // Log auxiliar para o console interno
+  const addLog = (msg) => {
+    setConnectionLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
+
+  // Verificar status real de conexão com a VPS
+  const checkRealConnection = async () => {
+    if (!evolutionUrl || !evolutionInstance || !evolutionToken) return;
+    try {
+      const response = await fetch(`${evolutionUrl}/instance/connectionState/${evolutionInstance}`, {
+        headers: { apikey: evolutionToken }
+      });
+      const data = await response.json();
+      if (response.ok && data.instance?.state === 'open') {
+        setEvolutionStatus('CONNECTED');
+        setQrCode('');
+      } else {
+        setEvolutionStatus('DISCONNECTED');
+      }
+    } catch (e) {
+      setEvolutionStatus('DISCONNECTED');
+    }
+  };
+
+  // Checar conexão ao abrir o painel
+  useEffect(() => {
+    if (showEvolutionSettings) {
+      checkRealConnection();
+    }
+  }, [showEvolutionSettings, evolutionUrl, evolutionInstance, evolutionToken]);
+
+  // Criar instância e buscar QR Code
+  const handleConnectWhatsApp = async () => {
+    setIsConnecting(true);
+    setConnectionLogs([]);
+    addLog(`Iniciando processo de conexão para "${evolutionInstance}"...`);
+
+    try {
+      // 1. Criar a Instância
+      addLog('Passo 1: Verificando/Criando instância na VPS...');
+      const createRes = await fetch(`${evolutionUrl}/instance/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evolutionToken
+        },
+        body: JSON.stringify({
+          instanceName: evolutionInstance,
+          token: evolutionToken,
+          qrcode: true,
+          integration: "WHATSAPP-BAILEYS"
+        })
+      });
+      const createData = await createRes.json();
+      if (createRes.ok || createRes.status === 201 || createRes.status === 403) {
+        addLog('Sucesso: Instância ativa na VPS.');
+      } else {
+        addLog(`Aviso ao criar: ${createData.message || JSON.stringify(createData)}`);
+      }
+
+      // 2. Gerar QR Code
+      addLog('Passo 2: Buscando QR Code de pareamento...');
+      const connectRes = await fetch(`${evolutionUrl}/instance/connect/${evolutionInstance}`, {
+        method: 'GET',
+        headers: {
+          'apikey': evolutionToken
+        }
+      });
+      const connectData = await connectRes.json();
+      if (connectRes.ok) {
+        const base64Qr = connectData.base64 || (connectData.qrcode && connectData.qrcode.base64);
+        if (base64Qr) {
+          setQrCode(base64Qr);
+          addLog('QR Code obtido com sucesso! Escaneie pelo WhatsApp do celular.');
+        } else if (connectData.status === 'open' || connectData.instance?.state === 'open') {
+          setEvolutionStatus('CONNECTED');
+          setQrCode('');
+          addLog('WhatsApp já conectado nesta instância!');
+        } else {
+          addLog(`Status: ${connectData.status || JSON.stringify(connectData)}`);
+        }
+      } else {
+        addLog(`Erro ao obter QR Code: ${JSON.stringify(connectData)}`);
+      }
+    } catch (err) {
+      addLog(`Falha na requisição: ${err.message}`);
+    }
+    setIsConnecting(false);
+  };
+
+  // Configurar o Webhook no Supabase
+  const handleConfigureWebhook = async () => {
+    addLog('Configurando webhook da IA Sofia...');
+    const webhookUrl = `https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent`;
+
+    try {
+      const response = await fetch(`${evolutionUrl}/webhook/set/${evolutionInstance}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evolutionToken
+        },
+        body: JSON.stringify({
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            byEvents: false,
+            events: ["MESSAGES_UPSERT"]
+          }
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        addLog(`Sucesso: Webhook apontado para o Supabase!`);
+      } else {
+        addLog(`Erro ao definir Webhook: ${data.message || JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      addLog(`Falha ao definir Webhook: ${err.message}`);
+    }
+  };
 
   // Modelos de Mensagens Rápidas
   const quickReplies = [
@@ -203,7 +330,7 @@ export default function WhatsApp() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6 text-slate-800 dark:text-slate-200 text-left">
             <div>
               <h3 className="text-sm font-bold font-title">Integração com Evolution API</h3>
-              <p className="text-[11px] text-slate-450 mt-0.5">Defina as chaves e a URL do servidor Evolution API para processar disparos e atendimento.</p>
+              <p className="text-[11px] text-slate-450 mt-0.5">Gerencie a conexão da sua VPS, gere o QR Code e ative o robô de inteligência artificial.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -242,21 +369,79 @@ export default function WhatsApp() {
               </div>
             </div>
 
-            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                <div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-white">Status da Conexão</span>
-                  <p className="text-[10px] text-slate-450 mt-0.5">WhatsApp Conectado e escutando webhooks.</p>
+            {/* Painel Central do QR Code e Ações */}
+            <div className="p-5 border border-slate-200/50 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/10 rounded-2xl flex flex-col md:flex-row items-center gap-6">
+              
+              {/* QR Code Frame */}
+              <div className="w-48 h-48 border border-slate-200/50 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-sm">
+                {qrCode ? (
+                  <img src={qrCode} alt="QR Code WhatsApp" className="w-full h-full object-contain" />
+                ) : evolutionStatus === 'CONNECTED' ? (
+                  <div className="text-center space-y-1.5 p-2">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                    <span className="text-[10px] font-bold text-emerald-500 block">WhatsApp Ativo</span>
+                  </div>
+                ) : (
+                  <div className="text-center text-slate-400 space-y-1 p-2">
+                    <Smartphone className="w-8 h-8 mx-auto opacity-30 animate-pulse" />
+                    <span className="text-[9px] font-medium block">Nenhum QR Code gerado</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Botões e Status */}
+              <div className="flex-1 space-y-4 w-full text-left">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3.5 h-3.5 rounded-full ${
+                    evolutionStatus === 'CONNECTED' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                  }`} />
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-white">Status da Conexão</span>
+                    <p className="text-[10px] text-slate-450 mt-0.5">
+                      {evolutionStatus === 'CONNECTED' 
+                        ? 'WhatsApp Conectado e escutando webhooks.' 
+                        : 'WhatsApp Desconectado. É necessário gerar e escanear o QR Code.'
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    onClick={handleConnectWhatsApp}
+                    disabled={isConnecting}
+                    className="px-3.5 py-2 bg-secondary text-white font-bold rounded-xl text-xs hover:opacity-95 shadow transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {isConnecting ? 'Verificando...' : '1. Gerar QR Code / Conectar'}
+                  </button>
+                  <button 
+                    onClick={handleConfigureWebhook}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-750 dark:text-slate-250 font-bold rounded-xl border border-slate-250 dark:border-slate-700 text-xs shadow-sm transition-all active:scale-[0.98]"
+                  >
+                    2. Ativar Webhook da Sofia IA
+                  </button>
+                  <button 
+                    onClick={checkRealConnection}
+                    className="px-3.5 py-2 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-500 font-semibold rounded-xl border border-slate-200 dark:border-slate-850 text-xs shadow-sm"
+                  >
+                    Atualizar Status
+                  </button>
                 </div>
               </div>
-              <button 
-                onClick={() => setEvolutionStatus(evolutionStatus === 'CONNECTED' ? 'DISCONNECTED' : 'CONNECTED')}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-650 dark:text-slate-250 font-bold rounded-lg border border-slate-200/50 dark:border-slate-700/50 text-[10px]"
-              >
-                Testar Conexão
-              </button>
             </div>
+
+            {/* Diagnostic Console */}
+            <div className="space-y-1.5">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Console de Conexão (VPS Logs)</label>
+              <div className="w-full h-32 bg-slate-950 border border-slate-800/80 rounded-2xl p-3 font-mono text-[10px] text-emerald-500 overflow-y-auto space-y-1">
+                {connectionLogs.length > 0 ? (
+                  connectionLogs.map((line, idx) => <div key={idx}>{line}</div>)
+                ) : (
+                  <div className="text-slate-600">[Aguardando comandos. Clique em "Gerar QR Code" acima para conectar.]</div>
+                )}
+              </div>
+            </div>
+
           </div>
         ) : activeChat ? (
           <>
