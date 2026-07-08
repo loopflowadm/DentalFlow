@@ -15,7 +15,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
   
   // Lista de Colunas (Etapas)
   const columns = [
-    'Novo Lead', 'Primeiro Contato', 'Avaliação Agendada', 'Confirmado', 
+    'Novo Paciente', 'Primeiro Contato', 'Avaliação Agendada', 'Confirmado', 
     'Compareceu', 'Orçamento', 'Negociação', 'Fechado', 
     'Tratamento', 'Retorno', 'Concluído', 'Perdido'
   ];
@@ -59,9 +59,9 @@ export default function CRM({ selectedLead, setSelectedLead }) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50 dark:bg-slate-900 rounded-[28px] border border-slate-200/40 dark:border-slate-800/40">
         <HelpCircle className="w-16 h-16 text-slate-350 dark:text-slate-600 animate-bounce mb-4" />
-        <h3 className="text-lg font-bold font-title text-slate-850 dark:text-white">Nenhum Lead Selecionado</h3>
+        <h3 className="text-lg font-bold font-title text-slate-850 dark:text-white">Nenhum Paciente Selecionado</h3>
         <p className="text-xs text-slate-400 mt-1 max-w-sm">
-          Selecione um lead comercial na barra lateral de leads (Worklist) para ver os detalhes, conversas e widgets.
+          Selecione um paciente na lista lateral para ver os detalhes, conversas e widgets.
         </p>
       </div>
     );
@@ -111,7 +111,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
   };
 
   const handleConvertToPatient = () => {
-    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? Ele sairá do funil CRM.`)) {
+    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? Ele sairá do funil.`)) {
       const updated = {
         ...selectedLead,
         stage: null,
@@ -120,7 +120,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
           { 
             date: new Date().toISOString(), 
             type: 'CONVERSION', 
-            description: 'Lead convertido em paciente clínico ativo e direcionado ao prontuário', 
+            description: 'Paciente convertido em ativo e direcionado ao prontuário', 
             user: user?.full_name || 'Profissional' 
           }
         ]
@@ -305,7 +305,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-1.5"
             >
               <UserCheck className="w-4 h-4" />
-              <span>Tornar Paciente</span>
+              <span>Tornar Paciente Ativo</span>
             </button>
           </div>
         </div>
@@ -690,7 +690,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
           </div>
 
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
-            Elaborar o orçamento do procedimento de {selectedLead.procedure_name || 'Consulta Geral'} e encaminhar o PDF da proposta ao lead via chat comercial.
+            Elaborar o orçamento do procedimento de {selectedLead.procedure_name || 'Consulta Geral'} e encaminhar o PDF da proposta ao paciente via chat comercial.
           </p>
 
           {/* PDF de Proposta Rápida */}

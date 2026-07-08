@@ -43,7 +43,7 @@ export default function Sidebar({
   // Mapeamento de Cargo para Itens Permitidos (RBAC)
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR', 'FINANCIAL'] },
-    { id: 'crm', label: 'CRM Leads', icon: Kanban, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
+    { id: 'crm', label: 'Funil de Pacientes', icon: Kanban, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
     { id: 'pacientes', label: 'Pacientes', icon: Users, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR', 'FINANCIAL'] },
     { id: 'agenda', label: 'Agenda', icon: Calendar, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
     { id: 'whatsapp', label: 'Central WhatsApp', icon: MessageSquare, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST'] },
@@ -199,7 +199,7 @@ export default function Sidebar({
             <div className="bg-slate-900/40 border border-slate-800/40 p-3.5 rounded-2xl shadow-sm text-left">
               <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-0.5">Módulo Ativo</span>
               <span className="text-sm font-black text-white uppercase tracking-wider font-title">
-                {activeTab === 'crm' && "Worklist"}
+                {activeTab === 'crm' && "Pacientes (Funil)"}
                 {activeTab === 'pacientes' && "Pacientes"}
                 {activeTab === 'agenda' && "Agenda do Dia"}
               </span>
@@ -211,7 +211,7 @@ export default function Sidebar({
                 {/* Grid 2x2 de métricas rápidas no topo */}
                 <div className="grid grid-cols-2 gap-2 text-white">
                   <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Worklist</span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
                     <span className="text-xl font-bold font-title mt-1">{totalLeadsCount}</span>
                   </div>
                   <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
@@ -234,7 +234,7 @@ export default function Sidebar({
                     <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
                     <input
                       type="text"
-                      placeholder="Buscar lead por nome..."
+                      placeholder="Buscar paciente por nome..."
                       value={crmSearch}
                       onChange={(e) => setCrmSearch(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
@@ -257,7 +257,7 @@ export default function Sidebar({
                       onClick={() => setShowAddLeadSidebar(true)}
                       className="p-2 hover:opacity-90 rounded-xl text-white flex items-center justify-center transition-all"
                       style={{ backgroundColor: currentTheme.secondary_color }}
-                      title="Adicionar Novo Lead"
+                      title="Adicionar Novo Paciente"
                     >
                       <Plus className="w-4 h-4 font-bold" />
                     </button>
@@ -321,7 +321,7 @@ export default function Sidebar({
 
                   {filteredLeads.length === 0 && (
                     <div className="py-8 text-center text-slate-500 text-xs">
-                      <span>Nenhum lead encontrado</span>
+                      <span>Nenhum paciente encontrado</span>
                     </div>
                   )}
                 </div>
@@ -331,15 +331,26 @@ export default function Sidebar({
             {/* 2. MÓDULO PACIENTES */}
             {activeTab === 'pacientes' && (
               <>
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Buscar paciente..."
-                    value={patientSearch}
-                    onChange={(e) => setPatientSearch(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
-                  />
+                <div className="flex gap-1.5 items-center">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
+                    <input
+                      type="text"
+                      placeholder="Buscar paciente..."
+                      value={patientSearch}
+                      onChange={(e) => setPatientSearch(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedPatient(null)}
+                    className="p-2 hover:opacity-90 rounded-xl text-white flex items-center justify-center transition-all flex-shrink-0"
+                    style={{ backgroundColor: currentTheme.secondary_color }}
+                    title="Cadastrar Novo Paciente"
+                  >
+                    <Plus className="w-4 h-4 font-bold" />
+                  </button>
                 </div>
 
                 <div className="space-y-2 pt-2">
@@ -448,7 +459,7 @@ export default function Sidebar({
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
               <h3 className="text-sm font-bold font-title flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-secondary" style={{ color: currentTheme.secondary_color }} />
-                Cadastrar Novo Lead
+                Cadastrar Novo Paciente (Funil)
               </h3>
               <button 
                 onClick={() => setShowAddLeadSidebar(false)}
@@ -464,7 +475,7 @@ export default function Sidebar({
                 <input
                   type="text"
                   required
-                  placeholder="Nome do lead"
+                  placeholder="Nome do paciente"
                   value={newLeadName}
                   onChange={(e) => setNewLeadName(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-700 text-white"
@@ -524,7 +535,7 @@ export default function Sidebar({
                 className="w-full py-2.5 hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-lg mt-2 transition-all"
                 style={{ backgroundColor: currentTheme.secondary_color }}
               >
-                Salvar Lead
+                Salvar Paciente
               </button>
             </form>
           </div>

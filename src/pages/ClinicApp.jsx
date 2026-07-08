@@ -53,8 +53,8 @@ export default function ClinicApp() {
       badge: "Segurança Financeira"
     },
     {
-      title: "🚀 Funil CRM & Conversão de Leads",
-      desc: "Em CRM Leads, arraste e solte cartões de pacientes em potencial ao longo das etapas. Ao clicar no cartão de um lead, você pode acompanhar seu checklist e histórico. Clique no botão '🚀 Tornar Paciente' dentro da gaveta para convertê-lo e integrá-lo diretamente no Prontuário Clínico.",
+      title: "🚀 Funil de Pacientes & Conversão",
+      desc: "No Funil de Pacientes, arraste e solte cartões de pacientes em potencial ao longo das etapas. Ao clicar no cartão de um paciente, você pode acompanhar seu checklist e histórico. Clique no botão '🚀 Tornar Paciente Ativo' dentro da gaveta para ativá-lo e integrá-lo diretamente no Prontuário Clínico.",
       badge: "Funil de Vendas"
     }
   ];
