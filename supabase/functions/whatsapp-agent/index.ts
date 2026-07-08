@@ -62,11 +62,13 @@ serve(async (req) => {
 
     const senderPhone = remoteJid.split("@")[0];
     
-    // Restringir a resposta APENAS para o número de teste homologado
-    const allowedTestPhone = "558399274420";
-    if (senderPhone !== allowedTestPhone) {
-      console.log(`Mensagem recebida de ${senderPhone}. Ignorando pois não é o número homologado de teste.`);
-      return new Response(JSON.stringify({ message: `Ignorado. Somente o número ${allowedTestPhone} está habilitado na fase de testes.` }), {
+    // Restringir a resposta para o número de teste apenas se LIMIT_TO_TEST_NUMBER for true (padrão)
+    const limitToTest = Deno.env.get("LIMIT_TO_TEST_NUMBER") !== "false";
+    const allowedTestPhone = Deno.env.get("TEST_PHONE_NUMBER") || "558399274420";
+    
+    if (limitToTest && senderPhone !== allowedTestPhone) {
+      console.log(`Mensagem recebida de ${senderPhone}. Ignorando pois a trava de número de teste (${allowedTestPhone}) está ativa.`);
+      return new Response(JSON.stringify({ message: `Ignorado. Apenas o número de testes está ativo no momento.` }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

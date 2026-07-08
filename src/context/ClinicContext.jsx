@@ -413,6 +413,7 @@ export function ClinicProvider({ children }) {
       status: 'offline',
       tags: p.stage !== null ? ['Lead'] : ['Paciente'],
       notes: '',
+      isBotPaused: false,
       messages: []
     }));
 
@@ -423,6 +424,11 @@ export function ClinicProvider({ children }) {
           .select('id, patient_id, sender, message_text, created_at')
           .eq('clinic_id', clinicId)
           .order('created_at', { ascending: true });
+
+        const { data: sessionsData, error: sessErr } = await supabase
+          .from('chat_sessions')
+          .select('patient_id, is_bot_paused')
+          .eq('clinic_id', clinicId);
 
         if (!error && messagesData) {
           const messagesByPatient = {};
@@ -439,7 +445,15 @@ export function ClinicProvider({ children }) {
             });
           });
 
+          const pausedSessions = {};
+          if (!sessErr && sessionsData) {
+            sessionsData.forEach(s => {
+              pausedSessions[s.patient_id] = s.is_bot_paused;
+            });
+          }
+
           defaultChats.forEach(chat => {
+            chat.isBotPaused = pausedSessions[chat.patientId] || false;
             if (messagesByPatient[chat.patientId]) {
               chat.messages = messagesByPatient[chat.patientId];
               chat.status = 'online';
@@ -745,6 +759,38 @@ export function ClinicProvider({ children }) {
     const clinicId = clinic.id;
     setWhatsappChats(prev => {
       const next = prev.map(c => c.patientId === patientId ? { ...c, tags } : c);
+      localStorage.setItem(`wa_chats_${clinicId}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const toggleBotSilence = async (patientId, isPaused) => {
+    const clinicId = clinic.id;
+
+    if (supabaseActive && supabase) {
+      try {
+        const { error } = await supabase
+          .from('chat_sessions')
+          .upsert({
+            clinic_id: clinicId,
+            patient_id: patientId,
+            is_bot_paused: isPaused,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'clinic_id,patient_id'
+          });
+        if (error) throw error;
+      } catch (err) {
+        console.error('[Supabase] Erro ao alternar silenciamento do bot:', err);
+      }
+    }
+
+    setWhatsappChats(prev => {
+      const next = prev.map(chat => 
+        chat.patientId === patientId 
+          ? { ...chat, isBotPaused: isPaused } 
+          : chat
+      );
       localStorage.setItem(`wa_chats_${clinicId}`, JSON.stringify(next));
       return next;
     });
@@ -1263,6 +1309,7 @@ export function ClinicProvider({ children }) {
       sendWhatsAppMessage,
       updateChatNotes,
       updateChatTags,
+      toggleBotSilence,
       addTransaction,
       saveProcedures,
       saveInsurancePlans,
