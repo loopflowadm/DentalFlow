@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 export default function CRM({ selectedLead, setSelectedLead }) {
-  const { crmLeads, updateCrmLead, patients } = useClinic();
+  const { crmLeads, updateCrmLead, convertLeadToPatient, patients } = useClinic();
   const { user } = useAuth();
   const { currentTheme } = useTheme();
   
@@ -110,23 +110,16 @@ export default function CRM({ selectedLead, setSelectedLead }) {
     setSelectedLead(updated);
   };
 
-  const handleConvertToPatient = () => {
-    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? Ele sairá do funil.`)) {
-      const updated = {
-        ...selectedLead,
-        stage: null,
-        history: [
-          ...(selectedLead.history || []),
-          { 
-            date: new Date().toISOString(), 
-            type: 'CONVERSION', 
-            description: 'Paciente convertido em ativo e direcionado ao prontuário', 
-            user: user?.full_name || 'Profissional' 
-          }
-        ]
-      };
-      updateCrmLead(updated);
-      setSelectedLead(null);
+  const handleConvertToPatient = async () => {
+    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? Ele será promovido para o prontuário.`)) {
+      try {
+        await convertLeadToPatient(selectedLead.id);
+        setSelectedLead(null);
+        alert('Paciente cadastrado com sucesso!');
+      } catch (err) {
+        console.error('Erro ao converter lead em paciente:', err);
+        alert('Falha ao converter lead em paciente.');
+      }
     }
   };
 
@@ -614,9 +607,9 @@ export default function CRM({ selectedLead, setSelectedLead }) {
             </span>
           </div>
 
-          {/* Seletor rápido de Estágio do Funil */}
+          {/* Seletor rápido de Estágio da Jornada */}
           <div className="space-y-2 border-t border-slate-800/10 dark:border-slate-800/20 pt-3">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mudar Estágio do Lead</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mudar Estágio do Paciente</label>
             <select
               value={selectedLead.stage}
               onChange={(e) => handleUpdateStage(parseInt(e.target.value))}

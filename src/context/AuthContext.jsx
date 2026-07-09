@@ -1,178 +1,117 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { mockDb } from '../lib/mockDatabase';
 import { useTheme } from './ThemeContext';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('df_session_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
   const [clinic, setClinic] = useState(() => {
     const saved = localStorage.getItem('df_session_clinic');
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(true);
-  const [supabaseActive, setSupabaseActive] = useState(() => {
-    const saved = localStorage.getItem('df_supabase_active');
-    if (saved !== null) return saved === 'true';
-    return isSupabaseConfigured;
-  });
+  const supabaseActive = true;
+  const setSupabaseActive = () => {};
   const { applyTheme, resetTheme } = useTheme();
 
   // Função para carregar as informações da clínica baseada no ID
   const fetchClinicData = async (clinicId) => {
     if (!clinicId) return null;
     
-    if (supabaseActive && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('*')
-          .eq('id', clinicId)
-          .single();
-        if (error) throw error;
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar dados da clínica no Supabase:', err);
-        // Fallback local se falhar
-        return mockDb.getClinics().find(c => c.id === clinicId) || null;
-      }
-    } else {
-      return mockDb.getClinics().find(c => c.id === clinicId) || null;
+    try {
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('id', clinicId)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Erro ao buscar dados da clínica no Supabase:', err);
+      return null;
     }
   };
-
-  // O efeito para persistir a escolha de supabaseActive no localStorage
-  useEffect(() => {
-    localStorage.setItem('df_supabase_active', supabaseActive ? 'true' : 'false');
-  }, [supabaseActive]);
 
   // Função para carregar as informações da clínica baseada no subdomínio
   const fetchClinicBySubdomain = async (subdomain) => {
     if (!subdomain) return null;
     
-    if (supabaseActive && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('clinics')
-          .select('*')
-          .eq('subdomain', subdomain)
-          .single();
-        if (error) throw error;
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar clínica por subdomínio no Supabase:', err);
-        return mockDb.getClinics().find(c => c.subdomain === subdomain) || null;
-      }
-    } else {
-      return mockDb.getClinics().find(c => c.subdomain === subdomain) || null;
+    try {
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('subdomain', subdomain)
+        .single();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error('Erro ao buscar clínica por subdomínio no Supabase:', err);
+      return null;
     }
   };
 
   const login = async (email, password) => {
     setLoading(true);
-    if (supabaseActive && supabase) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        if (error) throw error;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) throw error;
 
-        // Buscar dados do perfil do usuário logado
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+      // Buscar dados do perfil do usuário logado
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-        if (profileError) throw profileError;
+      if (profileError) throw profileError;
 
-        const sessionUser = {
-          id: data.user.id,
-          email: data.user.email,
-          role: profile.role,
-          full_name: profile.full_name,
-          clinic_id: profile.clinic_id
-        };
+      const sessionUser = {
+        id: data.user.id,
+        email: data.user.email,
+        role: profile.role,
+        full_name: profile.full_name,
+        clinic_id: profile.clinic_id
+      };
 
-        setUser(sessionUser);
-        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+      setUser(sessionUser);
+      localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
 
-        if (profile.clinic_id) {
-          const clinicData = await fetchClinicData(profile.clinic_id);
-          setClinic(clinicData);
-          if (clinicData) {
-            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
-            applyTheme({
-              name: clinicData.name,
-              primary_color: clinicData.primary_color,
-              secondary_color: clinicData.secondary_color,
-              logo_url: clinicData.logo_url
-            });
-          }
-        } else {
-          setClinic(null);
-          localStorage.removeItem('df_session_clinic');
-          resetTheme();
+      if (profile.clinic_id) {
+        const clinicData = await fetchClinicData(profile.clinic_id);
+        setClinic(clinicData);
+        if (clinicData) {
+          localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
+          applyTheme({
+            name: clinicData.name,
+            primary_color: clinicData.primary_color,
+            secondary_color: clinicData.secondary_color,
+            logo_url: clinicData.logo_url
+          });
         }
-        setLoading(false);
-        return { success: true, user: sessionUser };
-      } catch (err) {
-        console.error('Falha de login no Supabase:', err.message);
-        setLoading(false);
-        return { success: false, error: err.message };
-      }
-    } else {
-      // Autenticação Mock Local
-      const users = mockDb.getUsers();
-      const matchedUser = users.find(u => u.email === email && u.password === password);
-      
-      if (matchedUser) {
-        const sessionUser = {
-          id: matchedUser.id,
-          email: matchedUser.email,
-          role: matchedUser.role,
-          full_name: matchedUser.full_name,
-          clinic_id: matchedUser.clinic_id
-        };
-        
-        setUser(sessionUser);
-        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
-        
-        if (matchedUser.clinic_id) {
-          const clinicData = await fetchClinicData(matchedUser.clinic_id);
-          setClinic(clinicData);
-          if (clinicData) {
-            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
-            applyTheme({
-              name: clinicData.name,
-              primary_color: clinicData.primary_color,
-              secondary_color: clinicData.secondary_color,
-              logo_url: clinicData.logo_url
-            });
-          }
-        } else {
-          setClinic(null);
-          localStorage.removeItem('df_session_clinic');
-          resetTheme();
-        }
-        setLoading(false);
-        return { success: true, user: sessionUser };
       } else {
-        setLoading(false);
-        return { success: false, error: 'E-mail ou senha incorretos (Simulado).' };
+        setClinic(null);
+        localStorage.removeItem('df_session_clinic');
+        resetTheme();
       }
+      setLoading(false);
+      return { success: true, user: sessionUser };
+    } catch (err) {
+      console.error('Falha de login no Supabase:', err.message);
+      setLoading(false);
+      return { success: false, error: err.message };
     }
   };
 
   const logout = async () => {
     setLoading(true);
-    if (supabaseActive && supabase) {
+    try {
       await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Erro ao deslogar no Supabase:', e);
     }
     setUser(null);
     setClinic(null);
@@ -210,57 +149,55 @@ export function AuthProvider({ children }) {
     }
 
     // Verificar se há uma sessão válida no Supabase
-    if (supabaseActive && supabase) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
-          if (profile) {
-            const sessionUser = {
-              id: session.user.id,
-              email: session.user.email,
-              role: profile.role,
-              full_name: profile.full_name,
-              clinic_id: profile.clinic_id
-            };
-            setUser(sessionUser);
-            localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+        if (profile) {
+          const sessionUser = {
+            id: session.user.id,
+            email: session.user.email,
+            role: profile.role,
+            full_name: profile.full_name,
+            clinic_id: profile.clinic_id
+          };
+          setUser(sessionUser);
+          localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
 
-            if (profile.clinic_id) {
-              const clinicData = await fetchClinicData(profile.clinic_id);
-              setClinic(clinicData);
-              if (clinicData) {
-                localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
-                applyTheme({
-                  name: clinicData.name,
-                  primary_color: clinicData.primary_color,
-                  secondary_color: clinicData.secondary_color,
-                  logo_url: clinicData.logo_url
-                });
-              }
+          if (profile.clinic_id) {
+            const clinicData = await fetchClinicData(profile.clinic_id);
+            setClinic(clinicData);
+            if (clinicData) {
+              localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
+              applyTheme({
+                name: clinicData.name,
+                primary_color: clinicData.primary_color,
+                secondary_color: clinicData.secondary_color,
+                logo_url: clinicData.logo_url
+              });
             }
-          } else {
-            // Limpar se o perfil não existe
-            setUser(null);
-            setClinic(null);
-            localStorage.removeItem('df_session_user');
-            localStorage.removeItem('df_session_clinic');
           }
         } else {
-          // Limpar se não há sessão ativa no Supabase
+          // Limpar se o perfil não existe
           setUser(null);
           setClinic(null);
           localStorage.removeItem('df_session_user');
           localStorage.removeItem('df_session_clinic');
         }
-      } catch (e) {
-        console.error('Erro ao verificar sessão Supabase:', e);
+      } else {
+        // Limpar se não há sessão ativa no Supabase
+        setUser(null);
+        setClinic(null);
+        localStorage.removeItem('df_session_user');
+        localStorage.removeItem('df_session_clinic');
       }
+    } catch (e) {
+      console.error('Erro ao verificar sessão Supabase:', e);
     }
     setLoading(false);
   };
@@ -284,18 +221,14 @@ export function AuthProvider({ children }) {
     const updatedClinic = { ...clinic, ...updatedFields };
     setClinic(updatedClinic);
 
-    if (supabaseActive && supabase) {
-      try {
-        const { error } = await supabase
-          .from('clinics')
-          .update(updatedFields)
-          .eq('id', clinic.id);
-        if (error) throw error;
-      } catch (err) {
-        console.error('Erro ao atualizar clínica no Supabase:', err);
-      }
-    } else {
-      mockDb.saveClinic(updatedClinic);
+    try {
+      const { error } = await supabase
+        .from('clinics')
+        .update(updatedFields)
+        .eq('id', clinic.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Erro ao atualizar clínica no Supabase:', err);
     }
 
     applyTheme({
@@ -308,7 +241,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     checkSession();
-  }, [supabaseActive]);
+  }, []);
 
   return (
     <AuthContext.Provider value={{

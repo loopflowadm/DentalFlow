@@ -30,7 +30,7 @@ export default function Automacoes() {
 
   // Mock list of Triggers
   const triggersList = [
-    { name: 'Novo Lead', desc: 'Disparado quando um lead cai no funil', icon: Zap },
+    { name: 'Novo Lead', desc: 'Disparado quando um lead inicia a jornada', icon: Zap },
     { name: 'Novo Paciente', desc: 'Disparado ao cadastrar um prontuário', icon: Zap },
     { name: 'Agendamento', desc: 'Criado ao marcar consulta', icon: Zap },
     { name: 'Falta', desc: 'Disparado se o paciente não comparecer', icon: Zap },

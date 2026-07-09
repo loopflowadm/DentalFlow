@@ -23,7 +23,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     addMedicalRecord,
     addPrescription,
     generateAiEvolution,
-    sendPrescriptionWhatsapp
+    sendPrescriptionWhatsapp,
+    toothRecords,
+    updateToothRecord
   } = useClinic();
   const { currentTheme } = useTheme();
   const { user } = useAuth();
@@ -73,6 +75,19 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   const [selectedPrescTemplate, setSelectedPrescTemplate] = useState('');
   const [sendViaWa, setSendViaWa] = useState(true);
   const [viewingPrescription, setViewingPrescription] = useState(null);
+
+  // Estados de Ficha de Anamnese Estruturada
+  const [showEditAnamnese, setShowEditAnamnese] = useState(false);
+  const [hasHeartDisease, setHasHeartDisease] = useState(false);
+  const [hasDiabetes, setHasDiabetes] = useState(false);
+  const [hasHypertension, setHasHypertension] = useState(false);
+  const [hasAllergies, setHasAllergies] = useState(false);
+  const [allergyDetails, setAllergyDetails] = useState('');
+  const [isPregnant, setIsPregnant] = useState(false);
+  const [hasBleedingDisorder, setHasBleedingDisorder] = useState(false);
+  const [usesMedication, setUsesMedication] = useState(false);
+  const [medicationDetails, setMedicationDetails] = useState('');
+  const [generalNotes, setGeneralNotes] = useState('');
 
   const handleTemplateChange = (templateId) => {
     setSelectedPrescTemplate(templateId);
@@ -138,6 +153,58 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     setAdendoTargetId(null);
   };
 
+  const handleOpenEditAnamnese = () => {
+    if (!selectedPatient) return;
+    const history = parseHistory(selectedPatient.medical_history);
+    const anamnese = history.anamnese || {};
+    setHasHeartDisease(!!anamnese.has_heart_disease);
+    setHasDiabetes(!!anamnese.has_diabetes);
+    setHasHypertension(!!anamnese.has_hypertension);
+    setHasAllergies(!!anamnese.has_allergies);
+    setAllergyDetails(anamnese.allergy_details || '');
+    setIsPregnant(!!anamnese.is_pregnant);
+    setHasBleedingDisorder(!!anamnese.has_bleeding_disorder);
+    setUsesMedication(!!anamnese.uses_medication);
+    setMedicationDetails(anamnese.medication_details || '');
+    setGeneralNotes(history.notes || '');
+    setShowEditAnamnese(true);
+  };
+
+  const handleSaveAnamneseSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedPatient) return;
+    const history = parseHistory(selectedPatient.medical_history);
+    const updatedHistory = {
+      ...history,
+      notes: generalNotes,
+      anamnese: {
+        has_heart_disease: hasHeartDisease,
+        has_diabetes: hasDiabetes,
+        has_hypertension: hasHypertension,
+        has_allergies: hasAllergies,
+        allergy_details: hasAllergies ? allergyDetails : '',
+        is_pregnant: isPregnant,
+        has_bleeding_disorder: hasBleedingDisorder,
+        uses_medication: usesMedication,
+        medication_details: usesMedication ? medicationDetails : ''
+      }
+    };
+
+    const updatedPatient = {
+      ...selectedPatient,
+      medical_history: JSON.stringify(updatedHistory)
+    };
+
+    try {
+      await updatePatient(updatedPatient);
+      setSelectedPatient(updatedPatient);
+      setShowEditAnamnese(false);
+    } catch (err) {
+      console.error('Erro ao salvar anamnese:', err);
+      alert('Erro ao salvar ficha de anamnese.');
+    }
+  };
+
   const handleAiImproveRecord = async () => {
     if (!newRecordText) return;
     setIsGeneratingAiRecord(true);
@@ -200,35 +267,26 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     setSelectedPatient(fresh);
   };
 
-  const handleToothClick = (toothNumber) => {
+  const handleToothClick = async (toothNumber) => {
     if (isPaintMode) {
-      // Aplicar pincel rápido diretamente
-      const historyObj = parseHistory(selectedPatient.medical_history);
-      
-      historyObj.odontogram[toothNumber] = {
-        procedure: paintProcedure,
-        status: paintStatus,
-        date: new Date().toISOString().split('T')[0]
-      };
+      // Aplicar pincel rápido diretamente no estado de toothRecords
+      await updateToothRecord({
+        patient_id: selectedPatient.id,
+        tooth_number: toothNumber,
+        procedure_name: paintProcedure,
+        status: paintStatus
+      });
 
-      // Adicionar log na evolução clínica
-      historyObj.evolutions.unshift({
-        date: new Date().toISOString().split('T')[0],
-        text: `[Pincel Rápido] Dente ${toothNumber} atualizado para: ${paintProcedure || 'Sem procedimento'} (${
+      // Adicionar log seguro no prontuário oficial (medical_records)
+      await addMedicalRecord({
+        patient_id: selectedPatient.id,
+        description: `[Pincel Rápido] Dente ${toothNumber} atualizado para: ${paintProcedure || 'Sem procedimento'} (${
           paintStatus === 'NEED_TREATMENT' ? 'Necessita de Tratamento' :
           paintStatus === 'TREATED' ? 'Tratado' :
           paintStatus === 'IMPLANT' ? 'Implante' : 'Extraído/Ausente'
         })`,
-        dentist: user?.full_name || 'Dentista'
+        is_adendo: false
       });
-
-      const updated = {
-        ...selectedPatient,
-        medical_history: JSON.stringify(historyObj)
-      };
-
-      updatePatient(updated);
-      setSelectedPatient(updated);
 
       // Lançar transação financeira simulada se marcar como Tratado
       if (paintStatus === 'TREATED' && paintProcedure) {
@@ -244,10 +302,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       // Modo clássico (abre modal)
       setSelectedTooth(toothNumber);
       
-      const historyObj = parseHistory(selectedPatient.medical_history);
-      const existing = historyObj.odontogram[toothNumber];
+      const existing = toothRecords.find(r => r.patient_id === selectedPatient.id && r.tooth_number === toothNumber);
       if (existing) {
-        setToothProcedure(existing.procedure || '');
+        setToothProcedure(existing.procedure_name || '');
         setToothStatus(existing.status || 'NEED_TREATMENT');
       } else {
         setToothProcedure('');
@@ -258,34 +315,26 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     }
   };
 
-  const handleSaveToothConfig = () => {
-    const historyObj = parseHistory(selectedPatient.medical_history);
-    
+  const handleSaveToothConfig = async () => {
     // Atualizar registro do dente
-    historyObj.odontogram[selectedTooth] = {
-      procedure: toothProcedure,
-      status: toothStatus,
-      date: new Date().toISOString().split('T')[0]
-    };
+    await updateToothRecord({
+      patient_id: selectedPatient.id,
+      tooth_number: selectedTooth,
+      procedure_name: toothProcedure,
+      status: toothStatus
+    });
 
-    // Adicionar log na evolução clínica
-    historyObj.evolutions.unshift({
-      date: new Date().toISOString().split('T')[0],
-      text: `Dente ${selectedTooth} atualizado: ${toothProcedure || 'Removido procedimento'} (${
+    // Adicionar log no prontuário oficial
+    await addMedicalRecord({
+      patient_id: selectedPatient.id,
+      description: `Dente ${selectedTooth} atualizado: ${toothProcedure || 'Removido procedimento'} (${
         toothStatus === 'NEED_TREATMENT' ? 'Necessita de Tratamento' :
         toothStatus === 'TREATED' ? 'Tratado' :
         toothStatus === 'IMPLANT' ? 'Implante' : 'Extraído/Ausente'
       })`,
-      dentist: user?.full_name || 'Dentista'
+      is_adendo: false
     });
 
-    const updated = {
-      ...selectedPatient,
-      medical_history: JSON.stringify(historyObj)
-    };
-
-    updatePatient(updated);
-    setSelectedPatient(updated);
     setShowToothModal(false);
 
     // Se criou orçamento, lançar transação financeira simulada
@@ -300,8 +349,8 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     }
   };
 
-  const getToothColor = (toothNumber, odontogram) => {
-    const data = odontogram[toothNumber];
+  const getToothColor = (toothNumber) => {
+    const data = toothRecords.find(r => r.patient_id === selectedPatient.id && r.tooth_number === toothNumber);
     if (!data) return 'bg-slate-200 dark:bg-slate-800 hover:bg-slate-350 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300';
     
     switch (data.status) {
@@ -377,34 +426,37 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               {/* SUB-ABA: FICHA CLÍNICA */}
               {activeSubTab === 'ficha' && (() => {
                 const history = parseHistory(selectedPatient.medical_history);
+                const anamnese = history.anamnese || {};
                 const criticalConditions = [];
-                const notesLower = (history.notes || '').toLowerCase();
-                if (notesLower.includes('alergia') || notesLower.includes('penicilina')) {
-                  criticalConditions.push('Alergias (ex: Penicilina)');
-                }
-                if (notesLower.includes('cardiopatia') || notesLower.includes('coração') || notesLower.includes('cardíaco')) {
-                  criticalConditions.push('Cardiopatia');
-                }
-                if (notesLower.includes('hipertens') || notesLower.includes('pressão')) {
-                  criticalConditions.push('Hipertensão');
-                }
-                if (notesLower.includes('diabet')) {
-                  criticalConditions.push('Diabetes');
+
+                // Validar dados estruturados
+                if (anamnese.has_heart_disease) criticalConditions.push('Cardiopatia');
+                if (anamnese.has_diabetes) criticalConditions.push('Diabetes');
+                if (anamnese.has_hypertension) criticalConditions.push('Hipertensão');
+                if (anamnese.has_allergies) criticalConditions.push(anamnese.allergy_details ? `Alergia: ${anamnese.allergy_details}` : 'Alergia');
+                if (anamnese.is_pregnant) criticalConditions.push('Gestante');
+                if (anamnese.has_bleeding_disorder) criticalConditions.push('Distúrbio Hemorrágico');
+                if (anamnese.uses_medication) criticalConditions.push(anamnese.medication_details ? `Medicação: ${anamnese.medication_details}` : 'Uso de Medicação Contínua');
+
+                // Fallback para texto livre anterior
+                if (criticalConditions.length === 0 && history.notes) {
+                  const notesLower = (history.notes || '').toLowerCase();
+                  if (notesLower.includes('alergia') || notesLower.includes('penicilina')) {
+                    criticalConditions.push('Alergias (ex: Penicilina)');
+                  }
+                  if (notesLower.includes('cardiopatia') || notesLower.includes('coração') || notesLower.includes('cardíaco')) {
+                    criticalConditions.push('Cardiopatia');
+                  }
+                  if (notesLower.includes('hipertens') || notesLower.includes('pressão')) {
+                    criticalConditions.push('Hipertensão');
+                  }
+                  if (notesLower.includes('diabet')) {
+                    criticalConditions.push('Diabetes');
+                  }
                 }
 
-                // Unificar evoluções reais do context com mocks do prontuário
-                const allRecords = [
-                  ...medicalRecords.filter(r => r.patient_id === selectedPatient.id),
-                  ...history.evolutions.map((ev, idx) => ({
-                    id: `mock-rec-${idx}`,
-                    dentistName: ev.dentist || 'Dr. Pedro Ramos',
-                    description: ev.text,
-                    signature_hash: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
-                    is_adendo: false,
-                    parent_record_id: null,
-                    created_at: ev.date ? `${ev.date}T12:00:00.000Z` : new Date().toISOString()
-                  }))
-                ];
+                // Filtrar evoluções reais do context
+                const allRecords = medicalRecords.filter(r => r.patient_id === selectedPatient.id);
 
                 // Filtrar registros pai e adendos
                 const parentRecords = allRecords.filter(r => !r.is_adendo);
@@ -430,10 +482,32 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       {/* Lado Esquerdo: Observações Anamnese e Nova Evolução */}
                       <div className="lg:col-span-6 space-y-5">
                         <div className="p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
-                          <h4 className="text-xs font-bold text-slate-450 uppercase tracking-wider flex items-center gap-1.5">
-                            <Activity className="w-4 h-4 text-secondary" /> Observações e Alergias
-                          </h4>
-                          <p className="text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{history.notes || 'Nenhuma observação registrada.'}</p>
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-bold text-slate-450 uppercase tracking-wider flex items-center gap-1.5">
+                              <Activity className="w-4 h-4 text-secondary" /> Anamnese & Observações
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={handleOpenEditAnamnese}
+                              className="px-2.5 py-1 bg-secondary/10 hover:bg-secondary/20 text-secondary font-extrabold text-[9px] rounded-lg transition-all active:scale-95"
+                            >
+                              ⚙️ Editar Ficha
+                            </button>
+                          </div>
+                          
+                          {criticalConditions.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {criticalConditions.map((cond, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-red-500/10 text-red-500 text-[9px] font-black rounded-lg">
+                                  ⚠️ {cond}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <p className="text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap mt-2">
+                            {history.notes || 'Nenhuma observação clínica adicional.'}
+                          </p>
                         </div>
 
                         {/* Formulário: Nova Evolução com Sofia IA */}
@@ -565,7 +639,6 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
               {/* SUB-ABA: ODONTOGRAMA FDI */}
               {activeSubTab === 'odontograma' && (() => {
-                const history = parseHistory(selectedPatient.medical_history);
                 return (
                   <div className="flex flex-col items-center space-y-6">
                     
@@ -655,7 +728,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <button
                                 key={t}
                                 onClick={() => handleToothClick(t)}
-                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t, history.odontogram)}`}
+                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t)}`}
                               >
                                 <span>{t}</span>
                                 <span className="text-[9px] opacity-75">🦷</span>
@@ -670,7 +743,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <button
                                 key={t}
                                 onClick={() => handleToothClick(t)}
-                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t, history.odontogram)}`}
+                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t)}`}
                               >
                                 <span>{t}</span>
                                 <span className="text-[9px] opacity-75">🦷</span>
@@ -689,7 +762,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <button
                                 key={t}
                                 onClick={() => handleToothClick(t)}
-                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t, history.odontogram)}`}
+                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t)}`}
                               >
                                 <span className="text-[9px] opacity-75">🦷</span>
                                 <span>{t}</span>
@@ -704,7 +777,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <button
                                 key={t}
                                 onClick={() => handleToothClick(t)}
-                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t, history.odontogram)}`}
+                                className={`w-9 h-11 rounded-lg text-xs font-extrabold flex flex-col items-center justify-between p-1 transition-all active:scale-90 ${getToothColor(t)}`}
                               >
                                 <span className="text-[9px] opacity-75">🦷</span>
                                 <span>{t}</span>
@@ -722,8 +795,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
               {/* SUB-ABA: TRATAMENTOS E ORÇAMENTOS */}
               {activeSubTab === 'tratamentos' && (() => {
-                const history = parseHistory(selectedPatient.medical_history);
-                const odontogramProcedures = Object.entries(history.odontogram).filter(([_, info]) => info.procedure);
+                const odontogramProcedures = toothRecords.filter(r => r.patient_id === selectedPatient.id && r.procedure_name);
                 
                 return (
                   <div className="space-y-4">
@@ -739,18 +811,18 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
-                          {odontogramProcedures.map(([toothNum, info]) => (
-                            <tr key={toothNum} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                              <td className="py-3 px-4 font-bold">Dente {toothNum}</td>
-                              <td className="py-3 px-4 font-semibold">{info.procedure}</td>
+                          {odontogramProcedures.map(rec => (
+                            <tr key={rec.id || rec.tooth_number} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                              <td className="py-3 px-4 font-bold">Dente {rec.tooth_number}</td>
+                              <td className="py-3 px-4 font-semibold">{rec.procedure_name}</td>
                               <td className="py-3 px-4">
                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                                  info.status === 'TREATED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                                  rec.status === 'TREATED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
                                 }`}>
-                                  {info.status === 'TREATED' ? 'Concluído' : 'Pendente'}
+                                  {rec.status === 'TREATED' ? 'Concluído' : 'Pendente'}
                                 </span>
                               </td>
-                              <td className="py-3 px-4 font-medium">{info.date}</td>
+                              <td className="py-3 px-4 font-medium">{rec.updated_at ? new Date(rec.updated_at).toLocaleDateString('pt-BR') : '-'}</td>
                             </tr>
                           ))}
                           {odontogramProcedures.length === 0 && (
@@ -1190,49 +1262,262 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
       {/* MODAL: VISUALIZAR PRESCRIÇÃO */}
       {viewingPrescription && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-200/50 dark:border-slate-800 pb-3">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-850 rounded-[32px] max-w-xl w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left space-y-6">
+            
+            {/* Header com Ações Rápidas */}
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-850 pb-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">{viewingPrescription.title}</h3>
-                <span className="text-[10px] text-slate-400 font-semibold">Emitido por {viewingPrescription.dentistName} em {new Date(viewingPrescription.created_at).toLocaleDateString('pt-BR')}</span>
+                <span className="text-[9px] bg-sky-500/10 text-sky-500 font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">Prescrição Assinada</span>
+                <h3 className="text-base font-black text-slate-850 dark:text-white font-title mt-1">{viewingPrescription.title}</h3>
               </div>
               <button 
                 onClick={() => setViewingPrescription(null)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 active:scale-90 transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 font-mono text-xs text-slate-700 dark:text-slate-330 whitespace-pre-wrap min-h-[150px]">
-              {viewingPrescription.description}
+            {/* Documento Físico Simulado (Papel Timbrado) */}
+            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-inner text-slate-800 dark:text-slate-200">
+              
+              {/* Timbre da Clínica */}
+              <div className="flex justify-between items-start pb-4 border-b border-slate-200/40 dark:border-slate-800/60">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black font-title text-slate-900 dark:text-white uppercase tracking-wider">{clinic?.name || 'FlowDent Dental Clinic'}</h4>
+                  <span className="text-[10px] text-slate-400 font-bold block">FATOR DE INTEGRIDADE CLÍNICA • CFO</span>
+                </div>
+                {clinic?.logo_url ? (
+                  <img src={clinic.logo_url} alt="Logo" className="h-8 object-contain" />
+                ) : (
+                  <span className="text-xl">🦷</span>
+                )}
+              </div>
+
+              {/* Dados do Paciente e Emissão */}
+              <div className="grid grid-cols-2 gap-4 text-[10px] bg-slate-100/50 dark:bg-slate-850 p-3 rounded-xl">
+                <div>
+                  <span className="text-slate-400 font-bold uppercase block">Paciente</span>
+                  <span className="font-extrabold text-slate-800 dark:text-white text-xs">{selectedPatient?.name}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-400 font-bold uppercase block">Data de Emissão</span>
+                  <span className="font-extrabold text-slate-850 dark:text-white text-xs">
+                    {new Date(viewingPrescription.created_at).toLocaleDateString('pt-BR')} às {new Date(viewingPrescription.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Conteúdo Clínico */}
+              <div className="min-h-[140px] text-xs font-semibold leading-relaxed font-mono whitespace-pre-wrap py-2 border-b border-slate-200/40 dark:border-slate-800/60">
+                {viewingPrescription.description}
+              </div>
+
+              {/* Rodapé com Assinatura Eletrônica e QR Code */}
+              <div className="flex justify-between items-center gap-4 pt-2">
+                <div className="space-y-2 flex-1">
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Assinante</span>
+                    <span className="font-extrabold text-xs text-slate-800 dark:text-white">{viewingPrescription.dentistName}</span>
+                    <span className="text-[9px] text-slate-400 block font-semibold">Cirurgião-Dentista Responsável</span>
+                  </div>
+
+                  <div className="space-y-1 pt-1 border-t border-slate-200/40 dark:border-slate-800/60">
+                    <span className="text-[9px] text-emerald-500 font-extrabold flex items-center gap-1">
+                      🛡️ Assinatura Conforme ICP-Brasil / CFO
+                    </span>
+                    <span className="block font-mono text-[8px] text-slate-400 select-all leading-tight break-all">
+                      HASH: {viewingPrescription.signature_hash}
+                    </span>
+                  </div>
+                </div>
+
+                {/* QR Code de Validação Real */}
+                <div className="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=76x76&data=${encodeURIComponent(`https://flowdent.com.br/verificar?hash=${viewingPrescription.signature_hash}`)}`} 
+                    alt="QR Code de Validação" 
+                    className="w-[76px] h-[76px]"
+                  />
+                  <span className="text-[7px] text-slate-450 font-bold uppercase tracking-wider">E-VALIDAR</span>
+                </div>
+              </div>
+
             </div>
 
-            <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-[10px] text-emerald-600 font-bold space-y-1">
-              <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Assinatura Eletrônica Registrada</span>
-              <span className="block font-mono text-slate-455 select-all">HASH: {viewingPrescription.signature_hash}</span>
-            </div>
-
-            <div className="flex gap-2 justify-end pt-2">
+            {/* Ações de Impressão e WhatsApp */}
+            <div className="flex gap-2.5 justify-end pt-2 border-t border-slate-100 dark:border-slate-800/80">
               <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200"
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
               >
-                Imprimir Documento
+                Imprimir Prescrição
               </button>
               <button
                 onClick={() => {
                   sendPrescriptionWhatsapp(viewingPrescription.id);
                   setViewingPrescription(null);
                 }}
-                className="px-3.5 py-1.5 bg-emerald-500 text-white font-bold text-xs rounded-xl shadow hover:opacity-90"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
               >
-                Enviar via WhatsApp
+                <span>Enviar p/ WhatsApp</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR ANAMNESE ESTRUTURADA */}
+      {showEditAnamnese && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-850 rounded-[28px] max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-200/50 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-black text-slate-850 dark:text-white font-title">Editar Ficha de Anamnese</h3>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Paciente: {selectedPatient?.name}</span>
+              </div>
+              <button 
+                onClick={() => setShowEditAnamnese(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAnamneseSubmit} className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-200">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Checkbox 1: Cardiopatia */}
+                <label className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={hasHeartDisease}
+                    onChange={(e) => setHasHeartDisease(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Cardiopatia / Sopro</span>
+                </label>
+
+                {/* Checkbox 2: Diabetes */}
+                <label className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={hasDiabetes}
+                    onChange={(e) => setHasDiabetes(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Diabetes</span>
+                </label>
+
+                {/* Checkbox 3: Hipertensão */}
+                <label className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={hasHypertension}
+                    onChange={(e) => setHasHypertension(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Hipertensão</span>
+                </label>
+
+                {/* Checkbox 4: Gestante */}
+                <label className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={isPregnant}
+                    onChange={(e) => setIsPregnant(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Gestante</span>
+                </label>
+
+                {/* Checkbox 5: Distúrbio Hemorrágico */}
+                <label className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={hasBleedingDisorder}
+                    onChange={(e) => setHasBleedingDisorder(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Distúrbio Hemorrágico</span>
+                </label>
+              </div>
+
+              {/* Alergias */}
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasAllergies}
+                    onChange={(e) => setHasAllergies(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Apresenta Alergias Medicamentosas ou a Materiais?</span>
+                </label>
+                {hasAllergies && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Descreva as alergias (ex: Penicilina, Látex, Dipirona)..."
+                    value={allergyDetails}
+                    onChange={(e) => setAllergyDetails(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  />
+                )}
+              </div>
+
+              {/* Medicação Contínua */}
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={usesMedication}
+                    onChange={(e) => setUsesMedication(e.target.checked)}
+                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                  />
+                  <span>Faz uso de alguma medicação de uso contínuo?</span>
+                </label>
+                {usesMedication && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Quais medicações e dosagens?..."
+                    value={medicationDetails}
+                    onChange={(e) => setMedicationDetails(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  />
+                )}
+              </div>
+
+              {/* Observações Gerais */}
+              <div className="space-y-1.5 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Notas Clínicas e Observações Gerais</label>
+                <textarea
+                  rows={3}
+                  placeholder="Instruções gerais, histórico familiar ou observações secundárias..."
+                  value={generalNotes}
+                  onChange={(e) => setGeneralNotes(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAnamnese(false)}
+                  className="px-4 py-2 bg-slate-150 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-secondary text-white font-extrabold rounded-xl shadow transition-all active:scale-95"
+                  style={{ backgroundColor: currentTheme.secondary_color }}
+                >
+                  Salvar Ficha Clínica
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

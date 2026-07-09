@@ -11,7 +11,6 @@ import Agenda from './agenda/Agenda';
 import WhatsApp from './whatsapp/WhatsApp';
 import AIModule from './ai/AIModule';
 import Automacoes from './automacoes/Automacoes';
-import Marketing from './marketing/Marketing';
 import Financeiro from './financeiro/Financeiro';
 import Relatorios from './relatorios/Relatorios';
 import Configuracoes from './configuracoes/Configuracoes';
@@ -53,9 +52,9 @@ export default function ClinicApp() {
       badge: "Segurança Financeira"
     },
     {
-      title: "🚀 Funil de Pacientes & Conversão",
-      desc: "No Funil de Pacientes, arraste e solte cartões de pacientes em potencial ao longo das etapas. Ao clicar no cartão de um paciente, você pode acompanhar seu checklist e histórico. Clique no botão '🚀 Tornar Paciente Ativo' dentro da gaveta para ativá-lo e integrá-lo diretamente no Prontuário Clínico.",
-      badge: "Funil de Vendas"
+      title: "🚀 Jornada do Paciente & Conversão",
+      desc: "Na Jornada do Paciente, arraste e solte cartões de pacientes em potencial ao longo das etapas. Ao clicar no cartão de um paciente, você pode acompanhar seu checklist e histórico. Clique no botão '🚀 Tornar Paciente Ativo' dentro da gaveta para ativá-lo e integrá-lo diretamente no Prontuário Clínico.",
+      badge: "Captação de Pacientes"
     }
   ];
 
@@ -76,8 +75,6 @@ export default function ClinicApp() {
         return <AIModule />;
       case 'automacoes':
         return <Automacoes />;
-      case 'marketing':
-        return <Marketing />;
       case 'financeiro':
         return <Financeiro />;
       case 'relatorios':

@@ -7,13 +7,12 @@ export default function Breadcrumbs({ activeTab }) {
   
   const tabLabels = {
     dashboard: 'Dashboard Geral',
-    crm: 'Funil Comercial (CRM)',
+    crm: 'Jornada do Paciente (CRM)',
     pacientes: 'Prontuários e Pacientes',
     agenda: 'Agenda Clínica',
     whatsapp: 'Central WhatsApp',
     ai: 'Agente de IA',
     automacoes: 'Automações Comerciais',
-    marketing: 'Campanhas & Marketing',
     financeiro: 'Fluxo de Caixa & Finanças',
     relatorios: 'Relatórios & Business Intelligence',
     configuracoes: 'Configurações do Sistema'

@@ -108,38 +108,27 @@ export default function LandingPage({ onLogin, onRegister }) {
 
   const addLeadToDatabase = async (leadData) => {
     const defaultClinicId = 'clinic-sorriso-perfeito';
-    const historyObj = {
-      notes: 'Lead capturado via Landing Page comercial DentalFlow.',
-      odontogram: {}, evolutions: [], comments: [], checklist: [],
-      history: [{ date: new Date().toISOString(), type: 'STATUS', description: 'Lead capturado via Landing Page', user: 'Sistema' }]
-    };
     const newLead = {
-      clinic_id: defaultClinicId, name: leadData.name,
+      clinic_id: defaultClinicId,
+      name: leadData.name,
       phone: leadData.phone.replace(/\D/g, '') || '5511999999999',
-      email: leadData.email || null, avatar: '👤', stage: 0, priority: 'medium',
-      budget_amount: leadData.budget || 0.00, procedure_name: leadData.procedure,
-      medical_history: JSON.stringify(historyObj), created_at: new Date().toISOString()
+      avatar: '👤',
+      stage: 0,
+      priority: 'medium',
+      budget_amount: leadData.budget || 0.00,
+      procedure_name: leadData.procedure,
+      comments: [],
+      checklist: [],
+      history: [{ date: new Date().toISOString(), type: 'STATUS', description: 'Lead capturado via Landing Page', user: 'Sistema' }],
+      created_at: new Date().toISOString()
     };
-    const supabaseActive = localStorage.getItem('supabase_active') === 'true';
-    if (supabaseActive && supabase) {
-      try { await supabase.from('patients').insert([newLead]); }
-      catch (err) { console.warn('Erro ao inserir no Supabase:', err.message); }
+    if (supabase) {
+      try { 
+        await supabase.from('crm_leads').insert([newLead]); 
+      } catch (err) { 
+        console.warn('Erro ao inserir no Supabase:', err.message); 
+      }
     }
-    const cachedPatients = localStorage.getItem(`patients_${defaultClinicId}`);
-    const patientsList = cachedPatients ? JSON.parse(cachedPatients) : [];
-    const localLead = { ...newLead, id: 'lead-pub-' + Math.random().toString(36).substr(2, 9) };
-    patientsList.push(localLead);
-    localStorage.setItem(`patients_${defaultClinicId}`, JSON.stringify(patientsList));
-    const cachedChats = localStorage.getItem(`wa_chats_${defaultClinicId}`);
-    const chatsList = cachedChats ? JSON.parse(cachedChats) : [];
-    chatsList.push({
-      patientId: localLead.id, name: localLead.name, unreadCount: 1, status: 'online',
-      tags: ['Lead'], notes: '',
-      messages: [{ id: 'msg-pub-' + Math.random().toString(36).substr(2, 9), sender: 'PATIENT',
-        text: `Olá! Fiquei interessado em DentalFlow e preenchi o formulário comercial para ${leadData.procedure}.`,
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), type: 'text' }]
-    });
-    localStorage.setItem(`wa_chats_${defaultClinicId}`, JSON.stringify(chatsList));
   };
 
   const scrollToSection = (id) => {
@@ -786,7 +775,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                 <CheckCircle2 style={{ width: 48, height: 48, color: '#10B981' }} />
                 <h3>Solicitação enviada com sucesso!</h3>
                 <p>
-                  Seus dados foram cadastrados no funil comercial. Faça login com a conta <strong>admin@sorriso.com</strong> (senha <strong>123</strong>) no CRM para ver o seu lead na lista de "Novo Lead"!
+                  Seus dados foram cadastrados com sucesso. Faça login com as credenciais administrativas para gerenciar a jornada de seus pacientes!
                 </p>
                 <button onClick={() => setFormSuccess(false)} className="landing-btn--primary landing-btn--lg">Enviar outra mensagem</button>
               </motion.div>

@@ -6,18 +6,15 @@ import Breadcrumbs from './Breadcrumbs';
 import { mockDb } from '../lib/mockDatabase';
 
 export default function Header({ activeTab, onSearchChange }) {
-  const { user, clinic, selectClinic, supabaseActive } = useAuth();
+  const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
   const { currentTheme, darkMode, toggleDarkMode } = useTheme();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showClinicSelector, setShowClinicSelector] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  // Mocks de Notificações
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Falta Recebida', text: 'Maria Oliveira cancelou a consulta de amanhã.', time: 'há 5 min', read: false },
-    { id: 2, title: 'Novo Lead', text: 'Carlos Albuquerque se cadastrou pelo Instagram Ads.', time: 'há 10 min', read: false },
-    { id: 3, title: 'Intervenção da IA', text: 'Sofia pausou o bot para João Silva. Responda no WhatsApp.', time: 'há 1 hora', read: true }
-  ]);
+  // Notificações
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -132,36 +129,61 @@ export default function Header({ activeTab, onSearchChange }) {
               </div>
               
               <div className="py-1 max-h-72 overflow-y-auto space-y-1.5 mt-1.5">
-                {notifications.map(n => (
-                  <div 
-                    key={n.id} 
-                    className={`p-2.5 rounded-xl transition-all border text-xs text-left relative ${
-                      n.read 
-                        ? 'bg-transparent border-transparent text-slate-500 dark:text-slate-400' 
-                        : 'bg-violet-500/5 dark:bg-violet-500/10 border-violet-500/10 text-slate-800 dark:text-slate-200'
-                    }`}
-                  >
-                    {!n.read && (
-                      <span className="absolute right-3 top-3 w-1.5 h-1.5 bg-violet-500 rounded-full" />
-                    )}
-                    <h4 className="font-bold text-slate-800 dark:text-white">{n.title}</h4>
-                    <p className="text-[11px] mt-0.5 leading-relaxed">{n.text}</p>
-                    <span className="text-[9px] text-slate-400 mt-1 block font-semibold">{n.time}</span>
+                {notifications.length > 0 ? (
+                  notifications.map(n => (
+                    <div 
+                      key={n.id} 
+                      className={`p-2.5 rounded-xl transition-all border text-xs text-left relative ${
+                        n.read 
+                          ? 'bg-transparent border-transparent text-slate-500 dark:text-slate-400' 
+                          : 'bg-violet-500/5 dark:bg-violet-500/10 border-violet-500/10 text-slate-800 dark:text-slate-200'
+                      }`}
+                    >
+                      {!n.read && (
+                        <span className="absolute right-3 top-3 w-1.5 h-1.5 bg-violet-500 rounded-full" />
+                      )}
+                      <h4 className="font-bold text-slate-800 dark:text-white">{n.title}</h4>
+                      <p className="text-[11px] mt-0.5 leading-relaxed">{n.text}</p>
+                      <span className="text-[9px] text-slate-400 mt-1 block font-semibold">{n.time}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-[11px] text-slate-450 font-medium">
+                    🔔 Sem novas notificações
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Perfil & Avatar */}
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col text-right hidden sm:flex">
-            <span className="text-xs font-bold text-slate-800 dark:text-white">{user?.full_name}</span>
-          </div>
-          <div className="w-8 h-8 rounded-full border-2 border-slate-250 dark:border-slate-800 bg-secondary text-white font-bold flex items-center justify-center text-xs" style={{ backgroundColor: currentTheme.secondary_color }}>
+        {/* Perfil & Avatar com Menu Suspenso */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            className="w-8 h-8 rounded-full border-2 border-slate-250 dark:border-slate-800 bg-secondary hover:opacity-90 text-white font-bold flex items-center justify-center text-xs cursor-pointer select-none shadow-sm active:scale-95 transition-all"
+            style={{ backgroundColor: currentTheme.secondary_color }}
+          >
             {user?.full_name?.charAt(0) || 'U'}
-          </div>
+          </button>
+
+          {showUserDropdown && (
+            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-850 shadow-xl border border-slate-150 dark:border-slate-800 p-1.5 z-50 text-slate-800 dark:text-white animate-in fade-in slide-in-from-top-1 duration-150 text-left">
+              <div className="px-2.5 py-2 border-b border-slate-100 dark:border-slate-800/80">
+                <span className="text-xs font-black text-slate-800 dark:text-white block truncate">{user?.full_name}</span>
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">{user?.role === 'CLINIC_OWNER' || user?.role === 'CLINIC_ADMIN' ? 'Administrador' : user?.role === 'DOCTOR' ? 'Cirurgião-Dentista' : 'Colaborador'}</span>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserDropdown(false);
+                  logout();
+                }}
+                className="w-full mt-1.5 flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-left"
+              >
+                🚪 Sair do Sistema
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

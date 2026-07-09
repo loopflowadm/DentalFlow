@@ -35,7 +35,7 @@ export function ThemeProvider({ children }) {
   const [currentTheme, setCurrentTheme] = useState(defaultTheme);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme-mode');
-    return saved ? saved === 'dark' : true; // Default to dark theme as active
+    return saved ? saved === 'dark' : false; // Default to light theme as active
   });
 
   const toggleDarkMode = () => {

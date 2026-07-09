@@ -43,13 +43,12 @@ export default function Sidebar({
   // Mapeamento de Cargo para Itens Permitidos (RBAC)
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR', 'FINANCIAL'] },
-    { id: 'crm', label: 'Funil de Pacientes', icon: Kanban, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
+    { id: 'crm', label: 'Jornada do Paciente', icon: Kanban, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
     { id: 'pacientes', label: 'Pacientes', icon: Users, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR', 'FINANCIAL'] },
     { id: 'agenda', label: 'Agenda', icon: Calendar, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR'] },
     { id: 'whatsapp', label: 'Central WhatsApp', icon: MessageSquare, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST'] },
     { id: 'ai', label: 'Inteligência Artificial', icon: Bot, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'DOCTOR'] },
     { id: 'automacoes', label: 'Automações', icon: Zap, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST'] },
-    { id: 'marketing', label: 'Marketing', icon: Megaphone, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST'] },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'FINANCIAL'] },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'FINANCIAL'] },
     { id: 'configuracoes', label: 'Configurações', icon: Settings, roles: ['SUPER_ADMIN', 'CLINIC_ADMIN', 'CLINIC_OWNER', 'RECEPTIONIST', 'DOCTOR', 'FINANCIAL'] }
@@ -180,8 +179,13 @@ export default function Sidebar({
       {hasSubSidebar && !collapsed && (
         <aside className="w-64 bg-sidebar-2 border border-slate-900/60 flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250">
           
-          {/* HEADER DA SUB-SIDEBAR (APENAS BOTÃO DE RECOLHER) */}
-          <div className="px-4 py-3 border-b border-slate-900/40 flex items-center justify-end flex-shrink-0 bg-slate-950/5">
+          {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
+          <div className="px-4 py-3 border-b border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-950/5">
+            <span className="text-xs font-black text-white uppercase tracking-wider font-title pl-1">
+              {activeTab === 'crm' && "Jornada do Paciente"}
+              {activeTab === 'pacientes' && "Pacientes"}
+              {activeTab === 'agenda' && "Agenda do Dia"}
+            </span>
             {/* Toggle de Fechamento */}
             <button
               onClick={() => setCollapsed(true)}
@@ -194,16 +198,6 @@ export default function Sidebar({
 
           {/* CONTEÚDO CONTEXTUAL */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none">
-            
-            {/* Card do Módulo Ativo */}
-            <div className="bg-slate-900/40 border border-slate-800/40 p-3.5 rounded-2xl shadow-sm text-left">
-              <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-0.5">Módulo Ativo</span>
-              <span className="text-sm font-black text-white uppercase tracking-wider font-title">
-                {activeTab === 'crm' && "Pacientes (Funil)"}
-                {activeTab === 'pacientes' && "Pacientes"}
-                {activeTab === 'agenda' && "Agenda do Dia"}
-              </span>
-            </div>
             
             {/* 1. MÓDULO CRM LEADS */}
             {activeTab === 'crm' && (
@@ -459,7 +453,7 @@ export default function Sidebar({
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
               <h3 className="text-sm font-bold font-title flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-secondary" style={{ color: currentTheme.secondary_color }} />
-                Cadastrar Novo Paciente (Funil)
+                Adicionar à Jornada (Captação)
               </h3>
               <button 
                 onClick={() => setShowAddLeadSidebar(false)}

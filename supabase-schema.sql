@@ -76,10 +76,10 @@ ALTER TABLE public.whatsapp_config ENABLE ROW LEVEL SECURITY;
 -- DEFINIÇÃO DAS POLÍTICAS DE SEGURANÇA (RLS)
 -- ==========================================
 
--- Função auxiliar para obter o clinic_id do JWT do usuário logado
+-- Função auxiliar para obter o clinic_id do JWT do usuário logado (de forma segura através da tabela de perfis)
 CREATE OR REPLACE FUNCTION public.get_auth_clinic_id()
 RETURNS UUID AS $$
-  SELECT NULLIF(current_setting('request.jwt.claims', true)::json->'user_metadata'->>'clinic_id', '')::UUID;
+  SELECT clinic_id FROM public.profiles WHERE id = auth.uid();
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Função auxiliar para verificar se o usuário é Super Admin
@@ -100,6 +100,14 @@ CREATE POLICY clinics_read_public ON public.clinics
 -- Modificação apenas por Super Admins
 CREATE POLICY clinics_all_super_admin ON public.clinics
     FOR ALL USING (public.is_super_admin());
+
+-- Permitir inserção pública para novas clínicas (cadastro inicial)
+CREATE POLICY clinics_insert_public ON public.clinics
+    FOR INSERT WITH CHECK (true);
+
+-- Permitir que membros de uma clínica atualizem os dados da sua própria clínica (Branding)
+CREATE POLICY clinics_update_owner ON public.clinics
+    FOR UPDATE USING (id = public.get_auth_clinic_id() OR public.is_super_admin());
 
 
 -- 2. Políticas para PROFILES
@@ -213,9 +221,12 @@ CREATE TABLE public.medical_records (
 -- Habilitar RLS para Registros Clínicos
 ALTER TABLE public.medical_records ENABLE ROW LEVEL SECURITY;
 
--- Políticas de RLS para Registros Clínicos
-CREATE POLICY medical_records_all_clinic ON public.medical_records
-    FOR ALL USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+-- Políticas de RLS para Registros Clínicos (Imutabilidade: apenas leitura e inserção)
+CREATE POLICY medical_records_select ON public.medical_records
+    FOR SELECT USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+
+CREATE POLICY medical_records_insert ON public.medical_records
+    FOR INSERT WITH CHECK (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
 
 
 -- Tabela de Prescrições Digitais (Receitas, Atestados)
@@ -234,7 +245,56 @@ CREATE TABLE public.prescriptions (
 -- Habilitar RLS para Prescrições
 ALTER TABLE public.prescriptions ENABLE ROW LEVEL SECURITY;
 
--- Políticas de RLS para Prescrições
-CREATE POLICY prescriptions_all_clinic ON public.prescriptions
+-- Políticas de RLS para Prescrições (Imutabilidade: apenas leitura e inserção)
+CREATE POLICY prescriptions_select ON public.prescriptions
+    FOR SELECT USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+
+CREATE POLICY prescriptions_insert ON public.prescriptions
+    FOR INSERT WITH CHECK (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+
+
+-- Tabela de Registros de Dentes (Odontograma FDI)
+CREATE TABLE public.tooth_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+    tooth_number INT NOT NULL,
+    procedure_name VARCHAR(255),
+    status VARCHAR(50) NOT NULL DEFAULT 'NEED_TREATMENT', -- 'NEED_TREATMENT', 'TREATED', 'IMPLANT', 'MISSING'
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (patient_id, tooth_number)
+);
+
+-- Habilitar RLS para Registros de Dentes
+ALTER TABLE public.tooth_records ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para Registros de Dentes
+CREATE POLICY tooth_records_all_clinic ON public.tooth_records
+    FOR ALL USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+
+
+-- Tabela de Leads Comerciais do CRM
+CREATE TABLE public.crm_leads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50) NOT NULL,
+    avatar VARCHAR(50) DEFAULT '👤',
+    stage INT DEFAULT 0, -- 0 a 11 (Novo Paciente, Primeiro Contato, etc.)
+    priority VARCHAR(50) DEFAULT 'medium', -- 'high', 'medium', 'low'
+    budget_amount NUMERIC(10, 2) DEFAULT 0.00,
+    procedure_name VARCHAR(255) DEFAULT 'Consulta Geral',
+    comments JSONB DEFAULT '[]'::jsonb,
+    checklist JSONB DEFAULT '[]'::jsonb,
+    attachments JSONB DEFAULT '[]'::jsonb,
+    history JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS para Leads
+ALTER TABLE public.crm_leads ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS para Leads
+CREATE POLICY crm_leads_all_clinic ON public.crm_leads
     FOR ALL USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
 

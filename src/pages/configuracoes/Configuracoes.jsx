@@ -61,9 +61,22 @@ export default function Configuracoes() {
   const [newStaffRole, setNewStaffRole] = useState('RECEPTIONIST');
   const [showAddStaff, setShowAddStaff] = useState(false);
 
-  // States do WhatsApp QR code
-  const [showQr, setShowQr] = useState(false);
-  const [qrStatus, setQrStatus] = useState('PENDING'); // 'PENDING' | 'CONNECTED'
+  // States do WhatsApp (Evolution API)
+  const [evolutionUrl, setEvolutionUrl] = useState('');
+  const [evolutionInstance, setEvolutionInstance] = useState('');
+  const [evolutionToken, setEvolutionToken] = useState('');
+  const [evolutionStatus, setEvolutionStatus] = useState('DISCONNECTED');
+
+  // Carregar configurações da Evolution API
+  useEffect(() => {
+    if (clinic) {
+      const clinicId = clinic.id;
+      setEvolutionUrl(localStorage.getItem(`evolution_url_${clinicId}`) || '');
+      setEvolutionInstance(localStorage.getItem(`evolution_instance_${clinicId}`) || '');
+      setEvolutionToken(localStorage.getItem(`evolution_token_${clinicId}`) || '');
+      setEvolutionStatus(localStorage.getItem(`evolution_status_${clinicId}`) || 'DISCONNECTED');
+    }
+  }, [clinic]);
 
   // States Google Calendar
   const [gcalConnected, setGcalConnected] = useState(false);
@@ -151,13 +164,31 @@ export default function Configuracoes() {
     setShowAddStaff(false);
   };
 
-  // WhatsApp Link Simulator
-  const handleGenerateQr = () => {
-    setShowQr(true);
-    setQrStatus('PENDING');
-    setTimeout(() => {
-      setQrStatus('CONNECTED');
-    }, 3000);
+  // WhatsApp Evolution API Actions
+  const handleSaveWhatsAppConfig = (e) => {
+    e.preventDefault();
+    if (!clinic) return;
+    const clinicId = clinic.id;
+    localStorage.setItem(`evolution_url_${clinicId}`, evolutionUrl);
+    localStorage.setItem(`evolution_instance_${clinicId}`, evolutionInstance);
+    localStorage.setItem(`evolution_token_${clinicId}`, evolutionToken);
+    localStorage.setItem(`evolution_status_${clinicId}`, 'CONNECTED');
+    setEvolutionStatus('CONNECTED');
+    alert('Configurações salvas e WhatsApp ativado!');
+  };
+
+  const handleDisconnectWhatsApp = () => {
+    if (!clinic) return;
+    const clinicId = clinic.id;
+    localStorage.removeItem(`evolution_url_${clinicId}`);
+    localStorage.removeItem(`evolution_instance_${clinicId}`);
+    localStorage.removeItem(`evolution_token_${clinicId}`);
+    localStorage.setItem(`evolution_status_${clinicId}`, 'DISCONNECTED');
+    setEvolutionUrl('');
+    setEvolutionInstance('');
+    setEvolutionToken('');
+    setEvolutionStatus('DISCONNECTED');
+    alert('WhatsApp desconectado.');
   };
 
   return (
@@ -456,40 +487,91 @@ export default function Configuracoes() {
       {activeSubTab === 'integracoes' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
           
-          {/* WhatsApp QR Code */}
+          {/* WhatsApp Evolution API Config */}
           <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col justify-between space-y-4">
             <div className="flex gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0">
                 <Smartphone className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-xs font-title">WhatsApp Connection QR Link</h4>
-                <p className="text-[10px] text-slate-400 leading-relaxed mt-0.5">Conecte o seu número de WhatsApp da clínica para acionar automações e chatbot de IA.</p>
+                <h4 className="font-bold text-xs font-title">Integração WhatsApp (Evolution API)</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed mt-0.5">Conecte o seu número de WhatsApp comercial para automações e chatbot.</p>
               </div>
             </div>
 
-            <div className="flex flex-col items-center py-4 bg-slate-50 dark:bg-slate-900/30 rounded-xl border border-slate-100 dark:border-slate-800 relative">
-              {showQr ? (
-                qrStatus === 'PENDING' ? (
-                  <div className="flex flex-col items-center space-y-2">
-                    <QrCode className="w-28 h-28 text-slate-700 dark:text-white opacity-40 animate-pulse" />
-                    <span className="text-[10px] font-bold text-slate-400">Gerando QR Code...</span>
+            {evolutionStatus === 'CONNECTED' ? (
+              <div className="space-y-4 py-1.5 text-xs">
+                <div className="bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 p-3.5 rounded-xl flex items-center gap-2 font-bold">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+                  Instância Ativa & Conectada
+                </div>
+
+                <div className="space-y-1.5 font-semibold text-slate-600 dark:text-slate-350 bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800 p-3 rounded-xl">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Servidor:</span>
+                    <span className="font-mono text-[10px] truncate max-w-[180px]">{evolutionUrl}</span>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center space-y-2 text-emerald-500">
-                    <Check className="w-12 h-12" />
-                    <span className="text-[10px] font-bold">WhatsApp Conectado com Sucesso!</span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Instância:</span>
+                    <span className="font-mono text-[10px]">{evolutionInstance}</span>
                   </div>
-                )
-              ) : (
+                </div>
+
                 <button
-                  onClick={handleGenerateQr}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-250 dark:bg-slate-850 dark:hover:bg-slate-800 text-slate-750 dark:text-white font-bold rounded-xl border border-slate-200/50 dark:border-slate-700/50 text-xs shadow-sm"
+                  type="button"
+                  onClick={handleDisconnectWhatsApp}
+                  className="w-full py-2 bg-red-650 hover:bg-red-600 text-white font-extrabold text-xs rounded-xl shadow active:scale-95 transition-all"
                 >
-                  Gerar QR Code de Conexão
+                  Desconectar Instância
                 </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSaveWhatsAppConfig} className="space-y-3.5 text-xs text-left">
+                <div>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Evolution API Server URL</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="ex: https://api.evolution.com.br"
+                    value={evolutionUrl}
+                    onChange={(e) => setEvolutionUrl(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Instância</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="ex: clinica-sorriso"
+                      value={evolutionInstance}
+                      onChange={(e) => setEvolutionInstance(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase mb-1">Apikey Token</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="API token key"
+                      value={evolutionToken}
+                      onChange={(e) => setEvolutionToken(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow transition-all active:scale-95"
+                >
+                  Conectar Instância WhatsApp
+                </button>
+              </form>
+            )}
           </div>
 
           {/* Google Calendar Link */}

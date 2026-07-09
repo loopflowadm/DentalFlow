@@ -21,10 +21,11 @@ export default function Login({ initialView = 'login', onBack }) {
   const [subdomain, setSubdomain] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  const [regPrimaryColor, setRegPrimaryColor] = useState('#0f766e');
-  const [regSecondaryColor, setRegSecondaryColor] = useState('#0d9488');
+  const [regPrimaryColor, setRegPrimaryColor] = useState('#03269A');
+  const [regSecondaryColor, setRegSecondaryColor] = useState('#196BFB');
   const [regLogo, setRegLogo] = useState('🦷');
   const [regRole, setRegRole] = useState('CLINIC_OWNER'); // Default role when registering clinic
+  const [regFullName, setRegFullName] = useState('');
 
   // Forgot Form States
   const [forgotEmail, setForgotEmail] = useState('');
@@ -164,7 +165,7 @@ export default function Login({ initialView = 'login', onBack }) {
             data: {
               clinic_id: clinicData.id,
               role: 'CLINIC_ADMIN',
-              full_name: `Diretor(a) da ${clinicName}`
+              full_name: regFullName.trim() || 'Administrador'
             }
           }
         });
@@ -197,7 +198,7 @@ export default function Login({ initialView = 'login', onBack }) {
           email: regEmail,
           password: regPassword,
           role: 'CLINIC_ADMIN', // CLINIC_OWNER / CLINIC_ADMIN
-          full_name: `Diretor(a) da ${clinicName}`,
+          full_name: regFullName.trim() || 'Administrador',
           clinic_id: savedClinic.id
         };
         mockDb.saveUser(newUser);
@@ -249,30 +250,6 @@ export default function Login({ initialView = 'login', onBack }) {
 
       <div className="relative w-full max-w-[480px] z-10 transition-all duration-300">
         
-        {/* Banner de Modo Supabase vs Simulação */}
-        <div className="mb-4 flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md text-xs text-slate-350">
-          <div className="flex items-center gap-2">
-            {supabaseActive ? (
-              <>
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span className="text-white">Modo: <b>Supabase DB</b></span>
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span className="text-white">Modo: <b>Simulação Local</b> (Sem DB)</span>
-              </>
-            )}
-          </div>
-          <button 
-            type="button"
-            onClick={() => setSupabaseActive(!supabaseActive)}
-            className="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white font-bold rounded-lg border border-white/5"
-          >
-            Alternar
-          </button>
-        </div>
-
         {/* Card Principal */}
         <div className="bg-slate-950/60 border border-white/10 rounded-[28px] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl text-white flex flex-col">
           
@@ -292,12 +269,13 @@ export default function Login({ initialView = 'login', onBack }) {
               <Logo collapsed={false} className="h-10 w-auto text-white" />
             </div>
             
-            <h2 className="text-2.5xl font-extrabold tracking-tight text-white mb-1 font-title">
-              {view === 'login' && (currentTheme.name || 'DentalFlow')}
-              {view === 'register' && 'Crie sua Conta SaaS'}
-              {view === 'forgot' && 'Recuperar Senha'}
-            </h2>
-            <p className="text-xs text-slate-400">
+            {(view === 'register' || view === 'forgot') && (
+              <h2 className="text-2.5xl font-extrabold tracking-tight text-white mb-1 font-title">
+                {view === 'register' && 'Crie sua Conta SaaS'}
+                {view === 'forgot' && 'Recuperar Senha'}
+              </h2>
+            )}
+            <p className="text-xs text-slate-400 mt-1">
               {view === 'login' && 'Faça login no painel operacional da clínica'}
               {view === 'register' && 'Cadastre sua clínica e customize seu tema em segundos'}
               {view === 'forgot' && 'Digite seu e-mail para receber o link de recuperação'}
@@ -427,45 +405,18 @@ export default function Login({ initialView = 'login', onBack }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 p-3 bg-white/5 rounded-xl border border-white/5">
-                <div>
-                  <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center gap-1">
-                    <Paintbrush className="w-3 h-3 text-slate-400" /> Cor Primária
-                  </label>
-                  <input
-                    type="color"
-                    value={regPrimaryColor}
-                    onChange={(e) => setRegPrimaryColor(e.target.value)}
-                    className="w-full h-8 bg-transparent border-0 rounded cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
-                    Cor Secundária
-                  </label>
-                  <input
-                    type="color"
-                    value={regSecondaryColor}
-                    onChange={(e) => setRegSecondaryColor(e.target.value)}
-                    className="w-full h-8 bg-transparent border-0 rounded cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center gap-1">
-                    <Smile className="w-3 h-3 text-slate-400" /> Logo Icon
-                  </label>
-                  <select
-                    value={regLogo}
-                    onChange={(e) => setRegLogo(e.target.value)}
-                    className="w-full h-8 bg-slate-900 border border-white/10 rounded px-1.5 text-xs text-white focus:outline-none"
-                  >
-                    <option value="🦷">🦷 Dente</option>
-                    <option value="✨">✨ Estrela</option>
-                    <option value="💎">💎 Diamante</option>
-                    <option value="🏥">🏥 Clínica</option>
-                    <option value="🩺">🩺 Esteto</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                  Nome do Administrador / Proprietário
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Dr. Thácio Maikon"
+                  value={regFullName}
+                  onChange={(e) => setRegFullName(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
+                />
               </div>
 
               <div>
@@ -573,34 +524,6 @@ export default function Login({ initialView = 'login', onBack }) {
             </form>
           )}
 
-          {/* Atalho Rápido Único */}
-          {view === 'login' && !supabaseActive && (
-            <div className="mt-6 pt-5 border-t border-white/5">
-              <button
-                type="button"
-                onClick={async () => {
-                  setEmail('admin@sorriso.com');
-                  setPassword('123');
-                  setError('');
-                  setLoadingState(true);
-                  try {
-                    const res = await login('admin@sorriso.com', '123');
-                    if (!res.success) {
-                      setError(res.error || 'Erro ao efetuar login de teste.');
-                    }
-                  } catch (err) {
-                    setError('Ocorreu um erro ao fazer login de teste.');
-                  } finally {
-                    setLoadingState(false);
-                  }
-                }}
-                className="w-full py-3 bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 rounded-xl text-xs font-bold text-slate-200 transition-all flex items-center justify-center gap-2 group shadow-sm active:scale-[0.98]"
-              >
-                <Smile className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                Acessar Clínico Demonstrativo (Sorriso Perfeito)
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

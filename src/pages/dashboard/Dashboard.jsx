@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { 
   Users, UserPlus, Calendar, Award, TrendingUp, AlertTriangle, 
   MessageSquare, MessagesSquare, CheckSquare, FileText, ArrowUpRight, 
@@ -12,8 +13,61 @@ import {
 } from 'recharts';
 
 export default function Dashboard() {
-  const { patients, appointments, crmLeads } = useClinic();
+  const { patients, appointments, crmLeads, updateAppointment } = useClinic();
   const { user } = useAuth();
+  const [doctorsList, setDoctorsList] = useState([]);
+  const [labWorks, setLabWorks] = useState([]);
+
+  // Simular controle de próteses associados a pacientes cadastrados
+  useEffect(() => {
+    if (patients.length > 0) {
+      setLabWorks([
+        { id: 1, patient: patients[0].name, work: 'Coroa cerâmica (Dente 16)', lab: 'ProEsthetic Lab', due: 'Hoje', status: 'entregue' },
+        { id: 2, patient: patients[patients.length - 1].name || 'Paciente', work: 'Placa de Bruxismo', lab: 'OrtoArt Lab', due: 'Amanhã', status: 'pendente' }
+      ]);
+    } else {
+      setLabWorks([]);
+    }
+  }, [patients]);
+
+  const handleUpdateAppStatus = async (app, newStatus) => {
+    try {
+      await updateAppointment({
+        ...app,
+        status: newStatus
+      });
+    } catch (err) {
+      console.error('Erro ao atualizar status do agendamento:', err);
+      alert('Falha ao atualizar status.');
+    }
+  };
+
+  // Carregar lista real de dentistas da clínica
+  useEffect(() => {
+    async function loadDoctors() {
+      if (!user?.clinic_id) return;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('clinic_id', user.clinic_id)
+          .eq('role', 'DOCTOR');
+        if (!error && data) {
+          const formatted = data.map(doc => ({
+            name: doc.full_name,
+            specialty: 'Cirurgião-Dentista',
+            exp: 'Membro',
+            rating: 5.0,
+            avatar: '👨‍⚕️'
+          }));
+          setDoctorsList(formatted);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar dentistas para o Dashboard:', err);
+      }
+    }
+    loadDoctors();
+  }, [user]);
 
   // Calendário Dinâmico Local
   const today = new Date();
@@ -40,39 +94,87 @@ export default function Dashboard() {
     calendarDays.push(d);
   }
 
-  // Estatísticas Principais (Painel Executivo)
+  // Filtrar consultas de hoje
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayAppointments = appointments.filter(app => {
+    if (!app.appointment_date) return false;
+    const appDateStr = app.appointment_date.split('T')[0];
+    return appDateStr === todayStr;
+  });
+
+  // Métricas do Painel Executivo
+  const activePatientsCount = patients.length;
+  const completedAppointmentsCount = appointments.filter(app => app.status === 'completed' || app.status === 'Concluído').length;
+
+  const todayRevenue = todayAppointments
+    .filter(app => app.status === 'completed' || app.status === 'Concluído')
+    .reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
+
   const executiveStats = [
-    { label: 'Faturamento de Hoje', value: 'R$ 9.900', detail: '+20% este mês', isPositive: true, sparkData: [3, 5, 4, 8, 7, 9] },
-    { label: 'Consultas Realizadas', value: '230', detail: '+30 este mês', isPositive: true, sparkData: [2, 3, 5, 4, 6, 7] },
-    { label: 'Pacientes Ativos', value: '660', detail: '+40 este mês', isPositive: true, sparkData: [5, 6, 6, 8, 7, 9] },
-    { label: 'Confirmação de IA', value: '92%', detail: '+5% vs ontem', isPositive: true, sparkData: [8, 8.5, 9, 8.8, 9.1, 9.2] }
+    { label: 'Faturamento de Hoje', value: `R$ ${todayRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, detail: 'tempo real', isPositive: true },
+    { label: 'Consultas Realizadas', value: completedAppointmentsCount.toString(), detail: 'acumulado', isPositive: true },
+    { label: 'Pacientes Ativos', value: activePatientsCount.toString(), detail: 'no sistema', isPositive: true },
+    { label: 'Leads no CRM', value: crmLeads.length.toString(), detail: 'em captação', isPositive: true }
   ];
 
-  // Gráficos de Faturamento e Agendamentos
-  const revenueChartData = [
-    { month: 'Jan', appointments: 120, surgeries: 45, revenue: 4500 },
-    { month: 'Fev', appointments: 150, surgeries: 60, revenue: 5800 },
-    { month: 'Mar', appointments: 180, surgeries: 55, revenue: 6200 },
-    { month: 'Abr', appointments: 160, surgeries: 70, revenue: 7900 },
-    { month: 'Mai', appointments: 220, surgeries: 95, revenue: 9100 },
-    { month: 'Jun', appointments: 250, surgeries: 110, revenue: 9900 },
-    { month: 'Jul', appointments: 210, surgeries: 85, revenue: 8400 }
-  ];
+  // Gerar dados do gráfico dinamicamente com base nas consultas dos últimos 6 meses
+  const monthsAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  
+  const revenueChartData = Array.from({ length: 6 }).map((_, idx) => {
+    const targetMonthIdx = (currentMonthIdx - 5 + idx + 12) % 12;
+    const monthName = monthsAbbr[targetMonthIdx];
+    
+    const monthApps = appointments.filter(app => {
+      if (!app.appointment_date) return false;
+      const appDate = new Date(app.appointment_date);
+      return appDate.getMonth() === targetMonthIdx && appDate.getFullYear() === currentYear;
+    });
 
-  // Médicos em Destaque
-  const doctorsList = [
-    { name: 'Dr. Lillie Kennedy', specialty: 'Periodontista', exp: '9 anos', rating: 5.0, avatar: '👩‍⚕️' },
-    { name: 'Dr. Kerri Myers', specialty: 'Endodontista', exp: '6 anos', rating: 4.9, avatar: '👨‍⚕️' },
-    { name: 'Dr. Tobias Wong', specialty: 'Ortodontista', exp: '8 anos', rating: 4.8, avatar: '👨‍⚕️' }
-  ];
+    const appointmentsCount = monthApps.length;
+    const surgeriesCount = monthApps.filter(app => app.procedure_name?.toLowerCase().includes('cirurgia') || app.procedure_name?.toLowerCase().includes('implante')).length;
+    const revenue = monthApps
+      .filter(app => app.status === 'completed' || app.status === 'Concluído')
+      .reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
 
-  // Lista de Próximas Consultas do Widget Lateral
-  const upcomingAppointments = [
-    { patient: 'Kitty Miller', time: '08:00', type: 'Consulta Geral', color: 'bg-red-500' },
-    { patient: 'Anne Wallace', time: '09:00', type: 'Aplicação de Botox', color: 'bg-emerald-500' },
-    { patient: 'Lesley Chaney', time: '11:00', type: 'Canal Dente 16', color: 'bg-amber-500' },
-    { patient: 'Darcy May', time: '14:30', type: 'Urgência Extração', color: 'bg-blue-500' }
-  ];
+    return {
+      month: monthName,
+      appointments: appointmentsCount,
+      surgeries: surgeriesCount,
+      revenue: revenue
+    };
+  });
+
+  // Lista de Próximas Consultas do Widget Lateral calculadas em tempo real
+  const upcomingAppointments = todayAppointments.map(app => {
+    const patientObj = patients.find(p => p.id === app.patient_id);
+    const patientName = patientObj ? patientObj.name : 'Paciente';
+    const appTime = app.appointment_time || (app.appointment_date ? new Date(app.appointment_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--');
+    
+    let color = 'bg-blue-500';
+    if (app.status === 'completed' || app.status === 'Concluído') color = 'bg-emerald-500';
+    else if (app.status === 'canceled' || app.status === 'Cancelado') color = 'bg-red-500';
+    else if (app.status === 'confirmed' || app.status === 'Confirmado') color = 'bg-indigo-500';
+    
+    return {
+      patient: patientName,
+      time: appTime,
+      type: app.procedure_name || 'Procedimento',
+      color: color
+    };
+  }).sort((a, b) => a.time.localeCompare(b.time));
+
+  // Formatar a saudação de forma inteligente (Ex: "Dr. Thácio" ou "Thácio")
+  const getGreetingName = () => {
+    if (!user?.full_name) return 'Doutor';
+    const parts = user.full_name.trim().split(/\s+/);
+    if (parts.length === 0) return 'Doutor';
+    
+    const firstWord = parts[0].toLowerCase().replace('.', '');
+    if ((firstWord === 'dr' || firstWord === 'dra' || firstWord === 'doutor' || firstWord === 'doutora') && parts.length > 1) {
+      return `${parts[0]} ${parts[1]}`;
+    }
+    return parts[0];
+  };
 
   return (
     <div className="h-full flex flex-col xl:flex-row gap-6 overflow-y-auto pr-1 pb-10">
@@ -80,16 +182,13 @@ export default function Dashboard() {
       <div className="flex-1 xl:flex-[3] space-y-6">
         
         {/* Banner de Boas-Vindas */}
-        <div className="bg-gradient-to-r from-secondary/10 to-primary/5 dark:from-secondary/10 dark:to-primary/5 border border-secondary/20 rounded-3xl p-5 flex items-center justify-between shadow-[0_8px_30px_rgba(0,0,0,0.01)] backdrop-blur">
+        <div className="bg-gradient-to-r from-secondary/10 to-primary/5 dark:from-secondary/10 dark:to-primary/5 border border-secondary/20 rounded-3xl p-5 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.01)] backdrop-blur">
           <div>
             <h2 className="text-md font-black text-slate-800 dark:text-white font-title flex items-center gap-1.5">
-              Olá, {user?.full_name?.split(' ')[0] || 'Doutor'}! <Sparkles className="w-4 h-4 text-secondary animate-pulse" />
+              Olá, {getGreetingName()}! <Sparkles className="w-4 h-4 text-secondary animate-pulse" />
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Aqui está o resumo analítico de performance e automação da sua clínica.</p>
           </div>
-          <span className="text-[10px] bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 font-bold px-3 py-1.5 rounded-xl shadow-sm">
-            Fase de Operação: <span className="text-secondary font-extrabold">CRM + IA Sofia</span>
-          </span>
         </div>
 
         {/* Executivos Stats Grid */}
@@ -146,53 +245,144 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Sala de Espera (Fila da Recepção) */}
+        <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] animate-in fade-in duration-200">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider">Sala de Espera (Fila da Recepção)</h3>
+              <p className="text-[9px] text-slate-450 dark:text-slate-400 mt-0.5">Monitore os pacientes presentes no consultório e gerencie os chamados em tempo real.</p>
+            </div>
+            <span className="text-[9px] bg-amber-500/10 text-amber-500 font-extrabold px-2 py-0.5 rounded-full">
+              {todayAppointments.filter(a => a.status === 'aguardando' || a.status === 'em_atendimento').length} aguardando
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  <th className="py-2.5">Horário</th>
+                  <th>Paciente</th>
+                  <th>Procedimento</th>
+                  <th>Status Recepção</th>
+                  <th className="text-right">Ação Clínica</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                {todayAppointments.length > 0 ? (
+                  todayAppointments.map((app) => {
+                    const patient = patients.find(p => p.id === app.patient_id);
+                    
+                    return (
+                      <tr key={app.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors">
+                        <td className="py-3 font-bold text-slate-550">{app.appointment_time || (app.appointment_date ? new Date(app.appointment_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--')}</td>
+                        <td className="font-extrabold text-slate-800 dark:text-white">{patient?.name || 'Paciente'}</td>
+                        <td className="text-slate-450 font-medium">{app.procedure_name || 'Consulta'}</td>
+                        <td>
+                          {app.status === 'completed' || app.status === 'Concluído' ? (
+                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full font-extrabold text-[9px]">Finalizado</span>
+                          ) : app.status === 'em_atendimento' || app.status === 'em_consulta' ? (
+                            <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-500 rounded-full font-extrabold text-[9px] animate-pulse">No Consultório</span>
+                          ) : app.status === 'aguardando' || app.status === 'chegou' ? (
+                            <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full font-extrabold text-[9px]">Aguardando Recepção</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-450 rounded-full font-extrabold text-[9px]">Não Chegou</span>
+                          )}
+                        </td>
+                        <td className="text-right font-semibold">
+                          {app.status === 'completed' || app.status === 'Concluído' ? (
+                            <span className="text-[10px] text-slate-400 font-bold">✔️ Concluído</span>
+                          ) : app.status === 'em_atendimento' || app.status === 'em_consulta' ? (
+                            <button
+                              onClick={() => handleUpdateAppStatus(app, 'completed')}
+                              className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-bold text-[9px] shadow-sm transition-all"
+                            >
+                              Finalizar Consulta
+                            </button>
+                          ) : app.status === 'aguardando' || app.status === 'chegou' ? (
+                            <button
+                              onClick={() => handleUpdateAppStatus(app, 'em_atendimento')}
+                              className="px-2.5 py-1 bg-indigo-500 hover:bg-indigo-650 text-white rounded-lg font-bold text-[9px] shadow-sm transition-all"
+                            >
+                              Chamar Consultório
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUpdateAppStatus(app, 'aguardando')}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-[9px] transition-all"
+                            >
+                              Registrar Chegada
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="py-8 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Nenhum agendamento para hoje na fila.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Dentistas Ativos da Clínica */}
         <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
           <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider mb-4">Dentistas Disponíveis</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {doctorsList.map((doc, idx) => (
-              <div key={idx} className="border border-slate-200/40 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/30 dark:bg-slate-900/10 flex items-center justify-between hover:border-secondary/20 transition-all cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl bg-white dark:bg-slate-850 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-700/40 shadow-sm">
-                    {doc.avatar}
-                  </span>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 dark:text-white">{doc.name}</h4>
-                    <span className="text-[10px] text-slate-400 block">{doc.specialty} • {doc.exp}</span>
+            {doctorsList.length > 0 ? (
+              doctorsList.map((doc, idx) => (
+                <div key={idx} className="border border-slate-200/40 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/30 dark:bg-slate-900/10 flex items-center justify-between hover:border-secondary/20 transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl bg-white dark:bg-slate-850 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-700/40 shadow-sm">
+                      {doc.avatar}
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-white">{doc.name}</h4>
+                      <span className="text-[10px] text-slate-400 block">{doc.specialty} • {doc.exp}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-350">{doc.rating}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
-                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-350">{doc.rating}</span>
-                </div>
+              ))
+            ) : (
+              <div className="col-span-3 p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                Nenhum dentista cadastrado na equipe. Vá em Configurações para adicionar.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* Estatísticas de Pacientes */}
+        {/* Estatísticas Gerais */}
         <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
-          <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider mb-4">Métricas de Atração e Retenção</h3>
+          <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider mb-4">Estatísticas Gerais</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Novos Pacientes</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">2.000</span>
-              <span className="text-[9px] text-emerald-500 font-extrabold block mt-0.5">▲ 20.2%</span>
+            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Pacientes Cadastrados</span>
+              <span className="text-lg font-black text-slate-800 dark:text-white">{patients.length}</span>
             </div>
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Pacientes que Retornaram</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">6.000</span>
-              <span className="text-[9px] text-emerald-500 font-extrabold block mt-0.5">▲ 22.8%</span>
+            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Consultas na Agenda</span>
+              <span className="text-lg font-black text-slate-800 dark:text-white">{appointments.length}</span>
             </div>
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Público Masculino</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">3.000</span>
-              <span className="text-[9px] text-secondary font-extrabold block mt-0.5">38.9% total</span>
+            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Leads Comercial (CRM)</span>
+              <span className="text-lg font-black text-slate-800 dark:text-white">{crmLeads.length}</span>
             </div>
             <div className="p-3">
-              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Público Feminino</span>
-              <span className="text-lg font-black text-slate-800 dark:text-white">4.000</span>
-              <span className="text-[9px] text-secondary font-extrabold block mt-0.5">61.1% total</span>
+              <span className="text-[10px] text-slate-450 block font-semibold mb-1">Taxa de Conversão</span>
+              <span className="text-lg font-black text-slate-800 dark:text-white">
+                {crmLeads.length + patients.length > 0 
+                  ? `${Math.round((patients.length / (crmLeads.length + patients.length)) * 100)}%` 
+                  : '0%'}
+              </span>
             </div>
           </div>
         </div>
@@ -241,39 +431,91 @@ export default function Dashboard() {
           </div>
 
           <div className="space-y-2">
-            {upcomingAppointments.map((app, idx) => (
-              <div key={idx} className="p-3 border border-slate-150/40 dark:border-slate-800/80 rounded-2xl bg-slate-50/20 dark:bg-slate-900/10 flex items-center justify-between hover:-translate-y-0.5 transition-all">
-                <div className="flex items-center gap-3">
-                  <span className={`w-1.5 h-6 rounded-full ${app.color}`} />
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-800 dark:text-white">{app.patient}</h5>
-                    <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{app.type}</span>
+            {upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map((app, idx) => (
+                <div key={idx} className="p-3 border border-slate-150/40 dark:border-slate-800/80 rounded-2xl bg-slate-50/20 dark:bg-slate-900/10 flex items-center justify-between hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-1.5 h-6 rounded-full ${app.color}`} />
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-800 dark:text-white">{app.patient}</h5>
+                      <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{app.type}</span>
+                    </div>
+                  </div>
+                  <div className="text-[10px] font-extrabold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                    {app.time}
                   </div>
                 </div>
-                <div className="text-[10px] font-extrabold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
-                  {app.time}
-                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                Nenhuma consulta agendada para hoje
               </div>
-            ))}
+            )}
+          </div>
+        </div>
+
+        {/* Controle de Próteses & Laboratórios */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800/80 pt-4">
+            <h4 className="text-xs font-bold text-slate-850 dark:text-white">Trabalhos de Protético</h4>
+            <span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold px-2 py-0.5 rounded-full">
+              {labWorks.length} pend.
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {labWorks.length > 0 ? (
+              labWorks.map((work) => (
+                <div key={work.id} className="p-3 border border-slate-150/40 dark:border-slate-800/80 rounded-2xl bg-slate-50/20 dark:bg-slate-900/10 space-y-1.5 hover:-translate-y-0.5 transition-all text-left">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h5 className="text-[11px] font-extrabold text-slate-800 dark:text-white truncate max-w-[130px]">{work.patient}</h5>
+                      <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{work.work}</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full font-extrabold text-[8px] uppercase tracking-wider ${
+                      work.status === 'entregue' 
+                        ? 'bg-emerald-500/10 text-emerald-500' 
+                        : 'bg-amber-500/10 text-amber-500 animate-pulse'
+                    }`}>
+                      {work.status === 'entregue' ? 'Entregue' : 'Aguardando'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[9px] text-slate-400 font-bold pt-1.5 border-t border-slate-100/50 dark:border-slate-800/50">
+                    <span>{work.lab}</span>
+                    <span className={work.due === 'Hoje' ? 'text-rose-500' : ''}>Prazo: {work.due}</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+                Nenhum trabalho de prótese pendente
+              </div>
+            )}
           </div>
         </div>
 
         {/* Plantão do Dia / Médico de Plantão */}
-        <div className="bg-secondary border border-secondary/10 text-white rounded-2xl p-4 shadow-md shadow-secondary/10">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl bg-white/20 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10">
-              👨‍⚕️
-            </span>
-            <div>
-              <h5 className="text-xs font-bold">Dr. Tobias Wong</h5>
-              <span className="text-[10px] text-white/80 block mt-0.5">Médico Responsável Hoje</span>
+        {doctorsList.length > 0 ? (
+          <div className="bg-secondary border border-secondary/10 text-white rounded-2xl p-4 shadow-md shadow-secondary/10">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl bg-white/20 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10">
+                👩‍⚕️
+              </span>
+              <div>
+                <h5 className="text-xs font-bold">{doctorsList[0].name}</h5>
+                <span className="text-[10px] text-white/80 block mt-0.5">Médico Responsável Hoje</span>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] bg-black/10 px-2.5 py-1 rounded-xl w-fit">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Plantão Ativo</span>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-[10px] bg-black/10 px-2.5 py-1 rounded-xl w-fit">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Segunda, 20 - das 09h às 14h</span>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            Nenhum plantonista ativo hoje
           </div>
-        </div>
+        )}
 
       </div>
     </div>
