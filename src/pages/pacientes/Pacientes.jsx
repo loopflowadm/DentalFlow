@@ -28,7 +28,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     updateToothRecord
   } = useClinic();
   const { currentTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, clinic } = useAuth();
 
   // Estados locais
   const [search, setSearch] = useState('');
@@ -239,7 +239,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       if (historyText && typeof historyText === 'string' && historyText.startsWith('{')) {
         return JSON.parse(historyText);
       }
-    } catch(e) {}
+    } catch (e) {
+      console.warn('Erro ao parsear historico do paciente:', e);
+    }
     return { notes: typeof historyText === 'string' ? historyText : '', odontogram: {}, evolutions: [], exams: [] };
   };
 

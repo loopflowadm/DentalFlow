@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -34,7 +34,7 @@ export function ClinicProvider({ children }) {
   const [crmLeads, setCrmLeads] = useState([]);
 
   // Carregar dados de acordo com o Supabase de forma paralela e resiliente
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!clinic) return;
     setLoading(true);
 
@@ -146,9 +146,9 @@ export function ClinicProvider({ children }) {
     }
 
     setLoading(false);
-  };
+  }, [clinic, loadChatsState]);
 
-  const loadChatsState = async (patList, leadList = []) => {
+  const loadChatsState = useCallback(async (patList, leadList = []) => {
     const clinicId = clinic.id;
     const patientChats = patList.map(p => ({
       patientId: p.id,
@@ -225,11 +225,21 @@ export function ClinicProvider({ children }) {
     }
 
     setWhatsappChats(defaultChats);
-  };
+  }, [clinic]);
 
   useEffect(() => {
-    loadData();
-  }, [clinic]);
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        loadData();
+      }
+    };
+    run();
+    return () => {
+      active = false;
+    };
+  }, [loadData]);
 
   // FUNÇÕES DE PERSISTÊNCIA & OPERAÇÕES (SUPABASE NATIVO)
 

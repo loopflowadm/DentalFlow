@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { 
-  Sparkles, MessageSquare, Calendar, Shield, DollarSign, 
-  Check, ArrowRight, ChevronDown, Users, FileText, CheckCircle2, 
+import {
+  Sparkles, MessageSquare, Calendar, Shield, DollarSign,
+  Check, ArrowRight, ChevronDown, Users, FileText, CheckCircle2,
   BarChart3, Clock, X, UserPlus, Search, Bell, Lock, Headphones,
   Star, Brain, Plug, TrendingUp, ClipboardList, Zap, Heart,
   ExternalLink, Mail, Phone, MapPin, Globe, ChevronRight,
@@ -123,10 +123,10 @@ export default function LandingPage({ onLogin, onRegister }) {
       created_at: new Date().toISOString()
     };
     if (supabase) {
-      try { 
-        await supabase.from('crm_leads').insert([newLead]); 
-      } catch (err) { 
-        console.warn('Erro ao inserir no Supabase:', err.message); 
+      try {
+        await supabase.from('crm_leads').insert([newLead]);
+      } catch (err) {
+        console.warn('Erro ao inserir no Supabase:', err.message);
       }
     }
   };
@@ -147,7 +147,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           <div className="landing-header__logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <BrandLogo variant="dark" />
           </div>
-          
+
           {/* Nav */}
           <nav className="landing-header__nav">
             <button onClick={() => scrollToSection('recursos')}>Recursos</button>
@@ -180,7 +180,7 @@ export default function LandingPage({ onLogin, onRegister }) {
 
         <div className="landing-hero__inner">
           {/* Left - Copy */}
-          <motion.div 
+          <motion.div
             className="landing-hero__copy"
             initial="hidden"
             animate="visible"
@@ -198,7 +198,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             </motion.h1>
 
             <motion.p variants={fadeUp} className="landing-hero__subtitle">
-              O DentalFlow centraliza agenda, pacientes, financeiro, WhatsApp e 
+              O DentalFlow centraliza agenda, pacientes, financeiro, WhatsApp e
               Inteligência Artificial em um único sistema para clínicas modernas.
             </motion.p>
 
@@ -230,7 +230,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           </motion.div>
 
           {/* Right - Dashboard Mockup */}
-          <motion.div 
+          <motion.div
             className="landing-hero__mockup"
             initial={{ opacity: 0, x: 60, scale: 0.95 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -380,7 +380,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             </div>
 
             {/* Floating glassmorphism cards */}
-            <motion.div 
+            <motion.div
               className="landing-hero__float-card landing-hero__float-card--ai"
               animate={{ y: [0, -8, 0] }}
               transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
@@ -389,7 +389,7 @@ export default function LandingPage({ onLogin, onRegister }) {
               <span>IA ativa</span>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="landing-hero__float-card landing-hero__float-card--patients"
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 0.5 }}
@@ -472,9 +472,9 @@ export default function LandingPage({ onLogin, onRegister }) {
           <AnimatedSection className="landing-dark-section__photo-col">
             <div className="landing-dark-section__photo-wrapper">
               <div className="landing-dark-section__photo-glow" />
-              <img 
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=500" 
-                alt="Dentista usando DentalFlow" 
+              <img
+                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=500"
+                alt="Dentista usando DentalFlow"
                 className="landing-dark-section__photo"
               />
             </div>
@@ -549,18 +549,18 @@ export default function LandingPage({ onLogin, onRegister }) {
         </AnimatedSection>
         <div className="landing-testimonials__grid">
           {[
-            { 
-              name: 'Dr. Rafael Mendes', clinic: 'Clínica Sorriso Perfeito', 
+            {
+              name: 'Dr. Rafael Mendes', clinic: 'Clínica Sorriso Perfeito',
               text: 'O DentalFlow mudou a rotina da nossa clínica. Reduzimos faltas em 70%, organizamos processos e hoje temos mais tempo para focar no que realmente importa.',
               img: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150'
             },
-            { 
-              name: 'Dra. Camila Santos', clinic: 'OdontoVida Premium', 
+            {
+              name: 'Dra. Camila Santos', clinic: 'OdontoVida Premium',
               text: 'A integração com WhatsApp é incrível. Nossos pacientes recebem confirmações automáticas e o índice de comparecimento subiu muito desde que começamos a usar.',
               img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150'
             },
-            { 
-              name: 'Dr. Pedro Oliveira', clinic: 'Instituto Dental Plus', 
+            {
+              name: 'Dr. Pedro Oliveira', clinic: 'Instituto Dental Plus',
               text: 'O controle financeiro ficou transparente e fácil. Consigo ver em tempo real o faturamento, inadimplência e fazer projeções com a IA integrada.',
               img: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150'
             },
@@ -675,19 +675,19 @@ export default function LandingPage({ onLogin, onRegister }) {
 
         <div className="landing-pricing__grid">
           {[
-            { 
-              name: 'Starter', price: 'R$ 197', period: '/mês', 
+            {
+              name: 'Starter', price: 'R$ 197', period: '/mês',
               desc: 'Para clínicas que estão começando a digitalizar.',
               features: ['Até 500 pacientes', 'Agenda inteligente', 'WhatsApp básico', 'Prontuário digital', 'Suporte por email'],
               highlight: false
             },
-            { 
+            {
               name: 'Professional', price: 'R$ 397', period: '/mês',
               desc: 'Para clínicas em crescimento que buscam automação.',
               features: ['Pacientes ilimitados', 'WhatsApp completo', 'Financeiro integrado', 'Relatórios avançados', 'IA assistente', 'Integrações'],
               highlight: true, badge: 'Mais popular'
             },
-            { 
+            {
               name: 'Enterprise', price: 'Sob consulta', period: '',
               desc: 'Para redes de clínicas e grandes operações.',
               features: ['Multi-clínicas', 'API personalizada', 'SLA dedicado', 'Onboarding VIP', 'Customização completa', 'Gerente de sucesso'],
@@ -707,7 +707,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                   <li key={j}><Check style={{ width: 16, height: 16, color: plan.highlight ? '#196BFB' : '#10B981' }} /> {f}</li>
                 ))}
               </ul>
-              <button 
+              <button
                 onClick={onRegister}
                 className={plan.highlight ? 'landing-btn--primary landing-btn--lg landing-btn--full' : 'landing-btn--outline landing-btn--lg landing-btn--full'}
               >
@@ -737,7 +737,7 @@ export default function LandingPage({ onLogin, onRegister }) {
             { q: 'A IA substitui o dentista?', a: 'De forma alguma. A IA do DentalFlow automatiza tarefas administrativas e repetitivas, liberando mais tempo para o atendimento clínico.' },
           ].map((faq, idx) => (
             <AnimatedSection key={idx} delay={idx * 0.04} className="landing-faq__item">
-              <button 
+              <button
                 onClick={() => setOpenFaq(p => p === idx ? null : idx)}
                 className={`landing-faq__question ${openFaq === idx ? 'landing-faq__question--open' : ''}`}
               >
@@ -746,10 +746,10 @@ export default function LandingPage({ onLogin, onRegister }) {
               </button>
               <AnimatePresence>
                 {openFaq === idx && (
-                  <motion.div 
-                    initial={{ height: 0, opacity: 0 }} 
-                    animate={{ height: 'auto', opacity: 1 }} 
-                    exit={{ height: 0, opacity: 0 }} 
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
                     <div className="landing-faq__answer">{faq.a}</div>
@@ -903,7 +903,7 @@ export default function LandingPage({ onLogin, onRegister }) {
               <a href="#">Segurança</a>
             </div>
           </div>
-          
+
           <div className="landing-footer__bottom">
             <span>© {new Date().getFullYear()} DentalFlow. Todos os direitos reservados.</span>
             <span>Feito com ❤️ para clínicas odontológicas</span>

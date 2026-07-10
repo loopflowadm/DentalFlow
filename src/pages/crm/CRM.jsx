@@ -40,18 +40,38 @@ export default function CRM({ selectedLead, setSelectedLead }) {
   // Selecionar o primeiro lead caso nenhum esteja ativo ao montar
   useEffect(() => {
     if (!selectedLead && crmLeads.length > 0) {
-      setSelectedLead(crmLeads[0]);
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setSelectedLead(crmLeads[0]);
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
   }, [crmLeads, selectedLead, setSelectedLead]);
 
   // Sincronizar dados de edição quando o lead ativo muda
   useEffect(() => {
     if (selectedLead) {
-      setEditName(selectedLead.name || '');
-      setEditPhone(selectedLead.phone || '');
-      setEditProcedure(selectedLead.procedure_name || '');
-      setEditBudget(selectedLead.budget_amount || '');
-      setEditPriority(selectedLead.priority || 'medium');
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setEditName(selectedLead.name || '');
+          setEditPhone(selectedLead.phone || '');
+          setEditProcedure(selectedLead.procedure_name || '');
+          setEditBudget(selectedLead.budget_amount || '');
+          setEditPriority(selectedLead.priority || 'medium');
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
   }, [selectedLead]);
 

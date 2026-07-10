@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { HelpCircle, X, Sparkles, BookOpen } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 // Imports dos Módulos Modulares
 import Dashboard from './dashboard/Dashboard';
@@ -16,6 +17,7 @@ import Relatorios from './relatorios/Relatorios';
 import Configuracoes from './configuracoes/Configuracoes';
 
 export default function ClinicApp() {
+  const { currentTheme } = useTheme();
 
   // Abas do Panel: 'dashboard' | 'crm' | 'pacientes' | 'agenda' | 'whatsapp' | 'ai' | 'automacoes' | 'marketing' | 'financeiro' | 'relatorios' | 'configuracoes'
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -91,7 +93,10 @@ export default function ClinicApp() {
   const showSubSidebar = hasSubSidebar && !collapsed;
 
   return (
-    <div className="h-screen w-screen p-4 flex gap-4 bg-slate-100 dark:bg-slate-950 overflow-hidden font-body transition-colors duration-300">
+    <div 
+      className="h-screen w-screen p-4 flex gap-4 overflow-hidden font-body transition-colors duration-300"
+      style={{ backgroundColor: currentTheme.body_bg }}
+    >
       {/* Barra Lateral Navegação */}
       <Sidebar 
         activeTab={activeTab} 

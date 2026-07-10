@@ -1,8 +1,39 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { useTheme } from './ThemeContext';
 
 const AuthContext = createContext();
+
+const unpackClinicData = (clinic) => {
+  if (!clinic) return null;
+  const logo = clinic.logo_url || '';
+  if (logo.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(logo);
+      return {
+        ...clinic,
+        logo_url: parsed.logo_url || '',
+        accent_color: parsed.accent_color || '#D9E2FF',
+        font_family: parsed.font_family || 'Inter',
+        theme_base: parsed.theme_base || 'light',
+        favicon_url: parsed.favicon_url || '',
+        login_title: parsed.login_title || 'Bem-vindo ao seu portal',
+        login_bg: parsed.login_bg || ''
+      };
+    } catch (e) {
+      console.error('Failed to parse clinic whitelabel config from logo_url:', e);
+    }
+  }
+  return {
+    ...clinic,
+    accent_color: clinic.accent_color || '#D9E2FF',
+    font_family: clinic.font_family || 'Inter',
+    theme_base: clinic.theme_base || 'light',
+    favicon_url: clinic.favicon_url || '',
+    login_title: clinic.login_title || 'Bem-vindo ao seu portal',
+    login_bg: clinic.login_bg || ''
+  };
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -26,7 +57,7 @@ export function AuthProvider({ children }) {
         .eq('id', clinicId)
         .single();
       if (error) throw error;
-      return data;
+      return unpackClinicData(data);
     } catch (err) {
       console.error('Erro ao buscar dados da clínica no Supabase:', err);
       return null;
@@ -44,7 +75,7 @@ export function AuthProvider({ children }) {
         .eq('subdomain', subdomain)
         .single();
       if (error) throw error;
-      return data;
+      return unpackClinicData(data);
     } catch (err) {
       console.error('Erro ao buscar clínica por subdomínio no Supabase:', err);
       return null;
@@ -85,12 +116,7 @@ export function AuthProvider({ children }) {
         setClinic(clinicData);
         if (clinicData) {
           localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
-          applyTheme({
-            name: clinicData.name,
-            primary_color: clinicData.primary_color,
-            secondary_color: clinicData.secondary_color,
-            logo_url: clinicData.logo_url
-          });
+          applyTheme(clinicData);
         }
       } else {
         setClinic(null);
@@ -139,12 +165,7 @@ export function AuthProvider({ children }) {
       const clinicData = await fetchClinicBySubdomain(subdomain);
       if (clinicData) {
         setClinic(clinicData);
-        applyTheme({
-          name: clinicData.name,
-          primary_color: clinicData.primary_color,
-          secondary_color: clinicData.secondary_color,
-          logo_url: clinicData.logo_url
-        });
+        applyTheme(clinicData);
       }
     }
 
@@ -174,12 +195,7 @@ export function AuthProvider({ children }) {
             setClinic(clinicData);
             if (clinicData) {
               localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
-              applyTheme({
-                name: clinicData.name,
-                primary_color: clinicData.primary_color,
-                secondary_color: clinicData.secondary_color,
-                logo_url: clinicData.logo_url
-              });
+              applyTheme(clinicData);
             }
           }
         } else {
@@ -205,12 +221,7 @@ export function AuthProvider({ children }) {
   const selectClinic = (clinicData) => {
     setClinic(clinicData);
     if (clinicData) {
-      applyTheme({
-        name: clinicData.name,
-        primary_color: clinicData.primary_color,
-        secondary_color: clinicData.secondary_color,
-        logo_url: clinicData.logo_url
-      });
+      applyTheme(clinicData);
     } else {
       resetTheme();
     }
@@ -220,27 +231,51 @@ export function AuthProvider({ children }) {
     if (!clinic) return;
     const updatedClinic = { ...clinic, ...updatedFields };
     setClinic(updatedClinic);
+    localStorage.setItem('df_session_clinic', JSON.stringify(updatedClinic));
+
+    // Empacotar chaves Whitelabel estendidas em formato JSON dentro do campo logo_url do banco
+    const packedLogoUrl = JSON.stringify({
+      logo_url: updatedClinic.logo_url || '',
+      accent_color: updatedClinic.accent_color || '#D9E2FF',
+      font_family: updatedClinic.font_family || 'Inter',
+      theme_base: updatedClinic.theme_base || 'light',
+      favicon_url: updatedClinic.favicon_url || '',
+      login_title: updatedClinic.login_title || 'Bem-vindo ao seu portal',
+      login_bg: updatedClinic.login_bg || ''
+    });
+
+    const supabasePayload = {
+      name: updatedFields.name !== undefined ? updatedFields.name : clinic.name,
+      primary_color: updatedFields.primary_color !== undefined ? updatedFields.primary_color : clinic.primary_color,
+      secondary_color: updatedFields.secondary_color !== undefined ? updatedFields.secondary_color : clinic.secondary_color,
+      logo_url: packedLogoUrl
+    };
 
     try {
       const { error } = await supabase
         .from('clinics')
-        .update(updatedFields)
+        .update(supabasePayload)
         .eq('id', clinic.id);
       if (error) throw error;
     } catch (err) {
       console.error('Erro ao atualizar clínica no Supabase:', err);
     }
 
-    applyTheme({
-      name: updatedClinic.name,
-      primary_color: updatedClinic.primary_color,
-      secondary_color: updatedClinic.secondary_color,
-      logo_url: updatedClinic.logo_url
-    });
+    applyTheme(updatedClinic);
   };
 
   useEffect(() => {
-    checkSession();
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        checkSession();
+      }
+    };
+    run();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

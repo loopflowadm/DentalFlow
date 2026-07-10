@@ -4,18 +4,18 @@ import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
 import { supabase } from '../lib/supabase';
 import { mockDb } from '../lib/mockDatabase';
-import { 
-  KeyRound, Mail, AlertTriangle, ShieldCheck, HelpCircle, 
-  Building, UserPlus, ArrowLeft, Paintbrush, Smile, Info 
+import {
+  KeyRound, Mail, AlertTriangle, ShieldCheck, HelpCircle,
+  Building, UserPlus, ArrowLeft, Paintbrush, Smile, Info
 } from 'lucide-react';
 
 export default function Login({ initialView = 'login', onBack }) {
   const [view, setView] = useState(initialView); // 'login' | 'register' | 'forgot'
-  
+
   // Login Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   // Register Form States
   const [clinicName, setClinicName] = useState('');
   const [subdomain, setSubdomain] = useState('');
@@ -34,8 +34,8 @@ export default function Login({ initialView = 'login', onBack }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loadingState, setLoadingState] = useState(false);
-  
-  const { login, supabaseActive, setSupabaseActive } = useAuth();
+
+  const { login, clinic, supabaseActive, setSupabaseActive } = useAuth();
   const { applyTheme, resetTheme, currentTheme } = useTheme();
 
   // Efeito dinâmico para prever o tema no login pelo e-mail
@@ -81,12 +81,12 @@ export default function Login({ initialView = 'login', onBack }) {
         resetTheme();
       }
     }
-  }, [email, view]);
+  }, [email, view, applyTheme, resetTheme]);
 
   // Efeito dinâmico para prever o tema durante o cadastro da clínica
   useEffect(() => {
     if (view !== 'register') return;
-    
+
     if (clinicName) {
       // Gerar subdomínio automaticamente
       const slug = clinicName
@@ -94,7 +94,15 @@ export default function Login({ initialView = 'login', onBack }) {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
-      setSubdomain(slug);
+
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setSubdomain(slug);
+        }
+      };
+      run();
 
       applyTheme({
         name: clinicName,
@@ -102,10 +110,14 @@ export default function Login({ initialView = 'login', onBack }) {
         secondary_color: regSecondaryColor,
         logo_url: regLogo
       });
+
+      return () => {
+        active = false;
+      };
     } else {
       resetTheme();
     }
-  }, [clinicName, regPrimaryColor, regSecondaryColor, regLogo, view]);
+  }, [clinicName, regPrimaryColor, regSecondaryColor, regLogo, view, applyTheme, resetTheme]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -174,7 +186,7 @@ export default function Login({ initialView = 'login', onBack }) {
 
         setSuccess(`Clínica "${clinicName}" registrada com sucesso! Verifique a caixa de entrada de seu e-mail para confirmação.`);
         setLoadingState(false);
-        
+
         // Mover para login
         setTimeout(() => {
           setEmail(regEmail);
@@ -191,7 +203,7 @@ export default function Login({ initialView = 'login', onBack }) {
       // Salvar Local
       try {
         const savedClinic = mockDb.saveClinic(newClinic);
-        
+
         // Criar conta do proprietário/administrador da clínica
         const newUser = {
           id: 'user-' + Math.random().toString(36).substr(2, 9),
@@ -205,7 +217,7 @@ export default function Login({ initialView = 'login', onBack }) {
 
         setSuccess(`Clínica cadastrada com sucesso! Faça login com o email: ${regEmail}`);
         setLoadingState(false);
-        
+
         // Mover para login pré-preenchido
         setTimeout(() => {
           setEmail(regEmail);
@@ -223,7 +235,7 @@ export default function Login({ initialView = 'login', onBack }) {
   const handleForgotSubmit = (e) => {
     e.preventDefault();
     setLoadingState(true);
-    
+
     // Simulação de envio de email
     setTimeout(() => {
       setForgotSuccess(true);
@@ -237,24 +249,31 @@ export default function Login({ initialView = 'login', onBack }) {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-slate-900 overflow-hidden font-body px-4 py-8">
+    <div
+      className="relative min-h-screen w-full flex items-center justify-center bg-slate-900 overflow-hidden font-body px-4 py-8"
+      style={clinic?.login_bg ? {
+        backgroundImage: `linear-gradient(to bottom, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95)), url(${clinic.login_bg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      } : {}}
+    >
       {/* Círculos decorativos de background com blur */}
-      <div 
+      <div
         className="absolute -top-40 -left-45 w-[450px] h-[450px] rounded-full filter blur-[100px] opacity-25 transition-colors duration-1000"
         style={{ backgroundColor: currentTheme.primary_color }}
       />
-      <div 
+      <div
         className="absolute -bottom-40 -right-40 w-[450px] h-[450px] rounded-full filter blur-[100px] opacity-20 transition-colors duration-1000"
         style={{ backgroundColor: currentTheme.secondary_color }}
       />
 
       <div className="relative w-full max-w-[480px] z-10 transition-all duration-300">
-        
+
         {/* Card Principal */}
         <div className="bg-slate-950/60 border border-white/10 rounded-[28px] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] backdrop-blur-xl text-white flex flex-col">
-          
+
           {onBack && (
-            <button 
+            <button
               onClick={onBack}
               className="self-start mb-4 flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors active:scale-95"
             >
@@ -266,9 +285,26 @@ export default function Login({ initialView = 'login', onBack }) {
           {/* Header do Formulário */}
           <div className="flex flex-col items-center mb-6 text-center">
             <div className="h-12 w-auto mb-4 flex items-center justify-center">
-              <Logo collapsed={false} className="h-10 w-auto text-white" />
+              {currentTheme?.logo_url && (
+                currentTheme.logo_url.startsWith('http') ||
+                currentTheme.logo_url.startsWith('data:image/') ||
+                currentTheme.logo_url.startsWith('/') ||
+                currentTheme.logo_url.includes('.')
+              ) ? (
+                <img src={currentTheme.logo_url} className="h-10 object-contain rounded-lg" alt={currentTheme.name} />
+              ) : currentTheme?.logo_url && currentTheme.logo_url.trim().length <= 4 ? (
+                <span className="text-3xl filter drop-shadow">{currentTheme.logo_url}</span>
+              ) : (
+                <Logo collapsed={false} className="h-10 w-auto text-white" />
+              )}
             </div>
-            
+
+            {view === 'login' && (
+              <h2 className="text-xl font-extrabold tracking-tight text-white mb-0.5 font-title">
+                {clinic?.login_title || `Portal ${currentTheme?.name || 'Sorrisoclinica'}`}
+              </h2>
+            )}
+
             {(view === 'register' || view === 'forgot') && (
               <h2 className="text-2.5xl font-extrabold tracking-tight text-white mb-1 font-title">
                 {view === 'register' && 'Crie sua Conta SaaS'}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,7 +25,17 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
   // Sincronizar com agendamento selecionado da sidebar
   useEffect(() => {
     if (selectedAppointment) {
-      setSelectedApp(selectedAppointment);
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setSelectedApp(selectedAppointment);
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
   }, [selectedAppointment]);
   

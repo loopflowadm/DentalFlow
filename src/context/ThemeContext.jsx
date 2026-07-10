@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const ThemeContext = createContext();
 
@@ -14,7 +14,7 @@ export const defaultTheme = {
 function hexToRgb(hex) {
   if (!hex) return null;
   const cleanHex = hex.replace(/^#/, '');
-  let r = 0, g = 0, b = 0;
+  let r, g, b;
   
   if (cleanHex.length === 3) {
     r = parseInt(cleanHex[0] + cleanHex[0], 16);
@@ -31,25 +31,110 @@ function hexToRgb(hex) {
   return `${r} ${g} ${b}`;
 }
 
-export function ThemeProvider({ children }) {
-  const [currentTheme, setCurrentTheme] = useState(defaultTheme);
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme-mode');
-    return saved ? saved === 'dark' : false; // Default to light theme as active
-  });
+// Função para escurecer ou clarear uma cor hexadecimal
+function adjustColorBrightness(hex, percent) {
+  if (!hex) return hex;
+  const cleanHex = hex.replace(/^#/, '');
+  let R = parseInt(cleanHex.substring(0, 2), 16);
+  let G = parseInt(cleanHex.substring(2, 4), 16);
+  let B = parseInt(cleanHex.substring(4, 6), 16);
 
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
+  R = parseInt(R * (100 + percent) / 100);
+  G = parseInt(G * (100 + percent) / 100);
+  B = parseInt(B * (100 + percent) / 100);
+
+  R = (R < 255) ? R : 255;  
+  G = (G < 255) ? G : 255;  
+  B = (B < 255) ? B : 255;  
+
+  R = (R > 0) ? R : 0;  
+  G = (G > 0) ? G : 0;  
+  B = (B > 0) ? B : 0;  
+
+  const rHex = R.toString(16).padStart(2, '0');
+  const gHex = G.toString(16).padStart(2, '0');
+  const bHex = B.toString(16).padStart(2, '0');
+
+  return `#${rHex}${gHex}${bHex}`;
+}
+
+export function ThemeProvider({ children }) {
+  const [clinicTheme, setClinicTheme] = useState(defaultTheme);
+  const [themeMode, setThemeMode] = useState(() => {
+    return localStorage.getItem('theme-mode-three') || 'clinic';
+  });
 
   const applyTheme = (theme) => {
     const updatedTheme = { ...defaultTheme, ...theme };
-    setCurrentTheme(updatedTheme);
+    setClinicTheme(updatedTheme);
+  };
 
+  const resetTheme = () => {
+    applyTheme(defaultTheme);
+  };
+
+  // Recalcular o tema atual quando mudar o modo do tema ou o tema da clínica
+  const currentTheme = useMemo(() => {
+    let activeTheme;
+
+    if (themeMode === 'light') {
+      activeTheme = {
+        ...clinicTheme,
+        primary_color: '#03269A',
+        secondary_color: '#196BFB',
+        accent_color: '#D9E2FF',
+        sidebar_bg_1: '#07112E',
+        sidebar_bg_2: '#0A173B',
+        body_bg: '#f8fafc'
+      };
+    } else if (themeMode === 'dark') {
+      activeTheme = {
+        ...clinicTheme,
+        primary_color: '#0F172A',
+        secondary_color: '#3B82F6',
+        accent_color: '#1E293B',
+        sidebar_bg_1: '#07112E',
+        sidebar_bg_2: '#0A173B',
+        body_bg: '#020617'
+      };
+    } else {
+      // 'clinic'
+      const isClinicDark = clinicTheme.theme_base === 'dark';
+      const darkerPrimary = adjustColorBrightness(clinicTheme.primary_color, -25);
+      const accentBg = clinicTheme.accent_color || '#D9E2FF';
+      
+      let finalBodyBg;
+      let finalSidebar1 = clinicTheme.primary_color;
+      let finalSidebar2 = darkerPrimary;
+      
+      if (isClinicDark) {
+        finalBodyBg = '#020617';
+        finalSidebar1 = adjustColorBrightness(clinicTheme.primary_color, -40);
+        finalSidebar2 = adjustColorBrightness(clinicTheme.primary_color, -55);
+      } else {
+        finalBodyBg = adjustColorBrightness(accentBg, 80);
+      }
+
+      activeTheme = {
+        ...clinicTheme,
+        sidebar_bg_1: finalSidebar1,
+        sidebar_bg_2: finalSidebar2,
+        body_bg: finalBodyBg
+      };
+    }
+
+    return activeTheme;
+  }, [themeMode, clinicTheme]);
+
+  // Efeito reativo para aplicar modificações de DOM baseadas no tema
+  useEffect(() => {
     // Injetar variáveis no document Element
-    const primaryRGB = hexToRgb(updatedTheme.primary_color);
-    const secondaryRGB = hexToRgb(updatedTheme.secondary_color);
-    const accentRGB = hexToRgb(updatedTheme.accent_color || '#6366f1');
+    const primaryRGB = hexToRgb(currentTheme.primary_color);
+    const secondaryRGB = hexToRgb(currentTheme.secondary_color);
+    const accentRGB = hexToRgb(currentTheme.accent_color || '#D9E2FF');
+    const sidebarBg1RGB = hexToRgb(currentTheme.sidebar_bg_1);
+    const sidebarBg2RGB = hexToRgb(currentTheme.sidebar_bg_2);
+    const backgroundRGB = hexToRgb(currentTheme.body_bg);
 
     if (primaryRGB) {
       document.documentElement.style.setProperty('--color-primary', primaryRGB);
@@ -61,33 +146,55 @@ export function ThemeProvider({ children }) {
       document.documentElement.style.setProperty('--color-accent', accentRGB);
     }
 
-    // Atualizar o título do documento para a marca do cliente
-    if (updatedTheme.name) {
-      document.title = updatedTheme.name;
+    // Injetar variáveis de fundo e sidebar
+    document.documentElement.style.setProperty('--sidebar-bg-1', sidebarBg1RGB || '7 17 46');
+    document.documentElement.style.setProperty('--sidebar-bg-2', sidebarBg2RGB || '10 23 59');
+    document.documentElement.style.setProperty('--color-background', backgroundRGB || '248 250 252');
+
+    // Injetar fonte do Google Fonts dinamicamente
+    if (currentTheme.font_family) {
+      const fontId = 'whitelabel-google-font';
+      let fontLink = document.getElementById(fontId);
+      if (!fontLink) {
+        fontLink = document.createElement('link');
+        fontLink.id = fontId;
+        fontLink.rel = 'stylesheet';
+        document.head.appendChild(fontLink);
+      }
+      const formattedFont = currentTheme.font_family.replace(/ /g, '+');
+      fontLink.href = `https://fonts.googleapis.com/css2?family=${formattedFont}:wght@300;400;500;600;700;800;900&display=swap`;
+      document.documentElement.style.fontFamily = `"${currentTheme.font_family}", sans-serif`;
     }
-  };
 
-  const resetTheme = () => {
-    applyTheme(defaultTheme);
-  };
+    // Sincronizar Favicon dinamicamente
+    if (currentTheme.favicon_url) {
+      let faviconLink = document.querySelector("link[rel~='icon']");
+      if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        document.head.appendChild(faviconLink);
+      }
+      faviconLink.href = currentTheme.favicon_url;
+    }
 
-  // Carregar tema inicial e sincronizar com o estado darkMode
-  useEffect(() => {
-    applyTheme(defaultTheme);
-  }, []);
+    // Atualizar o título do documento para a marca do cliente
+    if (currentTheme.name) {
+      document.title = currentTheme.name;
+    }
 
-  useEffect(() => {
-    if (darkMode) {
+    // Toggle da classe dark
+    const isDark = themeMode === 'dark' || (themeMode === 'clinic' && clinicTheme.theme_base === 'dark');
+    if (isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme-mode', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme-mode', 'light');
     }
-  }, [darkMode]);
+
+    localStorage.setItem('theme-mode-three', themeMode);
+  }, [currentTheme, themeMode, clinicTheme.theme_base]);
 
   return (
-    <ThemeContext.Provider value={{ currentTheme, applyTheme, resetTheme, darkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ currentTheme, applyTheme, resetTheme, themeMode, setThemeMode }}>
       {children}
     </ThemeContext.Provider>
   );

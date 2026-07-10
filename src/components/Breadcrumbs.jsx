@@ -23,10 +23,10 @@ export default function Breadcrumbs({ activeTab }) {
       <div className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer">
         {clinic?.logo_url ? (
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-white flex items-center justify-center border border-slate-200/50 dark:border-slate-800/40 flex-shrink-0 select-none shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            {clinic.logo_url.startsWith('http') || clinic.logo_url.startsWith('/') ? (
+            {clinic.logo_url.startsWith('http') || clinic.logo_url.startsWith('/') || clinic.logo_url.startsWith('data:image/') || clinic.logo_url.includes('.') ? (
               <img src={clinic.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
             ) : (
-              <span className="text-sm font-bold text-slate-700">{clinic.logo_url}</span>
+              <span className="text-xl flex items-center justify-center select-none">{clinic.logo_url}</span>
             )}
           </div>
         ) : (

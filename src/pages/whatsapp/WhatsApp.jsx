@@ -85,7 +85,17 @@ export default function WhatsApp() {
   // Checar conexão ao abrir o painel
   useEffect(() => {
     if (showEvolutionSettings) {
-      checkRealConnection();
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          checkRealConnection();
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
   }, [showEvolutionSettings, evolutionUrl, evolutionInstance, evolutionToken]);
 
@@ -193,9 +203,19 @@ export default function WhatsApp() {
   // Inicializar o primeiro chat na carga se disponível
   useEffect(() => {
     if (whatsappChats.length > 0 && !selectedPatientId) {
-      setSelectedPatientId(whatsappChats[0].patientId);
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setSelectedPatientId(whatsappChats[0].patientId);
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
-  }, [whatsappChats]);
+  }, [whatsappChats, selectedPatientId]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();

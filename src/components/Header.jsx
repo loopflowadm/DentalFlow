@@ -7,11 +7,12 @@ import { mockDb } from '../lib/mockDatabase';
 
 export default function Header({ activeTab, onSearchChange }) {
   const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
-  const { currentTheme, darkMode, toggleDarkMode } = useTheme();
+  const { currentTheme, themeMode, setThemeMode } = useTheme();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showClinicSelector, setShowClinicSelector] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   // Notificações
   const [notifications, setNotifications] = useState([]);
@@ -87,18 +88,59 @@ export default function Header({ activeTab, onSearchChange }) {
           </div>
         )}
 
-        {/* Alternador de Tema Escuro / Claro */}
-        <button
-          onClick={toggleDarkMode}
-          className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/40 dark:border-slate-800/80 active:scale-95 transition-all text-slate-500 hover:text-slate-800 dark:hover:text-white"
-          title={darkMode ? "Ativar Tema Claro" : "Ativar Tema Escuro"}
-        >
-          {darkMode ? (
-            <Sun className="w-4 h-4 text-amber-500 fill-amber-550/20" />
-          ) : (
-            <Moon className="w-4 h-4 text-slate-600" />
+        {/* Alternador de 3 Temas */}
+        <div className="relative">
+          <button
+            onClick={() => setShowThemeMenu(!showThemeMenu)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/40 dark:border-slate-800/80 active:scale-95 transition-all text-slate-500 hover:text-slate-800 dark:hover:text-white"
+            title="Alterar Tema"
+          >
+            {themeMode === 'light' && <Sun className="w-4 h-4 text-amber-500" />}
+            {themeMode === 'dark' && <Moon className="w-4 h-4 text-indigo-400" />}
+            {themeMode === 'clinic' && <Sparkles className="w-4 h-4 text-emerald-500" />}
+          </button>
+
+          {showThemeMenu && (
+            <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-slate-850 shadow-xl border border-slate-150 dark:border-slate-800 p-1.5 z-50 text-slate-850 dark:text-white text-xs">
+              <button
+                onClick={() => {
+                  setThemeMode('light');
+                  setShowThemeMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all ${
+                  themeMode === 'light' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>Tema Claro</span>
+              </button>
+              <button
+                onClick={() => {
+                  setThemeMode('dark');
+                  setShowThemeMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all mt-0.5 ${
+                  themeMode === 'dark' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Tema Escuro</span>
+              </button>
+              <button
+                onClick={() => {
+                  setThemeMode('clinic');
+                  setShowThemeMenu(false);
+                }}
+                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all mt-0.5 ${
+                  themeMode === 'clinic' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Tema da Empresa</span>
+              </button>
+            </div>
           )}
-        </button>
+        </div>
 
         {/* Notificações */}
         <div className="relative">

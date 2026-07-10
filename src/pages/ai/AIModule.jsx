@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -79,7 +79,7 @@ export default function AIModule() {
 
     // Processamento Simulador
     setTimeout(() => {
-      let responseText = '';
+      let responseText;
       let intent = 'Outros / Desconhecido';
       let confidence = '85%';
       let action = 'Responder com base no modelo geral.';

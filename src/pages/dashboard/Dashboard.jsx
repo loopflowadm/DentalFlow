@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -16,18 +16,16 @@ export default function Dashboard() {
   const { patients, appointments, crmLeads, updateAppointment } = useClinic();
   const { user } = useAuth();
   const [doctorsList, setDoctorsList] = useState([]);
-  const [labWorks, setLabWorks] = useState([]);
 
   // Simular controle de próteses associados a pacientes cadastrados
-  useEffect(() => {
+  const labWorks = useMemo(() => {
     if (patients.length > 0) {
-      setLabWorks([
+      return [
         { id: 1, patient: patients[0].name, work: 'Coroa cerâmica (Dente 16)', lab: 'ProEsthetic Lab', due: 'Hoje', status: 'entregue' },
         { id: 2, patient: patients[patients.length - 1].name || 'Paciente', work: 'Placa de Bruxismo', lab: 'OrtoArt Lab', due: 'Amanhã', status: 'pendente' }
-      ]);
-    } else {
-      setLabWorks([]);
+      ];
     }
+    return [];
   }, [patients]);
 
   const handleUpdateAppStatus = async (app, newStatus) => {

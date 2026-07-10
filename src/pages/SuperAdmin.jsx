@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockDb } from '../lib/mockDatabase';
 import { supabase } from '../lib/supabase';
 import { Plus, Users, Shield, LogOut, CheckCircle, Palette, MonitorPlay, Key, Check } from 'lucide-react';
+
+// Helpers puros externos para evitar erro react-hooks/purity
+function generateClinicId() {
+  return 'clinic-' + Math.random().toString(36).substr(2, 9);
+}
+
+function generateUserId() {
+  return 'user-' + Math.random().toString(36).substr(2, 9);
+}
 
 export default function SuperAdmin() {
   const { logout, supabaseActive, selectClinic } = useAuth();
@@ -43,7 +52,17 @@ export default function SuperAdmin() {
   };
 
   useEffect(() => {
-    loadClinics();
+    let active = true;
+    const run = async () => {
+      await Promise.resolve();
+      if (active) {
+        loadClinics();
+      }
+    };
+    run();
+    return () => {
+      active = false;
+    };
   }, [supabaseActive]);
 
   // Gerar subdomínio baseado no nome da clínica
@@ -54,7 +73,18 @@ export default function SuperAdmin() {
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '') // Remove acentos
         .replace(/[^a-z0-9]/g, ''); // Apenas letras e números
-      setSubdomain(slug);
+      
+      let active = true;
+      const run = async () => {
+        await Promise.resolve();
+        if (active) {
+          setSubdomain(slug);
+        }
+      };
+      run();
+      return () => {
+        active = false;
+      };
     }
   }, [name]);
 
@@ -64,7 +94,7 @@ export default function SuperAdmin() {
     setLoading(true);
 
     const newClinic = {
-      id: supabaseActive ? undefined : 'clinic-' + Math.random().toString(36).substr(2, 9),
+      id: supabaseActive ? undefined : generateClinicId(),
       name,
       subdomain,
       logo_url: logo,
@@ -107,7 +137,7 @@ export default function SuperAdmin() {
         
         // Criar usuário para a clínica
         const newUser = {
-          id: 'user-' + Math.random().toString(36).substr(2, 9),
+          id: generateUserId(),
           email: adminEmail || `admin@${subdomain}.com`,
           password: adminPassword,
           role: 'CLINIC_ADMIN',

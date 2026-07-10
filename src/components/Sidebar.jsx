@@ -118,7 +118,7 @@ export default function Sidebar({
       {/* ========================================================================= */}
       {/* COLUNA 1: BARRA DE ÍCONES DE NAVEGAÇÃO (FIXA 80px)                        */}
       {/* ========================================================================= */}
-      <aside className="w-20 bg-sidebar-1 border border-slate-900/60 flex flex-col justify-between items-center py-5 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative">
+      <aside className="w-20 border border-slate-900/60 flex flex-col justify-between items-center py-5 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative" style={{ backgroundColor: currentTheme.sidebar_bg_1 }}>
         <div className="flex flex-col items-center gap-6 w-full">
           {/* Logo compacta - DentalFlow Symbol */}
           <div 
@@ -177,7 +177,7 @@ export default function Sidebar({
       {/* COLUNA 2: SUB-SIDEBAR CONTEXTUAL (OPCIONAL E COLAPSÁVEL, 260px)           */}
       {/* ========================================================================= */}
       {hasSubSidebar && !collapsed && (
-        <aside className="w-64 bg-sidebar-2 border border-slate-900/60 flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250">
+        <aside className="w-64 border border-slate-900/60 flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250" style={{ backgroundColor: currentTheme.sidebar_bg_2 }}>
           
           {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
           <div className="px-4 py-3 border-b border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-950/5">
@@ -204,19 +204,19 @@ export default function Sidebar({
               <>
                 {/* Grid 2x2 de métricas rápidas no topo */}
                 <div className="grid grid-cols-2 gap-2 text-white">
-                  <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
+                  <div className="p-3 bg-black/40 border border-white/5 rounded-2xl flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
                     <span className="text-xl font-bold font-title mt-1">{totalLeadsCount}</span>
                   </div>
-                  <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
+                  <div className="p-3 bg-black/40 border border-white/5 rounded-2xl flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Novos</span>
                     <span className="text-xl font-bold font-title mt-1 text-sky-400">{newLeadsCount}</span>
                   </div>
-                  <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
+                  <div className="p-3 bg-black/40 border border-white/5 rounded-2xl flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Negociando</span>
                     <span className="text-xl font-bold font-title mt-1 text-violet-400">{inNegotiationCount}</span>
                   </div>
-                  <div className="p-3 bg-slate-900/60 border border-slate-800/40 rounded-2xl flex flex-col justify-between">
+                  <div className="p-3 bg-black/40 border border-white/5 rounded-2xl flex flex-col justify-between">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Fechados</span>
                     <span className="text-xl font-bold font-title mt-1 text-emerald-400">{closedCount}</span>
                   </div>
@@ -231,7 +231,7 @@ export default function Sidebar({
                       placeholder="Buscar paciente por nome..."
                       value={crmSearch}
                       onChange={(e) => setCrmSearch(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
+                      className="w-full bg-black/35 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-white/20 transition-colors placeholder:text-slate-500"
                     />
                   </div>
 
@@ -239,7 +239,7 @@ export default function Sidebar({
                     <select
                       value={crmPriority}
                       onChange={(e) => setCrmPriority(e.target.value)}
-                      className="flex-1 bg-slate-900 border border-slate-850 rounded-xl py-2 px-2 text-xs text-slate-400 focus:outline-none cursor-pointer"
+                      className="flex-1 bg-black/35 border border-white/10 rounded-xl py-2 px-2 text-xs text-slate-400 focus:outline-none cursor-pointer"
                     >
                       <option value="">Todas prioridades</option>
                       <option value="high">Alta</option>
@@ -269,7 +269,7 @@ export default function Sidebar({
                         className={`p-3 rounded-2xl cursor-pointer relative transition-all border group ${
                           isActive 
                             ? 'border-transparent text-white shadow-md' 
-                            : 'bg-slate-900/50 hover:bg-slate-900 border-slate-850 text-slate-300 hover:text-white'
+                            : 'bg-black/25 hover:bg-black/45 border-white/5 text-slate-300 hover:text-white'
                         }`}
                         style={isActive ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}20` } : {}}
                       >
@@ -333,7 +333,7 @@ export default function Sidebar({
                       placeholder="Buscar paciente..."
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
+                      className="w-full bg-black/35 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-white/20 transition-colors placeholder:text-slate-500"
                     />
                   </div>
 
@@ -357,7 +357,7 @@ export default function Sidebar({
                         className={`p-3 rounded-2xl cursor-pointer transition-all border ${
                           isActive 
                             ? 'border-transparent text-white shadow-md' 
-                            : 'bg-slate-900/50 hover:bg-slate-900 border-slate-850 text-slate-300'
+                            : 'bg-black/25 hover:bg-black/45 border-white/5 text-slate-300'
                         }`}
                         style={isActive ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}20` } : {}}
                       >
@@ -390,7 +390,7 @@ export default function Sidebar({
                     placeholder="Filtrar por paciente..."
                     value={appointmentSearch}
                     onChange={(e) => setAppointmentSearch(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-850 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-slate-700 transition-colors placeholder:text-slate-500"
+                    className="w-full bg-black/35 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-white/20 transition-colors placeholder:text-slate-500"
                   />
                 </div>
 
@@ -405,7 +405,7 @@ export default function Sidebar({
                         className={`p-3 rounded-2xl cursor-pointer transition-all border relative ${
                           isActive 
                             ? 'border-transparent text-white shadow-md' 
-                            : 'bg-slate-900/50 hover:bg-slate-900 border-slate-850 text-slate-300'
+                            : 'bg-black/25 hover:bg-black/45 border-white/5 text-slate-300'
                         }`}
                         style={isActive ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}20` } : {}}
                       >
