@@ -92,7 +92,7 @@
 }
 
 .btn-depth-primary:hover {
-  @apply shadow-[0_4px_12px_rgba(var(--color-primary), 0.25)] -translate-y-0.5;
+  @apply shadow-[0_4px_12px_rgba(var(--color-primary),_0.25)] -translate-y-0.5;
 }
 
 .btn-depth-primary:active {

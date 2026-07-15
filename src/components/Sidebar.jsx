@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Kanban, Users, Calendar, MessageSquare, 
   Bot, Zap, Megaphone, DollarSign, BarChart3, Settings, 
   LogOut, ChevronLeft, ChevronRight, Sparkles, Search, 
-  Plus, CheckSquare, Clock, ArrowUpRight, Phone, AlertCircle
+  Plus, CheckSquare, Clock, ArrowUpRight, Phone, AlertCircle, Cloud
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -20,17 +20,84 @@ export default function Sidebar({
   selectedPatient,
   setSelectedPatient,
   selectedAppointment,
-  setSelectedAppointment
+  setSelectedAppointment,
+  agendaDate,
+  setAgendaDate,
+  selectedChairs,
+  setSelectedChairs,
+  selectedDentists,
+  setSelectedDentists,
+  agendaViewMode,
+  setAgendaViewMode
 }) {
   const { user, logout, clinic } = useAuth();
   const { currentTheme } = useTheme();
-  const { patients, appointments, crmLeads, addCrmLead } = useClinic();
+  const { patients, appointments, crmLeads, addCrmLead, chairs, dentists, addChair, addDentist } = useClinic();
 
   // Estados dos filtros da segunda sidebar
   const [crmSearch, setCrmSearch] = useState('');
   const [crmPriority, setCrmPriority] = useState('');
   const [patientSearch, setPatientSearch] = useState('');
   const [appointmentSearch, setAppointmentSearch] = useState('');
+
+  // Mini Calendar states & helper functions
+  const [miniCalDate, setMiniCalDate] = useState(new Date(agendaDate || new Date()));
+
+  // Sync mini calendar date when agendaDate changes
+  React.useEffect(() => {
+    if (agendaDate) {
+      setMiniCalDate(new Date(agendaDate));
+    }
+  }, [agendaDate]);
+
+  const navigateMiniCal = (dir) => {
+    const d = new Date(miniCalDate);
+    d.setMonth(d.getMonth() + dir);
+    setMiniCalDate(d);
+  };
+
+  const getMiniCalDays = () => {
+    const year = miniCalDate.getFullYear();
+    const month = miniCalDate.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const prevMonthTotalDays = new Date(year, month, 0).getDate();
+
+    const days = [];
+    // Prev month days
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      days.push({
+        day: prevMonthTotalDays - i,
+        date: new Date(year, month - 1, prevMonthTotalDays - i),
+        isCurrentMonth: false
+      });
+    }
+    // Current month days
+    for (let i = 1; i <= totalDays; i++) {
+      days.push({
+        day: i,
+        date: new Date(year, month, i),
+        isCurrentMonth: true
+      });
+    }
+    // Next month days
+    const remaining = 42 - days.length;
+    for (let i = 1; i <= remaining; i++) {
+      days.push({
+        day: i,
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false
+      });
+    }
+    return days;
+  };
+
+  const miniCalDays = getMiniCalDays();
+  const weekdaysMin = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const monthNames = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
 
   // Controlar exibição do modal de Novo Lead a partir da sidebar
   const [showAddLeadSidebar, setShowAddLeadSidebar] = useState(false);
@@ -144,7 +211,7 @@ export default function Sidebar({
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center relative group transition-all duration-300 ${
                       isActive 
                         ? 'text-white shadow-md' 
-                        : 'text-slate-500 hover:text-slate-200 hover:bg-slate-900/40'
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
                     }`}
                     style={isActive ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}40` } : {}}
                   >
@@ -165,7 +232,7 @@ export default function Sidebar({
           {/* Botão de Logout */}
           <button
             onClick={logout}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white/60 hover:text-red-400 hover:bg-red-500/10 transition-all"
             title="Sair do Sistema"
           >
             <LogOut className="w-5 h-5" />
@@ -189,7 +256,7 @@ export default function Sidebar({
             {/* Toggle de Fechamento */}
             <button
               onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-xl text-slate-500 hover:text-white hover:bg-slate-900/60 transition-colors flex-shrink-0"
+              className="p-1.5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
               title="Recolher painel"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
@@ -380,64 +447,195 @@ export default function Sidebar({
               </>
             )}
 
-            {/* 3. MÓDULO AGENDA (CONSULTAS DO DIA) */}
+            {/* 3. MÓDULO AGENDA (MINI CALENDÁRIO, CADEIRAS, DENTISTAS & BACKUP) */}
             {activeTab === 'agenda' && (
-              <>
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Filtrar por paciente..."
-                    value={appointmentSearch}
-                    onChange={(e) => setAppointmentSearch(e.target.value)}
-                    className="w-full bg-black/35 border border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-white/20 transition-colors placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div className="space-y-2.5 pt-2">
-                  {filteredAppointments.map(app => {
-                    const isActive = selectedAppointment?.id === app.id;
-                    const pat = patients.find(p => p.id === app.patient_id);
-                    return (
-                      <div
-                        key={app.id}
-                        onClick={() => setSelectedAppointment(app)}
-                        className={`p-3 rounded-2xl cursor-pointer transition-all border relative ${
-                          isActive 
-                            ? 'border-transparent text-white shadow-md' 
-                            : 'bg-black/25 hover:bg-black/45 border-white/5 text-slate-300'
-                        }`}
-                        style={isActive ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}20` } : {}}
+              <div className="space-y-4">
+                
+                {/* 3a. Mini Calendário (DatePicker) */}
+                <div className="p-3 bg-black/30 border border-white/5 rounded-2xl">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[11px] font-bold text-white capitalize font-title pl-1">
+                      {monthNames[miniCalDate.getMonth()]} {miniCalDate.getFullYear()}
+                    </span>
+                    <div className="flex gap-1">
+                      <button 
+                        type="button"
+                        onClick={() => navigateMiniCal(-1)} 
+                        className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors"
                       >
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[10px] font-extrabold ${isActive ? 'text-white font-black' : 'text-slate-200'}`}>
-                            {app.time || '14:00'}
-                          </span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-md ${
-                            isActive ? 'bg-white/20 text-white' : (app.status === 'confirmed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400')
-                          }`}>
-                            {app.status === 'confirmed' ? 'Confir.' : 'Pendente'}
-                          </span>
-                        </div>
-
-                        <h4 className={`text-xs font-bold mt-2 truncate ${isActive ? 'text-white font-black' : 'text-white'}`}>
-                          {pat?.name || 'Paciente'}
-                        </h4>
-                        
-                        <p className={`text-[10px] mt-0.5 truncate ${isActive ? 'text-white/80' : 'text-slate-400'}`}>
-                          {app.procedure_name || 'Consulta'}
-                        </p>
-                      </div>
-                    );
-                  })}
-
-                  {filteredAppointments.length === 0 && (
-                    <div className="py-8 text-center text-slate-500 text-xs">
-                      <span>Nenhuma consulta agendada</span>
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => navigateMiniCal(1)} 
+                        className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Dias da semana */}
+                  <div className="grid grid-cols-7 text-center text-slate-500 font-bold text-[9px] mb-1">
+                    {weekdaysMin.map((w, idx) => (
+                      <div key={idx} className="py-0.5">{w}</div>
+                    ))}
+                  </div>
+
+                  {/* Dias do mês */}
+                  <div className="grid grid-cols-7 text-center text-[10px] font-bold gap-0.5">
+                    {miniCalDays.map((day, idx) => {
+                      const isSelected = agendaDate && day.date.toDateString() === new Date(agendaDate).toDateString();
+                      const isToday = day.date.toDateString() === new Date().toDateString();
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setAgendaDate(day.date);
+                          }}
+                          className={`py-1 rounded-md transition-all font-semibold ${
+                            isSelected 
+                              ? 'bg-secondary text-white shadow-sm font-bold' 
+                              : isToday
+                                ? 'bg-white/10 text-amber-400 font-bold'
+                                : day.isCurrentMonth
+                                  ? 'text-slate-200 hover:bg-white/5'
+                                  : 'text-slate-600 hover:bg-white/5'
+                          }`}
+                          style={isSelected ? { backgroundColor: currentTheme.secondary_color } : {}}
+                        >
+                          {day.day}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </>
+
+                {/* 3b. Seção Cadeiras */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center pl-1 pr-1.5">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-title">
+                      Cadeiras
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const name = prompt('Digite o nome da nova cadeira:');
+                        if (name && name.trim()) {
+                          await addChair(name.trim());
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                      title="Adicionar Cadeira"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1 bg-black/20 p-2 border border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none">
+                    {/* Opção Todas */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedChairs([])}
+                      className={`w-full text-left px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between ${
+                        selectedChairs.length === 0 
+                          ? 'bg-white/10 text-white font-black' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span>Todas as Cadeiras</span>
+                      {selectedChairs.length === 0 && <span className="text-secondary" style={{ color: currentTheme.secondary_color }}>✓</span>}
+                    </button>
+
+                    {chairs.map(c => {
+                      const isChecked = selectedChairs.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedChairs(prev => 
+                              prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id]
+                            );
+                          }}
+                          className={`w-full text-left px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between ${
+                            isChecked 
+                              ? 'bg-white/10 text-white font-black' 
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          }`}
+                        >
+                          <span>{c.name}</span>
+                          {isChecked && <span className="text-secondary" style={{ color: currentTheme.secondary_color }}>✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3c. Seção Agendas (Profissionais) */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center pl-1 pr-1.5">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-title">
+                      Agendas (Dentistas)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = prompt('Digite o nome do novo profissional:');
+                        if (name && name.trim()) {
+                          addDentist(name.trim());
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+                      title="Adicionar Profissional"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-1 bg-black/20 p-2 border border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none">
+                    {/* Opção Todos */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDentists([])}
+                      className={`w-full text-left px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between ${
+                        selectedDentists.length === 0 
+                          ? 'bg-white/10 text-white font-black' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span>Todos Dentistas</span>
+                      {selectedDentists.length === 0 && <span className="text-secondary" style={{ color: currentTheme.secondary_color }}>✓</span>}
+                    </button>
+
+                    {dentists.map(d => {
+                      const isChecked = selectedDentists.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDentists(prev => 
+                              prev.includes(d.id) ? prev.filter(id => id !== d.id) : [...prev, d.id]
+                            );
+                          }}
+                          className={`w-full text-left px-2 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center justify-between ${
+                            isChecked 
+                              ? 'bg-white/10 text-white font-black' 
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          }`}
+                        >
+                          <span>{d.full_name}</span>
+                          {isChecked && <span className="text-secondary" style={{ color: currentTheme.secondary_color }}>✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+
+              </div>
             )}
 
           </div>
@@ -540,7 +738,7 @@ export default function Sidebar({
       {hasSubSidebar && collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="absolute left-[72px] top-6 w-6 h-12 bg-[#0A173B] hover:bg-[#12245C] border border-y-slate-850 border-r-slate-850 border-l-transparent rounded-r-xl flex items-center justify-center text-slate-400 hover:text-white transition-all shadow-md z-40 group hover:w-7 active:scale-95"
+          className="absolute left-[72px] top-6 w-6 h-12 bg-[#0A173B] hover:bg-[#12245C] border border-y-slate-850 border-r-slate-850 border-l-transparent rounded-r-xl flex items-center justify-center text-white/60 hover:text-white transition-all shadow-md z-40 group hover:w-7 active:scale-95"
           title="Expandir painel"
         >
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />

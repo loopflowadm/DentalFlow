@@ -42,15 +42,37 @@ CREATE TABLE public.patients (
 -- Habilitar RLS para Pacientes
 ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
 
+-- 3b. Tabela de Cadeiras (Chairs)
+CREATE TABLE public.chairs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Habilitar RLS para Cadeiras
+ALTER TABLE public.chairs ENABLE ROW LEVEL SECURITY;
+
 -- 4. Tabela de Consultas/Agendamentos (Appointments)
 CREATE TABLE public.appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
-    patient_id UUID NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
-    doctor_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    patient_id UUID REFERENCES public.patients(id) ON DELETE CASCADE, -- Nullable para Blocker (Compromisso) e Tarefas
+    doctor_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE, -- Nullable para Tarefas
+    chair_id UUID REFERENCES public.chairs(id) ON DELETE SET NULL,
+    room VARCHAR(255) DEFAULT NULL,
+    procedure_id UUID REFERENCES public.procedures(id) ON DELETE SET NULL,
+    title VARCHAR(255) DEFAULT NULL,
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    duration INTEGER DEFAULT 30,
+    observations TEXT DEFAULT NULL,
+    send_confirmation BOOLEAN DEFAULT FALSE,
+    return_days INTEGER DEFAULT NULL,
+    label VARCHAR(100) DEFAULT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING', -- 'PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'
+    type VARCHAR(50) DEFAULT 'CONSULTA', -- 'CONSULTA', 'COMPROMISSO', 'TAREFA'
+    is_recurring BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -128,6 +150,12 @@ CREATE POLICY profiles_modify_clinic ON public.profiles
 -- 3. Políticas para PATIENTS
 -- Apenas usuários da própria clínica podem ler/escrever pacientes
 CREATE POLICY patients_all_clinic ON public.patients
+    FOR ALL USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
+
+
+-- 3b. Políticas para CHAIRS
+-- Apenas usuários da própria clínica podem ler/escrever cadeiras
+CREATE POLICY chairs_all_clinic ON public.chairs
     FOR ALL USING (clinic_id = public.get_auth_clinic_id() OR public.is_super_admin());
 
 

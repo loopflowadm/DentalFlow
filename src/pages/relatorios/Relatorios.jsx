@@ -7,7 +7,7 @@ import {
 import { BarChart3, TrendingUp, Users, DollarSign, Target, Award, Filter, ShieldAlert } from 'lucide-react';
 
 export default function Relatorios() {
-  const { patients, appointments } = useClinic();
+  const { patients, appointments, dentists } = useClinic();
   
   // Estados locais
   const [dateRange, setDateRange] = useState('30d');
@@ -30,12 +30,15 @@ export default function Relatorios() {
     { name: 'Aparelho Estético', quantidade: 15, faturamento: 22500, fill: '#196BFB' }
   ];
 
-  // Faturamento por Dentista Data
-  const dentistRevenueData = [
-    { name: 'Dr. Pedro Ramos', faturamento: 84500 },
-    { name: 'Dra. Ana Paula', faturamento: 62000 },
-    { name: 'Dr. Carlos Souza', faturamento: 45000 }
-  ];
+  // Faturamento por Dentista Data calculado dinamicamente
+  const dentistRevenueData = dentists.map(d => {
+    const docApps = appointments.filter(app => app.doctor_id === d.id && (app.status === 'completed' || app.status === 'Concluído'));
+    const totalRev = docApps.reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
+    return {
+      name: d.full_name,
+      faturamento: totalRev > 0 ? totalRev : 0
+    };
+  });
 
   // Evolução LTV vs CAC Data
   const ltvCacData = [

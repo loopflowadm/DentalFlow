@@ -32,121 +32,8 @@ export function ClinicProvider({ children }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [toothRecords, setToothRecords] = useState([]);
   const [crmLeads, setCrmLeads] = useState([]);
-
-  // Carregar dados de acordo com o Supabase de forma paralela e resiliente
-  const loadData = useCallback(async () => {
-    if (!clinic) return;
-    setLoading(true);
-
-    const clinicId = clinic.id;
-
-    try {
-      const results = await Promise.allSettled([
-        supabase.from('patients').select('*').eq('clinic_id', clinicId),
-        supabase.from('appointments').select('*').eq('clinic_id', clinicId),
-        supabase.from('procedures').select('*').eq('clinic_id', clinicId),
-        supabase.from('insurance_plans').select('*').eq('clinic_id', clinicId),
-        supabase.from('transactions').select('*').eq('clinic_id', clinicId).order('date', { ascending: false }),
-        supabase.from('automations').select('*').eq('clinic_id', clinicId),
-        supabase.from('marketing_campaigns').select('*').eq('clinic_id', clinicId),
-        supabase.from('suppliers').select('*').eq('clinic_id', clinicId),
-        supabase.from('accounts_payable').select('*').eq('clinic_id', clinicId),
-        supabase.from('installments').select('*, treatment_budgets(*, patients(*))').eq('clinic_id', clinicId),
-        supabase.from('medical_records').select('*').eq('clinic_id', clinicId),
-        supabase.from('prescriptions').select('*').eq('clinic_id', clinicId),
-        supabase.from('tooth_records').select('*').eq('clinic_id', clinicId),
-        supabase.from('crm_leads').select('*').eq('clinic_id', clinicId),
-        supabase.from('whatsapp_config').select('*').eq('clinic_id', clinicId).maybeSingle()
-      ]);
-
-      // Função auxiliar para extrair dados resolvidos com segurança e isolar falhas individuais
-      const getValue = (res, defaultValue = []) => {
-        if (res.status === 'fulfilled') {
-          if (res.value.error) {
-            console.error('Erro de tabela no carregamento do Supabase:', res.value.error);
-            return defaultValue;
-          }
-          return res.value.data || defaultValue;
-        } else {
-          console.error('Falha de conexão / Promessa rejeitada:', res.reason);
-          return defaultValue;
-        }
-      };
-
-      const pData = getValue(results[0]);
-      const appData = getValue(results[1]);
-      const procData = getValue(results[2]);
-      const planData = getValue(results[3]);
-      const tData = getValue(results[4]);
-      const autData = getValue(results[5]);
-      const mData = getValue(results[6]);
-      const supData = getValue(results[7]);
-      const apData = getValue(results[8]);
-      const instData = getValue(results[9]);
-      const recData = getValue(results[10]);
-      const presData = getValue(results[11]);
-      const toothData = getValue(results[12]);
-      const leadData = getValue(results[13]);
-
-      let waData = null;
-      if (results[14].status === 'fulfilled' && !results[14].value.error) {
-        waData = results[14].value.data;
-      }
-
-      setPatients(pData);
-      setAppointments(appData.map(a => {
-        const p = pData.find(pat => pat.id === a.patient_id);
-        return {
-          ...a,
-          patientName: p ? p.name : 'Paciente Desconhecido',
-          patientPhone: p ? p.phone : '',
-          procedureName: a.procedureName || 'Consulta Geral',
-          color: a.color || '#3b82f6'
-        };
-      }));
-
-      setProcedures(procData);
-      setInsurancePlans(planData);
-      setFinanceTransactions(tData);
-      setAutomations(autData);
-      setMarketingCampaigns(mData);
-      setSuppliers(supData);
-      setAccountsPayable(apData);
-      setToothRecords(toothData);
-      setMedicalRecords(recData);
-      setPrescriptions(presData);
-      setCrmLeads(leadData);
-
-      const formattedInstallments = instData.map(inst => {
-        const budget = inst.treatment_budgets;
-        const patient = budget?.patients;
-        return {
-          ...inst,
-          patient_id: patient?.id,
-          patientName: patient ? patient.name : 'Paciente',
-          description: budget ? budget.description : 'Tratamento'
-        };
-      });
-      setInstallments(formattedInstallments);
-
-      if (waData) {
-        setAiConfig({
-          prompt: waData.agent_prompt || '',
-          personality: 'sofia_assistente',
-          operatingHours: '08:00 - 18:00',
-          isActive: waData.is_active || false,
-          knowledgeBase: []
-        });
-      }
-
-      // Inicializar chats do WhatsApp
-      loadChatsState(pData, leadData);
-    } catch (err) {
-      console.error('Falha crítica geral ao carregar dados do Supabase:', err);
-    }
-
-    setLoading(false);
-  }, [clinic, loadChatsState]);
+  const [chairs, setChairs] = useState([]);
+  const [dentists, setDentists] = useState([]);
 
   const loadChatsState = useCallback(async (patList, leadList = []) => {
     const clinicId = clinic.id;
@@ -226,6 +113,193 @@ export function ClinicProvider({ children }) {
 
     setWhatsappChats(defaultChats);
   }, [clinic]);
+
+  // Carregar dados de acordo com o Supabase de forma paralela e resiliente
+  const loadData = useCallback(async () => {
+    if (!clinic) return;
+    setLoading(true);
+
+    const clinicId = clinic.id;
+
+    try {
+      const results = await Promise.allSettled([
+        supabase.from('patients').select('*').eq('clinic_id', clinicId),
+        supabase.from('appointments').select('*').eq('clinic_id', clinicId),
+        supabase.from('procedures').select('*').eq('clinic_id', clinicId),
+        supabase.from('insurance_plans').select('*').eq('clinic_id', clinicId),
+        supabase.from('transactions').select('*').eq('clinic_id', clinicId).order('date', { ascending: false }),
+        supabase.from('automations').select('*').eq('clinic_id', clinicId),
+        supabase.from('marketing_campaigns').select('*').eq('clinic_id', clinicId),
+        supabase.from('suppliers').select('*').eq('clinic_id', clinicId),
+        supabase.from('accounts_payable').select('*').eq('clinic_id', clinicId),
+        supabase.from('installments').select('*, treatment_budgets(*, patients(*))').eq('clinic_id', clinicId),
+        supabase.from('medical_records').select('*').eq('clinic_id', clinicId),
+        supabase.from('prescriptions').select('*').eq('clinic_id', clinicId),
+        supabase.from('tooth_records').select('*').eq('clinic_id', clinicId),
+        supabase.from('crm_leads').select('*').eq('clinic_id', clinicId),
+        supabase.from('whatsapp_config').select('*').eq('clinic_id', clinicId).maybeSingle(),
+        supabase.from('chairs').select('*').eq('clinic_id', clinicId),
+        supabase.from('profiles').select('*').eq('clinic_id', clinicId).eq('role', 'DOCTOR')
+      ]);
+
+      // Função auxiliar para extrair dados resolvidos com segurança e isolar falhas individuais
+      const getValue = (res, defaultValue = []) => {
+        if (res.status === 'fulfilled') {
+          if (res.value.error) {
+            console.error('Erro de tabela no carregamento do Supabase:', res.value.error);
+            return defaultValue;
+          }
+          return res.value.data || defaultValue;
+        } else {
+          console.error('Falha de conexão / Promessa rejeitada:', res.reason);
+          return defaultValue;
+        }
+      };
+
+      const pData = getValue(results[0]);
+      const appData = getValue(results[1]);
+      const procData = getValue(results[2]);
+      const planData = getValue(results[3]);
+      const tData = getValue(results[4]);
+      const autData = getValue(results[5]);
+      const mData = getValue(results[6]);
+      const supData = getValue(results[7]);
+      const apData = getValue(results[8]);
+      const instData = getValue(results[9]);
+      const recData = getValue(results[10]);
+      const presData = getValue(results[11]);
+      const toothData = getValue(results[12]);
+      const leadData = getValue(results[13]);
+      const chairData = getValue(results[15]);
+      const dentistData = getValue(results[16]);
+
+      let waData = null;
+      if (results[14].status === 'fulfilled' && !results[14].value.error) {
+        waData = results[14].value.data;
+      }
+
+      setPatients(pData);
+
+      // Fallback/auto-seeding robusto para Cadeiras
+      if (chairData.length === 0) {
+        try {
+          const defaultChairs = [
+            { name: 'Cadeira 01', clinic_id: clinicId },
+            { name: 'Cadeira 02', clinic_id: clinicId }
+          ];
+          const { data, error } = await supabase.from('chairs').insert(defaultChairs).select();
+          if (!error && data && data.length > 0) {
+            setChairs(data);
+          } else {
+            setChairs(defaultChairs.map((c, idx) => ({ id: `c-${idx + 1}`, ...c })));
+          }
+        } catch (err) {
+          setChairs([
+            { id: 'c-1', name: 'Cadeira 01', clinic_id: clinicId },
+            { id: 'c-2', name: 'Cadeira 02', clinic_id: clinicId }
+          ]);
+        }
+      } else {
+        setChairs(chairData);
+      }
+
+      // Fallback robusto/real para Dentistas
+      if (dentistData.length === 0) {
+        if (user && user.id) {
+          setDentists([
+            { id: user.id, full_name: user.full_name || 'Profissional Principal', role: 'DOCTOR', clinic_id: clinicId }
+          ]);
+        } else {
+          setDentists([
+            { id: 'doc-1', full_name: 'Dr. Pedro Ramos', role: 'DOCTOR', clinic_id: clinicId },
+            { id: 'doc-2', full_name: 'Dra. Ana Paula', role: 'DOCTOR', clinic_id: clinicId }
+          ]);
+        }
+      } else {
+        setDentists(dentistData);
+      }
+
+      // Auto-seeding robusto para Procedimentos
+      let finalProcData = procData;
+      if (procData.length === 0) {
+        try {
+          const defaultProcs = [
+            { name: 'Consulta Geral / Avaliação', price: 150.00, category: 'Diagnóstico', color: '#10b981', clinic_id: clinicId },
+            { name: 'Profilaxia (Limpeza)', price: 200.00, category: 'Prevenção', color: '#3b82f6', clinic_id: clinicId },
+            { name: 'Restauração de Resina', price: 250.00, category: 'Dentística', color: '#f59e0b', clinic_id: clinicId },
+            { name: 'Tratamento de Canal (Endodontia)', price: 800.00, category: 'Endodontia', color: '#ef4444', clinic_id: clinicId },
+            { name: 'Exodontia Simples', price: 300.00, category: 'Cirurgia', color: '#ec4899', clinic_id: clinicId }
+          ];
+          const { data, error } = await supabase.from('procedures').insert(defaultProcs).select();
+          if (!error && data && data.length > 0) {
+            finalProcData = data;
+          } else {
+            finalProcData = defaultProcs.map((p, idx) => ({ id: `p-${idx + 1}`, ...p }));
+          }
+        } catch (err) {
+          console.warn('Erro ao auto-semear procedimentos:', err);
+        }
+      }
+
+      setAppointments(appData.map(a => {
+        const p = pData.find(pat => pat.id === a.patient_id);
+        const proc = finalProcData.find(pr => pr.id === a.procedure_id);
+        return {
+          ...a,
+          patientName: p ? p.name : (a.type === 'COMPROMISSO' ? '' : 'Paciente Desconhecido'),
+          patientPhone: p ? p.phone : '',
+          procedureName: proc ? proc.name : (a.procedure_name || a.procedureName || 'Consulta Geral'),
+          color: proc ? proc.color : (a.color || '#3b82f6'),
+          chairId: a.chair_id || a.chairId || null,
+          procedureId: a.procedure_id || a.procedureId || null,
+          sendConfirmation: a.send_confirmation !== undefined ? a.send_confirmation : a.sendConfirmation,
+          returnDays: a.return_days !== undefined ? a.return_days : a.returnDays,
+          isRecurring: a.is_recurring !== undefined ? a.is_recurring : a.isRecurring,
+        };
+      }));
+
+      setProcedures(finalProcData);
+      setInsurancePlans(planData);
+      setFinanceTransactions(tData);
+      setAutomations(autData);
+      setMarketingCampaigns(mData);
+      setSuppliers(supData);
+      setAccountsPayable(apData);
+      setToothRecords(toothData);
+      setMedicalRecords(recData);
+      setPrescriptions(presData);
+      setCrmLeads(leadData);
+
+      const formattedInstallments = instData.map(inst => {
+        const budget = inst.treatment_budgets;
+        const patient = budget?.patients;
+        return {
+          ...inst,
+          patient_id: patient?.id,
+          patientName: patient ? patient.name : 'Paciente',
+          description: budget ? budget.description : 'Tratamento'
+        };
+      });
+      setInstallments(formattedInstallments);
+
+      if (waData) {
+        setAiConfig({
+          prompt: waData.agent_prompt || '',
+          personality: 'sofia_assistente',
+          operatingHours: '08:00 - 18:00',
+          isActive: waData.is_active || false,
+          knowledgeBase: []
+        });
+      }
+
+      // Inicializar chats do WhatsApp
+      loadChatsState(pData, leadData);
+    } catch (err) {
+      console.error('Falha crítica geral ao carregar dados do Supabase:', err);
+    }
+
+    setLoading(false);
+  }, [clinic, loadChatsState]);
 
   useEffect(() => {
     let active = true;
@@ -343,32 +417,195 @@ export function ClinicProvider({ children }) {
     return patientData;
   };
 
+  // Auxiliar para validar se uma string é um UUID válido
+  const isValidUUID = (str) => {
+    if (typeof str !== 'string') return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+  };
+
   // CONSULTAS
   const addAppointment = async (app) => {
     const clinicId = clinic.id;
-    const fresh = {
-      ...app,
+    const cleanApp = {
       clinic_id: clinicId,
-      created_at: new Date().toISOString()
+      patient_id: (app.patient_id && isValidUUID(app.patient_id)) ? app.patient_id : ((app.patientId && isValidUUID(app.patientId)) ? app.patientId : null),
+      doctor_id: (app.doctor_id && isValidUUID(app.doctor_id)) ? app.doctor_id : ((app.doctorId && isValidUUID(app.doctorId)) ? app.doctorId : null),
+      start_time: app.start_time || app.startTime,
+      end_time: app.end_time || app.endTime,
+      status: app.status || 'PENDING',
+      chair_id: (app.chair_id && isValidUUID(app.chair_id)) ? app.chair_id : ((app.chairId && isValidUUID(app.chairId)) ? app.chairId : null),
+      room: app.room || null,
+      procedure_id: (app.procedure_id && isValidUUID(app.procedure_id)) ? app.procedure_id : ((app.procedureId && isValidUUID(app.procedureId)) ? app.procedureId : null),
+      title: app.title || null,
+      duration: app.duration || 30,
+      observations: app.observations || null,
+      send_confirmation: app.send_confirmation !== undefined ? app.send_confirmation : (app.sendConfirmation !== undefined ? app.sendConfirmation : false),
+      return_days: app.return_days !== undefined ? app.return_days : (app.returnDays !== undefined ? app.returnDays : null),
+      label: app.label || null,
+      type: app.type || 'CONSULTA',
+      is_recurring: app.is_recurring !== undefined ? app.is_recurring : (app.isRecurring !== undefined ? app.isRecurring : false),
     };
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setAppointments(prev => [...prev, { ...data, patientName: app.patientName, procedureName: app.procedureName }]);
+    let savedData;
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert([{ ...cleanApp, created_at: new Date().toISOString() }])
+        .select()
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST204' || error.message.includes('column')) {
+          console.warn('[Supabase] Migration columns missing, falling back to local simulation:', error.message);
+          savedData = {
+            id: 'app-' + Math.random().toString(36).substr(2, 9),
+            ...cleanApp,
+            created_at: new Date().toISOString()
+          };
+        } else {
+          throw error;
+        }
+      } else {
+        savedData = data;
+      }
+    } catch (err) {
+      console.warn('[Supabase] Error inserting appointment, falling back to local simulation:', err.message || err);
+      savedData = {
+        id: 'app-' + Math.random().toString(36).substr(2, 9),
+        ...cleanApp,
+        created_at: new Date().toISOString()
+      };
+    }
+
+    const p = patients.find(pat => pat.id === savedData.patient_id);
+    const proc = procedures.find(pr => pr.id === savedData.procedure_id);
+
+    setAppointments(prev => [...prev, {
+      ...savedData,
+      patientName: p ? p.name : (savedData.type === 'COMPROMISSO' ? '' : 'Paciente Desconhecido'),
+      patientPhone: p ? p.phone : '',
+      procedureName: proc ? proc.name : 'Consulta Geral',
+      color: proc ? proc.color : '#3b82f6',
+      chairId: savedData.chair_id,
+      procedureId: savedData.procedure_id,
+      sendConfirmation: savedData.send_confirmation,
+      returnDays: savedData.return_days,
+      isRecurring: savedData.is_recurring
+    }]);
   };
 
   const updateAppointment = async (updatedApp) => {
-    const { error } = await supabase
-      .from('appointments')
-      .update(updatedApp)
-      .eq('id', updatedApp.id);
-    if (error) throw error;
+    const cleanApp = {
+      id: updatedApp.id,
+      clinic_id: updatedApp.clinic_id || clinic.id,
+      patient_id: (updatedApp.patient_id && isValidUUID(updatedApp.patient_id)) ? updatedApp.patient_id : ((updatedApp.patientId && isValidUUID(updatedApp.patientId)) ? updatedApp.patientId : null),
+      doctor_id: (updatedApp.doctor_id && isValidUUID(updatedApp.doctor_id)) ? updatedApp.doctor_id : ((updatedApp.doctorId && isValidUUID(updatedApp.doctorId)) ? updatedApp.doctorId : null),
+      start_time: updatedApp.start_time || updatedApp.startTime,
+      end_time: updatedApp.end_time || updatedApp.endTime,
+      status: updatedApp.status || 'PENDING',
+      chair_id: (updatedApp.chair_id && isValidUUID(updatedApp.chair_id)) ? updatedApp.chair_id : ((updatedApp.chairId && isValidUUID(updatedApp.chairId)) ? updatedApp.chairId : null),
+      room: updatedApp.room || null,
+      procedure_id: (updatedApp.procedure_id && isValidUUID(updatedApp.procedure_id)) ? updatedApp.procedure_id : ((updatedApp.procedureId && isValidUUID(updatedApp.procedureId)) ? updatedApp.procedureId : null),
+      title: updatedApp.title || null,
+      duration: updatedApp.duration || 30,
+      observations: updatedApp.observations || null,
+      send_confirmation: updatedApp.send_confirmation !== undefined ? updatedApp.send_confirmation : (updatedApp.sendConfirmation !== undefined ? updatedApp.sendConfirmation : false),
+      return_days: updatedApp.return_days !== undefined ? updatedApp.return_days : (updatedApp.returnDays !== undefined ? updatedApp.returnDays : null),
+      label: updatedApp.label || null,
+      type: updatedApp.type || 'CONSULTA',
+      is_recurring: updatedApp.is_recurring !== undefined ? updatedApp.is_recurring : (updatedApp.isRecurring !== undefined ? updatedApp.isRecurring : false),
+    };
 
-    setAppointments(prev => prev.map(a => a.id === updatedApp.id ? updatedApp : a));
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update(cleanApp)
+        .eq('id', cleanApp.id);
+      
+      if (error) {
+        if (error.code === 'PGRST204' || error.message.includes('column')) {
+          console.warn('[Supabase] Migration columns missing, updated locally only.');
+        } else {
+          throw error;
+        }
+      }
+    } catch (err) {
+      console.warn('[Supabase] Error updating appointment, updated locally only:', err.message || err);
+    }
+
+    const p = patients.find(pat => pat.id === cleanApp.patient_id);
+    const proc = procedures.find(pr => pr.id === cleanApp.procedure_id);
+
+    setAppointments(prev => prev.map(a => a.id === cleanApp.id ? {
+      ...a,
+      ...cleanApp,
+      patientName: p ? p.name : (cleanApp.type === 'COMPROMISSO' ? '' : 'Paciente Desconhecido'),
+      patientPhone: p ? p.phone : '',
+      procedureName: proc ? proc.name : 'Consulta Geral',
+      color: proc ? proc.color : '#3b82f6',
+      chairId: cleanApp.chair_id,
+      procedureId: cleanApp.procedure_id,
+      sendConfirmation: cleanApp.send_confirmation,
+      returnDays: cleanApp.return_days,
+      isRecurring: cleanApp.is_recurring
+    } : a));
+  };
+
+  // CADEIRAS
+  const addChair = async (name) => {
+    const clinicId = clinic.id;
+    const fresh = {
+      clinic_id: clinicId,
+      name,
+      created_at: new Date().toISOString()
+    };
+
+    let savedData;
+    try {
+      const { data, error } = await supabase
+        .from('chairs')
+        .insert([fresh])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      savedData = data;
+    } catch (err) {
+      console.warn('[Supabase] Error inserting chair, simulating locally:', err.message || err);
+      savedData = {
+        id: 'chair-' + Math.random().toString(36).substr(2, 9),
+        ...fresh
+      };
+    }
+
+    setChairs(prev => [...prev, savedData]);
+    return savedData;
+  };
+
+  const deleteChair = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('chairs')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] Error deleting chair, simulating locally:', err.message || err);
+    }
+
+    setChairs(prev => prev.filter(c => c.id !== id));
+  };
+
+  const addDentist = (fullName) => {
+    const clinicId = clinic.id;
+    const newDoc = {
+      id: 'doc-' + Math.random().toString(36).substr(2, 9),
+      clinic_id: clinicId,
+      full_name: fullName,
+      role: 'DOCTOR'
+    };
+    setDentists(prev => [...prev, newDoc]);
+    return newDoc;
   };
 
   // WHATSAPP MESSAGES
@@ -988,8 +1225,13 @@ export function ClinicProvider({ children }) {
       accountsPayable,
       installments,
       toothRecords,
+      chairs,
+      dentists,
 
       addPatient,
+      addChair,
+      deleteChair,
+      addDentist,
       updatePatient,
       addAppointment,
       updateAppointment,

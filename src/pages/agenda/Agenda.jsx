@@ -1,59 +1,171 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  Plus, Calendar as CalIcon, ChevronLeft, ChevronRight, Filter, 
-  Clock, MapPin, Check, X, ShieldAlert, ArrowLeftRight 
+  Plus, Calendar as CalIcon, ChevronLeft, ChevronRight,
+  Clock, MapPin, Check, X, ShieldAlert, ArrowLeftRight,
+  Phone, User, Edit, Copy, CheckSquare, AlertCircle, FileText
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Agenda({ selectedAppointment, setSelectedAppointment }) {
-  const { appointments, addAppointment, updateAppointment, patients, procedures, checkPatientInadimplente } = useClinic();
+export default function Agenda({ 
+  selectedAppointment, 
+  setSelectedAppointment,
+  currentDate,
+  setCurrentDate,
+  selectedChairs,
+  setSelectedChairs,
+  selectedDentists,
+  setSelectedDentists,
+  view,
+  setView,
+  setActiveTab,
+  setSelectedPatient
+}) {
+  const { 
+    appointments, 
+    addAppointment, 
+    updateAppointment, 
+    patients, 
+    procedures, 
+    checkPatientInadimplente,
+    chairs,
+    dentists,
+    addPatient
+  } = useClinic();
   const { currentTheme } = useTheme();
   const { user } = useAuth();
-
-  // Estados locais
-  const [view, setView] = useState('week'); // 'day' | 'week' | 'month'
-  const [selectedDentist, setSelectedDentist] = useState('');
-  const [selectedRoom, setSelectedRoom] = useState('');
-  const [currentDate, setCurrentDate] = useState(new Date());
 
   // Diálogos
   const [showAddApp, setShowAddApp] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [activeModalTab, setActiveModalTab] = useState('consulta'); // 'consulta' | 'compromisso' | 'tarefa'
 
   // Sincronizar com agendamento selecionado da sidebar
   useEffect(() => {
     if (selectedAppointment) {
-      let active = true;
-      const run = async () => {
-        await Promise.resolve();
-        if (active) {
-          setSelectedApp(selectedAppointment);
-        }
-      };
-      run();
-      return () => {
-        active = false;
-      };
+      setSelectedApp(selectedAppointment);
     }
   }, [selectedAppointment]);
+
+  // ==========================================
+  // ESTADOS DOS FORMULÁRIOS
+  // ==========================================
   
-  // Form Novo Agendamento
+  // 1. Aba Consulta
   const [appPatientId, setAppPatientId] = useState('');
   const [appProcedureId, setAppProcedureId] = useState('');
   const [appDate, setAppDate] = useState(new Date().toISOString().split('T')[0]);
   const [appTime, setAppTime] = useState('09:00');
-  const [appRoom, setAppRoom] = useState('Consultório A');
-  const [appDoctor, setAppDoctor] = useState('Dr. Pedro Ramos');
+  const [appChairId, setAppChairId] = useState('');
+  const [appDoctorId, setAppDoctorId] = useState('');
+  const [appDuration, setAppDuration] = useState(30);
+  const [appObservations, setAppObservations] = useState('');
+  const [appSendConfirmation, setAppSendConfirmation] = useState(true);
+  const [appReturnDays, setAppReturnDays] = useState('');
+  const [appLabel, setAppLabel] = useState('Agendada');
 
-  // Filtro de dentistas cadastrados para simulação
-  const dentists = ['Dr. Pedro Ramos', 'Dra. Ana Paula', 'Dr. Carlos Souza'];
-  const rooms = ['Consultório A', 'Consultório B', 'Sala Cirúrgica'];
+  // Paciente Autocomplete
+  const [patientSearch, setPatientSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showQuickPatientForm, setShowQuickPatientForm] = useState(false);
+  const [quickPatientName, setQuickPatientName] = useState('');
+  const [quickPatientPhone, setQuickPatientPhone] = useState('');
 
-  // Slots de Horários (08:00 às 17:00)
-  const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+  // 2. Aba Compromisso
+  const [compDoctorId, setCompDoctorId] = useState('');
+  const [compTitle, setCompTitle] = useState('');
+  const [compStartDate, setCompStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [compStartTime, setCompStartTime] = useState('08:00');
+  const [compEndDate, setCompEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [compEndTime, setCompEndTime] = useState('08:30');
+  const [compIsRecurring, setCompIsRecurring] = useState(false);
+
+  // 3. Aba Tarefa
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState(new Date().toISOString().split('T')[0]);
+  const [taskDueTime, setTaskDueTime] = useState('08:15');
+  const [taskList, setTaskList] = useState('Entrada');
+  const [taskPatientId, setTaskPatientId] = useState('');
+  const [taskPatientSearch, setTaskPatientSearch] = useState('');
+  const [showTaskPatientSuggestions, setShowTaskPatientSuggestions] = useState(false);
+
+  // Inicializar IDs padrões no modal ao abrir
+  useEffect(() => {
+    if (showAddApp) {
+      if (chairs && chairs.length > 0 && !appChairId) {
+        setAppChairId(chairs[0].id);
+      }
+      if (dentists && dentists.length > 0 && !appDoctorId) {
+        setAppDoctorId(dentists[0].id);
+        setCompDoctorId(dentists[0].id);
+      }
+    }
+  }, [showAddApp, chairs, dentists]);
+
+  // Filtro de consultas
+  const filteredApps = appointments.filter(app => {
+    const matchesDentist = selectedDentists.length > 0 ? selectedDentists.includes(app.doctor_id) : true;
+    const matchesChair = selectedChairs.length > 0 
+      ? (selectedChairs.includes(app.chair_id) || selectedChairs.includes(app.room)) 
+      : true;
+    return matchesDentist && matchesChair;
+  });
+
+  // Slots de Horários (07:00 às 18:00)
+  const timeSlots = [
+    '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', 
+    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+  ];
   const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+  const formatTimeLabel = (timeStr) => {
+    if (timeStr === '12:00') return 'Meio dia';
+    const hour = timeStr.split(':')[0];
+    return `${hour}h`;
+  };
+
+  const renderCellSubSlots = (date, timeStr, onClickExtra = () => {}) => {
+    const hour = timeStr.split(':')[0];
+    return (
+      <div className="absolute inset-0 flex flex-col pointer-events-auto z-0">
+        {/* Top half (00 min) */}
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setAppDate(date.toISOString().split('T')[0]);
+            setAppTime(`${hour}:00`);
+            onClickExtra();
+            setActiveModalTab('consulta');
+            setShowAddApp(true);
+          }}
+          className="h-1/2 w-full relative group/sub cursor-pointer"
+        >
+          <div className="absolute inset-x-2 top-1 bottom-0.5 border border-sky-500/20 bg-sky-500/5 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-lg flex items-center px-3 text-[10px] font-bold opacity-0 group-hover/sub:opacity-100 transition-opacity pointer-events-none">
+            {hour}:00
+          </div>
+        </div>
+        {/* Bottom half (30 min) */}
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setAppDate(date.toISOString().split('T')[0]);
+            setAppTime(`${hour}:30`);
+            onClickExtra();
+            setActiveModalTab('consulta');
+            setShowAddApp(true);
+          }}
+          className="h-1/2 w-full relative group/sub cursor-pointer"
+        >
+          <div className="absolute inset-x-2 top-0.5 bottom-1 border border-sky-500/20 bg-sky-500/5 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-lg flex items-center px-3 text-[10px] font-bold opacity-0 group-hover/sub:opacity-100 transition-opacity pointer-events-none">
+            {hour}:30
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Obter dias da semana corrente
   const getWeekDates = (date) => {
@@ -69,11 +181,11 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
     return dates;
   };
 
-  const weekDates = getWeekDates(currentDate);
+  const weekDates = getWeekDates(currentDate || new Date());
 
   const navigateDate = (direction) => {
-    const temp = new Date(currentDate);
-    if (view === 'day') {
+    const temp = new Date(currentDate || new Date());
+    if (view === 'day' || view === 'chair') {
       temp.setDate(temp.getDate() + direction);
     } else if (view === 'week') {
       temp.setDate(temp.getDate() + (direction * 7));
@@ -83,48 +195,130 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
     setCurrentDate(temp);
   };
 
-  const handleAddAppSubmit = (e) => {
+  // Submissão do novo agendamento
+  const handleAddAppSubmit = async (e) => {
     e.preventDefault();
-    if (!appPatientId || !appProcedureId) return;
 
-    const matchedPat = patients.find(p => p.id === appPatientId);
-    const matchedProc = procedures.find(p => p.id === appProcedureId);
+    if (activeModalTab === 'consulta') {
+      if (!appPatientId || !appProcedureId) return;
 
-    // RN-001 de Contas a Receber: Bloqueio de Prontuário por Inadimplência
-    if (checkPatientInadimplente(appPatientId)) {
-      const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') || 
-                          matchedProc?.name?.toLowerCase().includes('canal') || 
-                          matchedProc?.name?.toLowerCase().includes('dor');
-      
-      if (!isEmergency) {
-        alert(`❌ AGENDAMENTO BLOQUEADO!\n\nO paciente ${matchedPat?.name} está INADIMPLENTE (parcelas vencidas há mais de 30 dias). Agendamentos eletivos (como "${matchedProc?.name}") estão bloqueados. Por favor, direcione o paciente ao setor financeiro.`);
-        return;
-      } else {
-        const confirmEmergency = window.confirm(`⚠️ AVISO DE INADIMPLÊNCIA\n\nO paciente ${matchedPat?.name} está inadimplente, mas o procedimento solicitado é emergencial ("${matchedProc?.name}"). Deseja autorizar o agendamento de urgência?`);
-        if (!confirmEmergency) return;
+      const matchedPat = patients.find(p => p.id === appPatientId);
+      const matchedProc = procedures.find(p => p.id === appProcedureId);
+      const matchedChair = chairs.find(c => c.id === appChairId);
+
+      // RN-001 de Contas a Receber: Bloqueio de Prontuário por Inadimplência
+      if (checkPatientInadimplente(appPatientId)) {
+        const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') || 
+                            matchedProc?.name?.toLowerCase().includes('canal') || 
+                            matchedProc?.name?.toLowerCase().includes('dor');
+        
+        if (!isEmergency) {
+          alert(`❌ AGENDAMENTO BLOQUEADO!\n\nO paciente ${matchedPat?.name} está INADIMPLENTE (parcelas vencidas há mais de 30 dias). Agendamentos eletivos (como "${matchedProc?.name}") estão bloqueados. Por favor, direcione o paciente ao setor financeiro.`);
+          return;
+        } else {
+          const confirmEmergency = window.confirm(`⚠️ AVISO DE INADIMPLÊNCIA\n\nO paciente ${matchedPat?.name} está inadimplente, mas o procedimento solicitado é emergencial ("${matchedProc?.name}"). Deseja autorizar o agendamento de urgência?`);
+          if (!confirmEmergency) return;
+        }
       }
+
+      const start = new Date(`${appDate}T${appTime}:00`);
+      const end = new Date(start.getTime() + appDuration * 60 * 1000);
+
+      await addAppointment({
+        patient_id: appPatientId,
+        patientName: matchedPat?.name || 'Paciente Novo',
+        patientPhone: matchedPat?.phone || '',
+        procedure_id: appProcedureId,
+        procedureName: matchedProc?.name || 'Procedimento',
+        color: matchedProc?.color || '#3b82f6',
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        chair_id: appChairId,
+        room: matchedChair ? matchedChair.name : 'Cadeira',
+        doctor_id: appDoctorId,
+        duration: appDuration,
+        observations: appObservations,
+        send_confirmation: appSendConfirmation,
+        return_days: appReturnDays ? parseInt(appReturnDays) : null,
+        label: appLabel,
+        type: 'CONSULTA',
+        status: 'PENDING'
+      });
+
+      // Limpar formulário
+      setAppPatientId('');
+      setAppProcedureId('');
+      setPatientSearch('');
+      setAppObservations('');
+      setAppReturnDays('');
+
+    } else if (activeModalTab === 'compromisso') {
+      if (!compTitle) return;
+
+      const start = new Date(`${compStartDate}T${compStartTime}:00`);
+      const end = new Date(`${compEndDate}T${compEndTime}:00`);
+
+      await addAppointment({
+        title: compTitle,
+        doctor_id: compDoctorId,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        type: 'COMPROMISSO',
+        is_recurring: compIsRecurring,
+        status: 'CONFIRMED' // Blocker já nasce confirmado
+      });
+
+      setCompTitle('');
+      setCompIsRecurring(false);
+
+    } else if (activeModalTab === 'tarefa') {
+      if (!taskTitle) return;
+
+      const start = new Date(`${taskDueDate}T${taskDueTime}:00`);
+      const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 min padrão
+
+      await addAppointment({
+        title: taskTitle,
+        observations: taskDescription,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        patient_id: taskPatientId || null,
+        label: taskList,
+        type: 'TAREFA',
+        status: 'PENDING'
+      });
+
+      setTaskTitle('');
+      setTaskDescription('');
+      setTaskPatientId('');
+      setTaskPatientSearch('');
     }
 
-    const start = new Date(`${appDate}T${appTime}:00`);
-    const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hora padrão
-
-    addAppointment({
-      patient_id: appPatientId,
-      patientName: matchedPat?.name || 'Paciente Novo',
-      patientPhone: matchedPat?.phone || '',
-      patientEmail: matchedPat?.email || '',
-      procedureName: matchedProc?.name || 'Procedimento',
-      color: matchedProc?.color || '#3b82f6',
-      start_time: start.toISOString(),
-      end_time: end.toISOString(),
-      room: appRoom,
-      doctor_id: 'doc-1', // Default
-      status: 'PENDING'
-    });
-
     setShowAddApp(false);
-    setAppPatientId('');
-    setAppProcedureId('');
+  };
+
+  // Cadastro de paciente rápido
+  const handleQuickPatientSave = async (e) => {
+    e.preventDefault();
+    if (!quickPatientName || !quickPatientPhone) return;
+
+    try {
+      const newPat = await addPatient({
+        name: quickPatientName,
+        phone: quickPatientPhone
+      });
+
+      if (newPat) {
+        setAppPatientId(newPat.id);
+        setPatientSearch(newPat.name);
+        setShowQuickPatientForm(false);
+        setQuickPatientName('');
+        setQuickPatientPhone('');
+      }
+    } catch (err) {
+      console.error('Erro ao cadastrar paciente rápido:', err);
+      alert('Não foi possível cadastrar o paciente. Tente novamente.');
+    }
   };
 
   // Drag and Drop
@@ -136,7 +330,7 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
     e.preventDefault();
   };
 
-  const handleDrop = (e, slotTime, slotDate) => {
+  const handleDrop = (e, slotTime, slotDate, chairId = null) => {
     e.preventDefault();
     const appId = e.dataTransfer.getData('text/plain');
     const app = appointments.find(a => a.id === appId);
@@ -147,12 +341,17 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
       const day = String(slotDate.getDate()).padStart(2, '0');
       
       const newStart = new Date(`${year}-${month}-${day}T${slotTime}:00`);
-      const newEnd = new Date(newStart.getTime() + 60 * 60 * 1000);
+      const durationMin = app.duration || 60;
+      const newEnd = new Date(newStart.getTime() + durationMin * 60 * 1000);
+
+      const matchedChair = chairId ? chairs.find(c => c.id === chairId) : null;
 
       const updated = {
         ...app,
         start_time: newStart.toISOString(),
-        end_time: newEnd.toISOString()
+        end_time: newEnd.toISOString(),
+        chair_id: chairId || app.chair_id,
+        room: matchedChair ? matchedChair.name : app.room
       };
       updateAppointment(updated);
     }
@@ -163,24 +362,68 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
     if (app) {
       updateAppointment({ ...app, status: newStatus });
       setSelectedApp(null);
-      if (setSelectedAppointment) {
+      if (selectedAppointment) {
         setSelectedAppointment(null);
       }
     }
   };
 
-  // Filtragem dos agendamentos
-  const filteredApps = appointments.filter(app => {
-    const matchesDentist = selectedDentist ? app.doctor_id === selectedDentist : true;
-    const matchesRoom = selectedRoom ? app.room === selectedRoom : true;
-    return matchesDentist && matchesRoom;
-  });
+  // Confirmar WhatsApp
+  const handleConfirmWhatsapp = (app) => {
+    handleStatusChange(app.id, 'CONFIRMED');
+    alert(`Mensagem de confirmação enviada para o WhatsApp do paciente ${app.patientName}!`);
+  };
+
+  // Duplicar agendamento
+  const handleDuplicateApp = async (app) => {
+    const start = new Date(app.start_time);
+    const end = new Date(app.end_time);
+    
+    // Avança 1 dia para simular a duplicação
+    start.setDate(start.getDate() + 1);
+    end.setDate(end.getDate() + 1);
+
+    await addAppointment({
+      ...app,
+      id: undefined,
+      start_time: start.toISOString(),
+      end_time: end.toISOString(),
+      created_at: undefined
+    });
+    alert('Agendamento duplicado para o próximo dia útil com sucesso!');
+    setSelectedApp(null);
+  };
+
+  // Navegar para prontuário
+  const handleOpenPatientRecord = (patientId) => {
+    const pat = patients.find(p => p.id === patientId);
+    if (pat) {
+      setSelectedPatient(pat);
+      setActiveTab('pacientes');
+    }
+    setSelectedApp(null);
+    if (selectedAppointment) {
+      setSelectedAppointment(null);
+    }
+  };
+
+  // Filtrar pacientes autocomplete
+  const filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+    p.phone.includes(patientSearch)
+  );
+
+  const filteredTaskPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(taskPatientSearch.toLowerCase())
+  );
 
   return (
-    <div className="h-full flex flex-col space-y-4 overflow-hidden">
+    <div className="h-full flex flex-col space-y-4 overflow-hidden text-slate-800 dark:text-slate-100">
       
-      {/* Top Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
+      {/* ========================================================================= */}
+      {/* CONTROLES SUPERIORES DA GRADE                                            */}
+      {/* ========================================================================= */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/85 backdrop-blur border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
         
         {/* Date Navigator */}
         <div className="flex items-center gap-3">
@@ -193,7 +436,7 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
               <ChevronLeft className="w-4 h-4" />
             </button>
             <h3 className="text-xs font-bold text-slate-800 dark:text-white w-44 text-center font-title">
-              {view === 'day' && currentDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {(view === 'day' || view === 'chair') && currentDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
               {view === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}`}
               {view === 'month' && currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
             </h3>
@@ -207,71 +450,63 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
 
           {/* View Toggle */}
           <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex border border-slate-200/30 dark:border-slate-700/30">
-            {['day', 'week', 'month'].map(v => (
+            {['day', 'week', 'month', 'chair'].map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
                   view === v 
                     ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-350'
+                    : 'text-slate-555 hover:text-slate-700 dark:hover:text-slate-350'
                 }`}
               >
-                {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : 'Mês'}
+                {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Ações */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <select
-            value={selectedDentist}
-            onChange={(e) => setSelectedDentist(e.target.value)}
-            className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-2 px-3 text-xs text-slate-600 focus:outline-none cursor-pointer"
+          {/* Extensão WhatsApp Button (Mock) */}
+          <button
+            onClick={() => alert('Extensão instalada e ativa no seu WhatsApp Web!')}
+            className="hidden md:flex px-3 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold items-center gap-1.5 transition-colors"
           >
-            <option value="">Todos Dentistas</option>
-            <option value="doc-1">Dr. Pedro Ramos</option>
-            <option value="doc-2">Dra. Ana Paula</option>
-          </select>
-
-          <select
-            value={selectedRoom}
-            onChange={(e) => setSelectedRoom(e.target.value)}
-            className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-2 px-3 text-xs text-slate-600 focus:outline-none cursor-pointer"
-          >
-            <option value="">Todas Salas</option>
-            {rooms.map((r, i) => (
-              <option key={i} value={r}>{r}</option>
-            ))}
-          </select>
+            <Phone className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Extensão para WhatsApp</span>
+          </button>
 
           <button
-            onClick={() => setShowAddApp(true)}
-            className="w-full sm:w-auto px-4 py-2.5 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] hover:opacity-95 flex items-center justify-center gap-1.5"
+            onClick={() => {
+              setActiveModalTab('consulta');
+              setShowAddApp(true);
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] hover:opacity-95 flex items-center justify-center gap-1.5 border border-white/10"
             style={{ backgroundColor: currentTheme.secondary_color }}
           >
             <Plus className="w-4 h-4" />
-            Nova Consulta
+            Agendar
           </button>
         </div>
       </div>
 
-      {/* Grid Container */}
-      <div className="flex-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] overflow-hidden flex flex-col">
+      {/* ========================================================================= */}
+      {/* CONTEÚDO PRINCIPAL (GRADE DE HORÁRIOS)                                   */}
+      {/* ========================================================================= */}
+      <div className="flex-1 bg-white/80 dark:bg-slate-900/85 backdrop-blur border border-slate-200/40 dark:border-slate-800/80 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] overflow-hidden flex flex-col">
         
         {/* VIEW: SEMANA */}
         {view === 'week' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            {/* Headers da Semana */}
-            <div className="grid grid-cols-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-500 font-semibold text-xs">
+            <div className="grid grid-cols-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-550 font-semibold text-[10px] uppercase tracking-wider">
               <div className="flex items-center justify-center border-r border-slate-200/50 dark:border-slate-800/50">Horário</div>
               {weekDates.map((date, idx) => {
                 const isToday = date.toDateString() === new Date().toDateString();
                 return (
                   <div key={idx} className={`flex flex-col items-center justify-center ${isToday ? 'text-violet-500' : ''}`}>
-                    <span className="text-[10px] font-medium uppercase tracking-wider">{weekdays[date.getDay()].substring(0, 3)}</span>
-                    <span className={`text-base font-extrabold font-title ${isToday ? 'bg-violet-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm' : ''}`}>
+                    <span>{weekdays[date.getDay()].substring(0, 3)}</span>
+                    <span className={`text-base font-extrabold font-title mt-0.5 ${isToday ? 'bg-violet-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm' : ''}`}>
                       {date.getDate()}
                     </span>
                   </div>
@@ -279,64 +514,58 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
               })}
             </div>
 
-            {/* Linhas de Horário */}
             <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
               {timeSlots.map((time, slotIdx) => (
                 <div key={slotIdx} className="grid grid-cols-8 min-h-[70px]">
-                  {/* Célula de Horário */}
                   <div className="border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400 select-none">
-                    {time}
+                    {formatTimeLabel(time)}
                   </div>
                   
-                  {/* Dias */}
                   {weekDates.map((date, dayIdx) => {
-                    // Filtrar consultas desse dia e horário
                     const hour = parseInt(time.split(':')[0]);
                     const matchedApps = filteredApps.filter(app => {
                       const appStart = new Date(app.start_time);
                       return appStart.getDate() === date.getDate() && 
                              appStart.getMonth() === date.getMonth() && 
+                             appStart.getFullYear() === date.getFullYear() && 
                              appStart.getHours() === hour;
                     });
-
-                    // Bloqueio de almoço (exemplo)
-                    const isLunch = time === '12:00';
 
                     return (
                       <div
                         key={dayIdx}
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, time, date)}
-                        className={`p-1 border-r border-slate-100 dark:border-slate-800/40 relative group transition-colors ${
-                          isLunch ? 'bg-slate-50/50 dark:bg-slate-800/10' : 'hover:bg-slate-50/20 dark:hover:bg-slate-800/5'
-                        }`}
+                        className="p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors"
                       >
-                        {isLunch && dayIdx > 0 && dayIdx < 6 && (
-                          <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-350 dark:text-slate-600 bg-slate-100/30 dark:bg-slate-900/10 select-none">
-                            Intervalo Almoço
-                          </div>
-                        )}
-
+                        {matchedApps.length === 0 && renderCellSubSlots(date, time)}
                         {matchedApps.map((app) => (
                           <div
                             key={app.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, app.id)}
-                            onClick={() => setSelectedApp(app)}
-                            className="absolute inset-x-1.5 top-1.5 bottom-1.5 rounded-xl border p-2 text-[10px] shadow-sm select-none hover:-translate-y-0.5 transition-all text-left flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing text-white"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedApp(app);
+                            }}
+                            className="absolute inset-x-1 top-1 bottom-1 rounded-xl border p-2 text-[10px] shadow-sm select-none hover:-translate-y-0.5 transition-all text-left flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing text-white"
                             style={{ 
-                              backgroundColor: app.color, 
+                              backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
                               borderColor: 'rgba(255, 255, 255, 0.15)',
-                              boxShadow: `0 3px 12px ${app.color}25`
+                              boxShadow: `0 3px 12px rgba(0,0,0,0.08)`
                             }}
                           >
                             <div>
-                              <h4 className="font-extrabold truncate leading-tight">{app.patientName}</h4>
-                              <p className="text-[9px] opacity-80 mt-0.5 truncate">{app.procedureName}</p>
+                              <h4 className="font-extrabold truncate leading-tight">
+                                {app.type === 'CONSULTA' ? app.patientName : app.title}
+                              </h4>
+                              <p className="text-[9px] opacity-80 mt-0.5 truncate">
+                                {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
+                              </p>
                             </div>
                             <div className="flex justify-between items-center text-[8px] font-bold opacity-90 mt-1">
                               <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> {time}</span>
-                              <span className={`px-1 rounded bg-white/20`}>
+                              <span className="px-1 rounded bg-white/20">
                                 {app.status === 'CONFIRMED' ? '✓' : '?'}
                               </span>
                             </div>
@@ -354,14 +583,12 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
         {/* VIEW: DIA */}
         {view === 'day' && (
           <div className="flex-grow flex flex-col overflow-y-auto">
-            {/* Headers Dia */}
-            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-4 flex-shrink-0 text-slate-500 font-semibold text-xs">
+            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-4 flex-shrink-0 text-slate-550 font-semibold text-xs">
               <h4 className="font-title font-extrabold text-sm text-slate-800 dark:text-white">
                 {weekdays[currentDate.getDay()]}
               </h4>
             </div>
 
-            {/* Linhas de Horário */}
             <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
               {timeSlots.map((time, slotIdx) => {
                 const hour = parseInt(time.split(':')[0]);
@@ -369,35 +596,47 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
                   const appStart = new Date(app.start_time);
                   return appStart.getDate() === currentDate.getDate() && 
                          appStart.getMonth() === currentDate.getMonth() && 
+                         appStart.getFullYear() === currentDate.getFullYear() && 
                          appStart.getHours() === hour;
                 });
 
                 return (
                   <div key={slotIdx} className="grid grid-cols-12 min-h-[75px] items-stretch">
-                    <div className="col-span-2 border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                      {time}
+                    <div className="col-span-2 border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400 select-none">
+                      {formatTimeLabel(time)}
                     </div>
 
                     <div
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, time, currentDate)}
-                      className="col-span-10 p-2 relative hover:bg-slate-50/10 transition-colors flex gap-2 overflow-x-auto"
+                      className="col-span-10 p-2 relative transition-colors flex gap-2 overflow-x-auto"
                     >
+                      {dayApps.length === 0 && renderCellSubSlots(currentDate, time)}
                       {dayApps.map(app => (
                         <div
                           key={app.id}
                           draggable
                           onDragStart={(e) => handleDragStart(e, app.id)}
-                          onClick={() => setSelectedApp(app)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedApp(app);
+                          }}
                           className="h-full min-w-[200px] w-64 rounded-xl border p-2.5 text-left flex flex-col justify-between shadow-sm cursor-grab active:cursor-grabbing text-white"
-                          style={{ backgroundColor: app.color, borderColor: 'rgba(255, 255, 255, 0.15)' }}
+                          style={{ 
+                            backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
+                            borderColor: 'rgba(255, 255, 255, 0.15)' 
+                          }}
                         >
                           <div>
-                            <h4 className="font-extrabold text-xs truncate leading-tight">{app.patientName}</h4>
-                            <p className="text-[10px] opacity-80 mt-0.5 truncate">{app.procedureName}</p>
+                            <h4 className="font-extrabold text-xs truncate leading-tight">
+                              {app.type === 'CONSULTA' ? app.patientName : app.title}
+                            </h4>
+                            <p className="text-[10px] opacity-80 mt-0.5 truncate">
+                              {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
+                            </p>
                           </div>
                           <div className="flex justify-between items-center text-[9px] font-semibold mt-1">
-                            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {app.room}</span>
+                            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {app.room || 'Consultório'}</span>
                             <span className="px-1.5 py-0.5 rounded bg-white/25 uppercase font-bold text-[8px]">
                               {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
                             </span>
@@ -415,36 +654,38 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
         {/* VIEW: MÊS */}
         {view === 'month' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            {/* Headers dos Dias da Semana */}
             <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-2.5 text-slate-550 font-bold text-[10px] uppercase tracking-wider flex-shrink-0">
               {weekdays.map((day, idx) => <div key={idx}>{day.substring(0, 3)}</div>)}
             </div>
 
-            {/* Grid dos Dias do Mês */}
             <div className="grid grid-cols-7 grid-rows-5 flex-grow divide-x divide-y divide-slate-100 dark:divide-slate-800/80 border-b border-r border-slate-100 dark:border-slate-800/80">
               {(() => {
                 const days = [];
                 const startMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
                 const startDay = startMonth.getDay();
                 
-                // Células vazias do mês anterior
                 for (let i = 0; i < startDay; i++) {
                   days.push(<div key={`prev-${i}`} className="bg-slate-50/50 dark:bg-slate-900/10 min-h-[90px]" />);
                 }
 
-                // Células do mês corrente
                 const totalDays = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
                 for (let d = 1; d <= totalDays; d++) {
                   const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
                   const matchedApps = filteredApps.filter(app => {
                     const appStart = new Date(app.start_time);
-                    return appStart.getDate() === d && appStart.getMonth() === currentDate.getMonth();
+                    return appStart.getDate() === d && appStart.getMonth() === currentDate.getMonth() && appStart.getFullYear() === currentDate.getFullYear();
                   });
 
                   days.push(
                     <div 
                       key={`curr-${d}`} 
-                      className="p-1.5 min-h-[90px] hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition-all text-left flex flex-col justify-between"
+                      onClick={() => {
+                        setAppDate(cellDate.toISOString().split('T')[0]);
+                        setAppTime('09:00');
+                        setActiveModalTab('consulta');
+                        setShowAddApp(true);
+                      }}
+                      className="p-1.5 min-h-[90px] hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition-all text-left flex flex-col justify-between cursor-pointer"
                     >
                       <span className="text-[10px] font-bold text-slate-400 select-none block mb-1">
                         {d}
@@ -454,11 +695,15 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
                         {matchedApps.slice(0, 3).map(app => (
                           <button
                             key={app.id}
-                            onClick={() => setSelectedApp(app)}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedApp(app);
+                            }}
                             className="w-full text-left truncate px-1.5 py-0.5 rounded text-[8px] text-white font-bold leading-tight"
-                            style={{ backgroundColor: app.color }}
+                            style={{ backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')) }}
                           >
-                            {app.patientName.split(' ')[0]}: {app.procedureName}
+                            {app.type === 'CONSULTA' ? `${app.patientName.split(' ')[0]}: ${app.procedureName}` : app.title}
                           </button>
                         ))}
                         {matchedApps.length > 3 && (
@@ -476,160 +721,776 @@ export default function Agenda({ selectedAppointment, setSelectedAppointment }) 
           </div>
         )}
 
+        {/* VIEW: CADEIRA */}
+        {view === 'chair' && (
+          <div className="flex-grow flex flex-col overflow-y-auto">
+            {/* Headers de Cadeiras */}
+            <div className="grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-550 font-semibold text-[10px] uppercase tracking-wider">
+              <div className="col-span-2 flex items-center justify-center border-r border-slate-200/50 dark:border-slate-800/50">Horário</div>
+              <div className="col-span-10 grid" style={{ gridTemplateColumns: `repeat(${selectedChairs.length > 0 ? selectedChairs.length : (chairs.length || 2)}, minmax(0, 1fr))` }}>
+                {(selectedChairs.length > 0 ? chairs.filter(c => selectedChairs.includes(c.id)) : chairs).map((chair, idx) => (
+                  <div key={idx} className="flex items-center justify-center text-xs font-bold text-slate-850 dark:text-white border-r last:border-r-0 border-slate-200/45 dark:border-slate-800/55">
+                    {chair.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Linhas de Horário por Cadeira */}
+            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
+              {timeSlots.map((time, slotIdx) => {
+                const hour = parseInt(time.split(':')[0]);
+                const activeChairs = selectedChairs.length > 0 ? chairs.filter(c => selectedChairs.includes(c.id)) : chairs;
+
+                return (
+                  <div key={slotIdx} className="grid grid-cols-12 min-h-[75px] items-stretch">
+                    {/* Time Slot cell */}
+                    <div className="col-span-2 border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400 select-none">
+                      {formatTimeLabel(time)}
+                    </div>
+
+                    {/* Columns for each chair */}
+                    <div className="col-span-10 grid" style={{ gridTemplateColumns: `repeat(${activeChairs.length}, minmax(0, 1fr))` }}>
+                      {activeChairs.map((chair, cIdx) => {
+                        const chairApps = filteredApps.filter(app => {
+                          const appStart = new Date(app.start_time);
+                          const matchesDate = appStart.getDate() === currentDate.getDate() &&
+                                              appStart.getMonth() === currentDate.getMonth() &&
+                                              appStart.getFullYear() === currentDate.getFullYear();
+                          const matchesHour = appStart.getHours() === hour;
+                          const matchesChair = app.chair_id === chair.id || app.room === chair.name;
+                          return matchesDate && matchesHour && matchesChair;
+                        });
+
+                        return (
+                          <div
+                            key={cIdx}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, time, currentDate, chair.id)}
+                            className="p-1 border-r last:border-r-0 border-slate-100 dark:border-slate-800/40 relative transition-colors"
+                          >
+                            {chairApps.length === 0 && renderCellSubSlots(currentDate, time, () => setAppChairId(chair.id))}
+                            {chairApps.map(app => (
+                              <div
+                                key={app.id}
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, app.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedApp(app);
+                                }}
+                                className="absolute inset-x-1.5 top-1 bottom-1 rounded-xl border p-2.5 text-[10px] shadow-sm select-none hover:-translate-y-0.5 transition-all text-left flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing text-white"
+                                style={{ 
+                                  backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
+                                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                              >
+                                <div>
+                                  <h4 className="font-extrabold truncate leading-tight">
+                                    {app.type === 'CONSULTA' ? app.patientName : app.title}
+                                  </h4>
+                                  <p className="text-[9px] opacity-85 truncate mt-0.5">
+                                    {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
+                                  </p>
+                                </div>
+                                <div className="flex justify-between items-center text-[8px] font-bold opacity-90 mt-1">
+                                  <span>{time}</span>
+                                  <span className="px-1.5 py-0.5 rounded bg-white/20 font-bold uppercase text-[7px]">
+                                    {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
 
-      {/* DIÁLOGO: QUICK ACTIONS (CONSULTA) */}
-      {selectedApp && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-slate-800 dark:text-white">
-            <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
-              <h3 className="text-sm font-bold font-title">Gerenciar Consulta</h3>
+      {/* ========================================================================= */}
+      {/* DIÁLOGO: DETALHES DA CONSULTA (POPOVER ESTILO macOS DEPTH UI)             */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {selectedApp && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
+              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-850 dark:text-white"
+            >
+              {/* Fechar */}
               <button 
                 onClick={() => {
                   setSelectedApp(null);
-                  if (setSelectedAppointment) {
-                    setSelectedAppointment(null);
+                  if (selectedAppointment) {
+                    selectedAppointment(null);
                   }
                 }}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-250 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
-            </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-900/30 rounded-xl border border-slate-100 dark:border-slate-800">
-                <div className="font-bold text-sm text-slate-800 dark:text-white">{selectedApp.patientName}</div>
-                <div className="flex items-center gap-1.5 text-slate-400"><Clock className="w-3.5 h-3.5" /> <span>{new Date(selectedApp.start_time).toLocaleDateString('pt-BR')} às {new Date(selectedApp.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span></div>
-                <div className="flex items-center gap-1.5 text-slate-400"><MapPin className="w-3.5 h-3.5" /> <span>{selectedApp.room} ({selectedApp.procedureName})</span></div>
-              </div>
+              {/* Corpo */}
+              <div className="space-y-5 text-xs text-left">
+                {/* Header Paciente / Título */}
+                <div className="flex items-center gap-3.5 pr-6">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-xl shadow-inner border border-slate-200/30 dark:border-white/5">
+                    {selectedApp.type === 'CONSULTA' ? '👤' : (selectedApp.type === 'TAREFA' ? '📋' : '🔒')}
+                  </div>
+                  <div className="overflow-hidden">
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate font-title leading-tight">
+                      {selectedApp.type === 'CONSULTA' ? selectedApp.patientName : selectedApp.title}
+                    </h3>
+                    {selectedApp.type === 'CONSULTA' && (
+                      <div className="flex items-center gap-1.5 mt-1 text-slate-500">
+                        <span className="font-semibold">{selectedApp.patientPhone || 'Sem telefone'}</span>
+                        {selectedApp.patientPhone && (
+                          <button
+                            onClick={() => handleConfirmWhatsapp(selectedApp)}
+                            className="flex items-center gap-1 text-[10px] text-emerald-500 hover:text-emerald-400 font-bold hover:underline transition-colors ml-1"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Confirmar consulta</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  onClick={() => handleStatusChange(selectedApp.id, 'CONFIRMED')}
-                  className="py-2.5 bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow"
-                >
-                  <Check className="w-4 h-4" /> Confirmar
-                </button>
-                <button
-                  onClick={() => handleStatusChange(selectedApp.id, 'CANCELLED')}
-                  className="py-2.5 bg-red-500 text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow"
-                >
-                  <X className="w-4 h-4" /> Cancelar
-                </button>
-              </div>
+                {/* Ações Rápidas (Apenas se Consulta) */}
+                {selectedApp.type === 'CONSULTA' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleOpenPatientRecord(selectedApp.patient_id)}
+                      className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      Abrir prontuário
+                    </button>
+                    <button
+                      onClick={() => handleOpenPatientRecord(selectedApp.patient_id)}
+                      className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-violet-500" />
+                      Adicionar evolução
+                    </button>
+                  </div>
+                )}
 
-              <div className="p-3.5 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 rounded-2xl flex items-start gap-2.5 text-[10px] text-slate-500">
-                <ShieldAlert className="w-4 h-4 mt-0.5 text-violet-500 flex-shrink-0" />
-                <span>Você também pode reagendar arrastando e soltando o card no horário desejado dentro da grade semanal.</span>
+                {/* Botão de Edição */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      alert('Funcionalidade de edição avançada: em breve!');
+                      setSelectedApp(null);
+                    }}
+                    className="flex-1 py-2.5 bg-secondary text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_4px_15px_rgba(var(--color-secondary),0.3)] hover:opacity-95 active:scale-[0.98] border border-white/10 transition-all text-xs"
+                    style={{ backgroundColor: currentTheme.secondary_color }}
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    {selectedApp.type === 'CONSULTA' ? 'Editar agendamento' : 'Editar compromisso'}
+                  </button>
+                  <button
+                    onClick={() => handleDuplicateApp(selectedApp)}
+                    className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-white rounded-xl flex items-center justify-center border border-slate-200/30 dark:border-white/5 shadow-sm transition-all"
+                    title="Duplicar"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Listagem de Detalhes */}
+                <div className="space-y-2.5 bg-slate-50 dark:bg-black/30 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/60 text-slate-500 dark:text-slate-400">
+                  {/* Profissional / Cadeira */}
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span>
+                      {selectedApp.type === 'CONSULTA' 
+                        ? `${dentists.find(d => d.id === selectedApp.doctor_id)?.full_name || 'Profissional'} · ${selectedApp.room || 'Cadeira'}`
+                        : `${dentists.find(d => d.id === selectedApp.doctor_id)?.full_name || 'Bloqueio geral'}`
+                      }
+                    </span>
+                  </div>
+
+                  {/* Data */}
+                  <div className="flex items-center gap-2">
+                    <CalIcon className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="capitalize">
+                      {new Date(selectedApp.start_time).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+
+                  {/* Hora */}
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <span>
+                      {new Date(selectedApp.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {new Date(selectedApp.end_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      {selectedApp.duration && ` (${selectedApp.duration} min)`}
+                    </span>
+                  </div>
+
+                  {/* Observação / Descrição */}
+                  {selectedApp.observations && (
+                    <div className="flex items-start gap-2 pt-1 border-t border-slate-200/40 dark:border-slate-800/40">
+                      <FileText className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{selectedApp.observations}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Dropdown */}
+                {selectedApp.type === 'CONSULTA' && (
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-1">Status da Consulta</label>
+                    <div className="relative">
+                      <select
+                        value={selectedApp.status}
+                        onChange={(e) => handleStatusChange(selectedApp.id, e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/35 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 pl-8 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-secondary/30 focus:border-secondary cursor-pointer appearance-none"
+                      >
+                        <option value="PENDING">Agendada</option>
+                        <option value="CONFIRMED">Confirmada</option>
+                        <option value="COMPLETED">Atendido</option>
+                        <option value="CANCELLED">Cancelado</option>
+                      </select>
+                      <span className={`absolute left-3 top-[11px] w-2.5 h-2.5 rounded-full ${
+                        selectedApp.status === 'CONFIRMED' 
+                          ? 'bg-emerald-500' 
+                          : selectedApp.status === 'PENDING'
+                            ? 'bg-blue-500'
+                            : selectedApp.status === 'COMPLETED'
+                              ? 'bg-violet-500'
+                              : 'bg-red-500'
+                      }`} />
+                    </div>
+                  </div>
+                )}
+
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
-      {/* MODAL: NOVO AGENDAMENTO */}
-      {showAddApp && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Novo Agendamento Clínico</h3>
+      {/* ========================================================================= */}
+      {/* MODAL: NOVO AGENDAMENTO MULTI-ABAS (MAC STYLE)                            */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {showAddApp && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-855 dark:text-white"
+            >
+              {/* Fechar */}
               <button 
-                onClick={() => setShowAddApp(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                onClick={() => {
+                  setShowAddApp(false);
+                  setShowQuickPatientForm(false);
+                }}
+                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-250 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
-            </div>
 
-            <form onSubmit={handleAddAppSubmit} className="space-y-3.5 text-slate-800 dark:text-slate-200">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Selecionar Paciente</label>
-                <select
-                  required
-                  value={appPatientId}
-                  onChange={(e) => setAppPatientId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                >
-                  <option value="">Escolher paciente...</option>
-                  {patients.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Procedimento</label>
-                <select
-                  required
-                  value={appProcedureId}
-                  onChange={(e) => setAppProcedureId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                >
-                  <option value="">Escolher procedimento...</option>
-                  {procedures.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} - R$ {p.price}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Data</label>
-                  <input
-                    type="date"
-                    required
-                    value={appDate}
-                    onChange={(e) => setAppDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Horário</label>
-                  <input
-                    type="time"
-                    required
-                    value={appTime}
-                    onChange={(e) => setAppTime(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sala / Consultório</label>
-                  <select
-                    value={appRoom}
-                    onChange={(e) => setAppRoom(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+              {/* TABS DE SELEÇÃO */}
+              <div className="flex bg-slate-100 dark:bg-black/40 p-1.5 rounded-2xl border border-slate-200/30 dark:border-slate-800/80 mb-5 max-w-xs">
+                {['consulta', 'compromisso', 'tarefa'].map(tab => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveModalTab(tab)}
+                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                      activeModalTab === tab 
+                        ? 'bg-white dark:bg-slate-750 text-slate-850 dark:text-white shadow-sm' 
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
                   >
-                    {rooms.map((r, i) => <option key={i} value={r}>{r}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Dentista</label>
-                  <select
-                    value={appDoctor}
-                    onChange={(e) => setAppDoctor(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                  >
-                    {dentists.map((d, i) => <option key={i} value={d}>{d}</option>)}
-                  </select>
-                </div>
+                    {tab}
+                  </button>
+                ))}
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-secondary text-white font-bold rounded-xl shadow text-xs mt-2"
-                style={{ backgroundColor: currentTheme.secondary_color }}
-              >
-                Agendar Consulta
-              </button>
-            </form>
+              {/* FORMULÁRIO */}
+              <form onSubmit={handleAddAppSubmit} className="space-y-4 text-left">
+                
+                {/* ----------------- ABA: CONSULTA ----------------- */}
+                {activeModalTab === 'consulta' && (
+                  <>
+                    {/* Dentista & Cadeira */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Dentista</label>
+                        <select
+                          required
+                          value={appDoctorId}
+                          onChange={(e) => setAppDoctorId(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                        >
+                          {dentists.map(d => (
+                            <option key={d.id} value={d.id}>{d.full_name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Cadeira</label>
+                        <select
+                          required
+                          value={appChairId}
+                          onChange={(e) => setAppChairId(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                        >
+                          {chairs.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Paciente (Autocomplete ou Cadastro Rápido) */}
+                    <div className="relative">
+                      <div className="flex justify-between items-center pl-1 mb-1">
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Paciente</label>
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickPatientForm(!showQuickPatientForm)}
+                          className="text-[9px] text-secondary hover:underline font-bold"
+                          style={{ color: currentTheme.secondary_color }}
+                        >
+                          {showQuickPatientForm ? '« Buscar paciente' : '+ Cadastrar'}
+                        </button>
+                      </div>
+
+                      {showQuickPatientForm ? (
+                        /* Subform Cadastro Rápido */
+                        <div className="p-3.5 bg-slate-100/50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Nome completo..."
+                              value={quickPatientName}
+                              onChange={(e) => setQuickPatientName(e.target.value)}
+                              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              required
+                              placeholder="Celular (ex: 88999699232)..."
+                              value={quickPatientPhone}
+                              onChange={(e) => setQuickPatientPhone(e.target.value)}
+                              className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleQuickPatientSave}
+                              className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow border border-white/5 active:scale-95"
+                              style={{ backgroundColor: currentTheme.secondary_color }}
+                            >
+                              Salvar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Autocomplete Input */
+                        <>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Busque por nome, telefone, CPF..."
+                            value={patientSearch}
+                            onChange={(e) => {
+                              setPatientSearch(e.target.value);
+                              setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                          />
+                          {showSuggestions && patientSearch && (
+                            <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
+                              {filteredPatients.slice(0, 5).map(p => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setAppPatientId(p.id);
+                                    setPatientSearch(p.name);
+                                    setShowSuggestions(false);
+                                  }}
+                                  className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-colors"
+                                >
+                                  {p.name} <span className="opacity-60">({p.phone})</span>
+                                </button>
+                              ))}
+                              {filteredPatients.length === 0 && (
+                                <div className="p-2 text-center text-xs text-slate-500">Nenhum paciente encontrado</div>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Procedimento */}
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Procedimento</label>
+                      <select
+                        required
+                        value={appProcedureId}
+                        onChange={(e) => setAppProcedureId(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                      >
+                        <option value="">Escolher procedimento...</option>
+                        {procedures.map(p => (
+                          <option key={p.id} value={p.id}>{p.name} - R$ {p.price}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Data, Horário e Duração */}
+                    <div className="grid grid-cols-3 gap-2.5">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Data</label>
+                        <input
+                          type="date"
+                          required
+                          value={appDate}
+                          onChange={(e) => setAppDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Horário</label>
+                        <input
+                          type="time"
+                          required
+                          value={appTime}
+                          onChange={(e) => setAppTime(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center pl-1 mb-1">
+                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Duração</label>
+                          <span className="text-[8px] text-slate-400">min</span>
+                        </div>
+                        <input
+                          type="number"
+                          required
+                          value={appDuration}
+                          onChange={(e) => setAppDuration(parseInt(e.target.value))}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Observações */}
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Observações</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Adicione observações sobre esta consulta..."
+                        value={appObservations}
+                        onChange={(e) => setAppObservations(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
+                      />
+                    </div>
+
+                    {/* Sim/Não WhatsApp & Retorno & Etiqueta */}
+                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/50">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-0.5 mb-1.5">Enviar confirmação?</label>
+                        <div className="flex gap-4 items-center mt-1">
+                          <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                            <input
+                              type="radio"
+                              checked={appSendConfirmation === true}
+                              onChange={() => setAppSendConfirmation(true)}
+                              className="accent-secondary"
+                            />
+                            Sim
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                            <input
+                              type="radio"
+                              checked={appSendConfirmation === false}
+                              onChange={() => setAppSendConfirmation(false)}
+                              className="accent-secondary"
+                            />
+                            Não
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Retornar em</label>
+                        <select
+                          value={appReturnDays}
+                          onChange={(e) => setAppReturnDays(e.target.value)}
+                          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-2 text-xs focus:outline-none cursor-pointer"
+                        >
+                          <option value="">Sem retorno</option>
+                          <option value="15">15 dias</option>
+                          <option value="30">30 dias</option>
+                          <option value="90">90 dias</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Etiqueta</label>
+                      <select
+                        value={appLabel}
+                        onChange={(e) => setAppLabel(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer"
+                      >
+                        <option value="Agendada">Agendada</option>
+                        <option value="Primeira consulta">Primeira consulta</option>
+                        <option value="Orçamento">Orçamento</option>
+                        <option value="Retorno">Retorno</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* ----------------- ABA: COMPROMISSO ----------------- */}
+                {activeModalTab === 'compromisso' && (
+                  <>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Dentista</label>
+                      <select
+                        required
+                        value={compDoctorId}
+                        onChange={(e) => setCompDoctorId(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                      >
+                        {dentists.map(d => (
+                          <option key={d.id} value={d.id}>{d.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Título</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Dê um título ao compromisso (ex: Reunião, Almoço)..."
+                        value={compTitle}
+                        onChange={(e) => setCompTitle(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                      />
+                    </div>
+
+                    {/* Data/Hora Início */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Data de início</label>
+                        <input
+                          type="date"
+                          required
+                          value={compStartDate}
+                          onChange={(e) => setCompStartDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Hora de início</label>
+                        <input
+                          type="time"
+                          required
+                          value={compStartTime}
+                          onChange={(e) => setCompStartTime(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Data/Hora Fim */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Data de término</label>
+                        <input
+                          type="date"
+                          required
+                          value={compEndDate}
+                          onChange={(e) => setCompEndDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Hora de término</label>
+                        <input
+                          type="time"
+                          required
+                          value={compEndTime}
+                          onChange={(e) => setCompEndTime(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Recorrência */}
+                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/50">
+                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={compIsRecurring}
+                          onChange={(e) => setCompIsRecurring(e.target.checked)}
+                          className="w-4 h-4 rounded text-secondary focus:ring-secondary accent-secondary"
+                        />
+                        Repetir este compromisso
+                      </label>
+                    </div>
+                  </>
+                )}
+
+                {/* ----------------- ABA: TAREFA ----------------- */}
+                {activeModalTab === 'tarefa' && (
+                  <>
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Título *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Qual tarefa você precisa fazer?"
+                        value={taskTitle}
+                        onChange={(e) => setTaskTitle(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Descrição</label>
+                      <textarea
+                        rows={2.5}
+                        placeholder="Adicione detalhes sobre a tarefa..."
+                        value={taskDescription}
+                        onChange={(e) => setTaskDescription(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
+                      />
+                    </div>
+
+                    {/* Data/Hora Prazo */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Prazo (Data)</label>
+                        <input
+                          type="date"
+                          required
+                          value={taskDueDate}
+                          onChange={(e) => setTaskDueDate(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Prazo (Hora)</label>
+                        <input
+                          type="time"
+                          required
+                          value={taskDueTime}
+                          onChange={(e) => setTaskDueTime(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Lista & Paciente */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Lista</label>
+                        <select
+                          value={taskList}
+                          onChange={(e) => setTaskList(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                        >
+                          <option value="Entrada">Entrada</option>
+                          <option value="Hoje">Hoje</option>
+                          <option value="Financeiro">Financeiro</option>
+                        </select>
+                      </div>
+                      <div className="relative">
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Paciente (Opcional)</label>
+                        <input
+                          type="text"
+                          placeholder="Buscar paciente..."
+                          value={taskPatientSearch}
+                          onChange={(e) => {
+                            setTaskPatientSearch(e.target.value);
+                            setShowTaskPatientSuggestions(true);
+                          }}
+                          onFocus={() => setShowTaskPatientSuggestions(true)}
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                        />
+                        {showTaskPatientSuggestions && taskPatientSearch && (
+                          <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
+                            {filteredTaskPatients.slice(0, 5).map(p => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setTaskPatientId(p.id);
+                                  setTaskPatientSearch(p.name);
+                                  setShowTaskPatientSuggestions(false);
+                                }}
+                                className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-colors"
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* BOTÕES DE SUBMISSÃO */}
+                <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800/85">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddApp(false);
+                      setShowQuickPatientForm(false);
+                    }}
+                    className="px-4 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-secondary text-white font-bold rounded-xl text-xs shadow-lg active:scale-95 transition-all flex items-center gap-1.5 border border-white/5"
+                    style={{ backgroundColor: currentTheme.secondary_color }}
+                  >
+                    {activeModalTab === 'consulta' && 'Agendar consulta'}
+                    {activeModalTab === 'compromisso' && 'Salvar compromisso'}
+                    {activeModalTab === 'tarefa' && 'Criar tarefa'}
+                  </button>
+                </div>
+
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

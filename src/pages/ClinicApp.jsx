@@ -3,6 +3,8 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { HelpCircle, X, Sparkles, BookOpen } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import Onboarding from './onboarding/Onboarding';
 
 // Imports dos Módulos Modulares
 import Dashboard from './dashboard/Dashboard';
@@ -18,6 +20,12 @@ import Configuracoes from './configuracoes/Configuracoes';
 
 export default function ClinicApp() {
   const { currentTheme } = useTheme();
+  const { user, clinic } = useAuth();
+
+  const onboardingKey = `df_onboarding_done_${clinic?.id}_${user?.id}`;
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    return !localStorage.getItem(onboardingKey);
+  });
 
   // Abas do Panel: 'dashboard' | 'crm' | 'pacientes' | 'agenda' | 'whatsapp' | 'ai' | 'automacoes' | 'marketing' | 'financeiro' | 'relatorios' | 'configuracoes'
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -27,6 +35,12 @@ export default function ClinicApp() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  // Estados compartilhados da Agenda (elevados)
+  const [agendaDate, setAgendaDate] = useState(new Date());
+  const [selectedChairs, setSelectedChairs] = useState([]);
+  const [selectedDentists, setSelectedDentists] = useState([]);
+  const [agendaViewMode, setAgendaViewMode] = useState('week');
 
   // Central de Ajuda
   const [showHelpCenter, setShowHelpCenter] = useState(false);
@@ -70,7 +84,22 @@ export default function ClinicApp() {
       case 'pacientes':
         return <Pacientes selectedPatient={selectedPatient} setSelectedPatient={setSelectedPatient} />;
       case 'agenda':
-        return <Agenda selectedAppointment={selectedAppointment} setSelectedAppointment={setSelectedAppointment} />;
+        return (
+          <Agenda 
+            selectedAppointment={selectedAppointment} 
+            setSelectedAppointment={setSelectedAppointment}
+            currentDate={agendaDate}
+            setCurrentDate={setAgendaDate}
+            selectedChairs={selectedChairs}
+            setSelectedChairs={setSelectedChairs}
+            selectedDentists={selectedDentists}
+            setSelectedDentists={setSelectedDentists}
+            view={agendaViewMode}
+            setView={setAgendaViewMode}
+            setActiveTab={setActiveTab}
+            setSelectedPatient={setSelectedPatient}
+          />
+        );
       case 'whatsapp':
         return <WhatsApp />;
       case 'ai':
@@ -92,6 +121,17 @@ export default function ClinicApp() {
   const hasSubSidebar = ['crm', 'pacientes', 'agenda'].includes(activeTab);
   const showSubSidebar = hasSubSidebar && !collapsed;
 
+  if (showOnboarding) {
+    return (
+      <Onboarding 
+        onComplete={() => {
+          localStorage.setItem(onboardingKey, 'true');
+          setShowOnboarding(false);
+        }} 
+      />
+    );
+  }
+
   return (
     <div 
       className="h-screen w-screen p-4 flex gap-4 overflow-hidden font-body transition-colors duration-300"
@@ -109,6 +149,14 @@ export default function ClinicApp() {
         setSelectedPatient={setSelectedPatient}
         selectedAppointment={selectedAppointment}
         setSelectedAppointment={setSelectedAppointment}
+        agendaDate={agendaDate}
+        setAgendaDate={setAgendaDate}
+        selectedChairs={selectedChairs}
+        setSelectedChairs={setSelectedChairs}
+        selectedDentists={selectedDentists}
+        setSelectedDentists={setSelectedDentists}
+        agendaViewMode={agendaViewMode}
+        setAgendaViewMode={setAgendaViewMode}
       />
 
       {/* Área de Conteúdo Principal */}
