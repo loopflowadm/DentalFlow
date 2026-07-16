@@ -1103,22 +1103,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     {/* Widget: Odontograma FDI */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
-                        <div className="flex gap-1 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/40 dark:border-slate-800">
-                          {['permanentes', 'deciduos'].map(type => (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() => setArcadaType(type)}
-                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                                arcadaType === type 
-                                  ? 'bg-white dark:bg-slate-750 text-slate-855 dark:text-white shadow-sm' 
-                                  : 'text-slate-500 hover:text-slate-355'
-                              }`}
-                            >
-                              {type}
-                            </button>
-                          ))}
-                        </div>
+                        <h4 className="text-xs font-black text-slate-855 dark:text-white font-title flex items-center gap-1.5">
+                          🦷 Odontograma de Resumo
+                        </h4>
 
                         {/* Legenda de Status */}
                         <div className="flex items-center gap-3 text-[9px] font-black text-slate-450 uppercase tracking-widest">
@@ -1151,7 +1138,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             );
                           };
 
-                          return arcadaType === 'permanentes' ? (
+                          return (
                             <div className="space-y-6 flex flex-col items-center min-w-[650px] w-full">
                               {/* Arcada Superior */}
                               <div className="flex flex-col items-center w-full">
@@ -1173,30 +1160,6 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                                   {lowerTeethLeft.map(t => renderMiniToothBlock(t, true))}
                                 </div>
                                 <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mt-3">Arcada Inferior</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-6 flex flex-col items-center min-w-[500px] w-full">
-                              {/* Decíduos Superior */}
-                              <div className="flex flex-col items-center w-full">
-                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mb-2">Arcada Decídua Superior</span>
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {upperTeethDecRight.map(t => renderMiniToothBlock(t, false))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
-                                  {upperTeethDecLeft.map(t => renderMiniToothBlock(t, false))}
-                                </div>
-                              </div>
-                              
-                              <div className="w-full h-px bg-slate-200/40 dark:bg-slate-800/40" />
-
-                              {/* Decíduos Inferior */}
-                              <div className="flex flex-col items-center w-full">
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {lowerTeethDecRight.map(t => renderMiniToothBlock(t, true))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
-                                  {lowerTeethDecLeft.map(t => renderMiniToothBlock(t, true))}
-                                </div>
-                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mt-3">Arcada Decídua Inferior</span>
                               </div>
                             </div>
                           );
