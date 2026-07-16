@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { mockDb } from '../lib/mockDatabase';
 import { supabase } from '../lib/supabase';
-import { Plus, Users, Shield, LogOut, CheckCircle, Palette, MonitorPlay, Key, Check } from 'lucide-react';
+import { Plus, Users, Shield, LogOut, CheckCircle, Palette, MonitorPlay, Key, Check, Activity, Sparkles, Gem, Building } from 'lucide-react';
 
 // Helpers puros externos para evitar erro react-hooks/purity
 function generateClinicId() {
@@ -309,12 +309,12 @@ export default function SuperAdmin() {
                       onChange={(e) => setLogo(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white"
                     >
-                      <option value="🦷">🦷 Dente</option>
-                      <option value="✨">✨ Brilho</option>
-                      <option value="💎">💎 Diamante</option>
-                      <option value="🏥">🏥 Hospital/Clínica</option>
-                      <option value="🛡️">🛡️ Escudo</option>
-                      <option value="⚕️">⚕️ Medicina</option>
+                      <option value="🦷">Dente</option>
+                      <option value="✨">Brilho</option>
+                      <option value="💎">Diamante</option>
+                      <option value="🏥">Hospital/Clínica</option>
+                      <option value="🛡️">Escudo</option>
+                      <option value="⚕️">Medicina</option>
                     </select>
                   </div>
                 </div>
@@ -384,7 +384,20 @@ export default function SuperAdmin() {
                   {clinics.map((c) => (
                     <tr key={c.id || c.subdomain} className="hover:bg-slate-800/10 transition-colors">
                       <td className="py-3 font-bold text-white flex items-center gap-2">
-                        <span className="text-lg">{c.logo_url || '🦷'}</span>
+                        <span className="text-lg flex items-center justify-center">
+                          {(() => {
+                            const logoMap = {
+                              '🦷': Activity,
+                              '✨': Sparkles,
+                              '💎': Gem,
+                              '🏥': Building,
+                              '🛡️': Shield,
+                              '⚕️': Activity
+                            };
+                            const IconComponent = logoMap[c.logo_url] || Activity;
+                            return <IconComponent className="w-5 h-5 text-slate-400" />;
+                          })()}
+                        </span>
                         {c.name}
                       </td>
                       <td className="py-3 text-slate-300 font-mono">{c.subdomain}.crm.com</td>

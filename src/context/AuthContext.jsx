@@ -14,7 +14,7 @@ const unpackClinicData = (clinic) => {
         ...clinic,
         logo_url: parsed.logo_url || '',
         accent_color: parsed.accent_color || '#D9E2FF',
-        font_family: parsed.font_family || 'Inter',
+        font_family: parsed.font_family || 'Geist',
         theme_base: parsed.theme_base || 'light',
         favicon_url: parsed.favicon_url || '',
         login_title: parsed.login_title || 'Bem-vindo ao seu portal',
@@ -28,7 +28,7 @@ const unpackClinicData = (clinic) => {
   return {
     ...clinic,
     accent_color: clinic.accent_color || '#D9E2FF',
-    font_family: clinic.font_family || 'Inter',
+    font_family: clinic.font_family || 'Geist',
     theme_base: clinic.theme_base || 'light',
     favicon_url: clinic.favicon_url || '',
     login_title: clinic.login_title || 'Bem-vindo ao seu portal',
@@ -239,7 +239,7 @@ export function AuthProvider({ children }) {
     const packedLogoUrl = JSON.stringify({
       logo_url: updatedClinic.logo_url || '',
       accent_color: updatedClinic.accent_color || '#D9E2FF',
-      font_family: updatedClinic.font_family || 'Inter',
+      font_family: updatedClinic.font_family || 'Geist',
       theme_base: updatedClinic.theme_base || 'light',
       favicon_url: updatedClinic.favicon_url || '',
       login_title: updatedClinic.login_title || 'Bem-vindo ao seu portal',

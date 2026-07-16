@@ -4,7 +4,7 @@
    Aligned with project palette: index.css & DESIGN.md
    ═══════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
 
 /* ── Design Tokens (aligned with project's --color-primary / --color-secondary) ── */
 :root {
@@ -36,7 +36,7 @@
   min-height: 100vh;
   width: 100%;
   background: var(--lp-gray);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--lp-text-primary);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -52,7 +52,7 @@
 .landing-page h2,
 .landing-page h3,
 .landing-page h4 {
-  font-family: 'Poppins', -apple-system, sans-serif;
+  font-family: 'Geist', -apple-system, sans-serif;
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -136,7 +136,7 @@
   gap: 8px;
   background: var(--lp-blue);
   color: white;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-weight: 700;
   font-size: 14px;
   border: none;
@@ -164,7 +164,7 @@
   gap: 8px;
   background: var(--lp-white);
   color: var(--lp-text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-weight: 700;
   font-size: 14px;
   border: 2px solid var(--lp-border);
@@ -185,7 +185,7 @@
   background: transparent;
   border: none;
   color: var(--lp-text-secondary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-weight: 700;
   font-size: 14px;
   padding: 8px 16px;
@@ -250,7 +250,7 @@
 }
 
 .landing-header__logo-text {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--lp-text-primary);
@@ -270,7 +270,7 @@
 .landing-header__nav button {
   background: none;
   border: none;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--lp-text-secondary);
@@ -967,7 +967,7 @@
 }
 
 .landing-features__card-title {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 16px;
   font-weight: 700;
   color: var(--lp-text-primary);
@@ -1135,7 +1135,7 @@
 }
 
 .landing-results__card-value {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 42px;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -1504,7 +1504,7 @@
 }
 
 .landing-pricing__plan-name {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: var(--lp-text-primary);
@@ -1524,7 +1524,7 @@
 }
 
 .landing-pricing__price-value {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 36px;
   font-weight: 900;
   color: var(--lp-text-primary);
@@ -1599,7 +1599,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: var(--lp-text-primary);
@@ -1710,7 +1710,7 @@
   background: var(--lp-gray);
   border: 1px solid var(--lp-border);
   border-radius: var(--lp-radius-sm);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 14px;
   font-weight: 500;
   color: var(--lp-text-primary);
@@ -1787,7 +1787,7 @@
   gap: 10px;
   background: white;
   color: var(--lp-blue);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-weight: 800;
   font-size: 16px;
   padding: 16px 40px;
@@ -1859,7 +1859,7 @@
 }
 
 .landing-footer__brand-text {
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 22px;
   font-weight: 800;
   color: white;
@@ -1899,7 +1899,7 @@
 }
 
 .landing-footer__links-group h4 {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);

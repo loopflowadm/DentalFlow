@@ -6,7 +6,8 @@ import { supabase } from '../lib/supabase';
 import { mockDb } from '../lib/mockDatabase';
 import {
   KeyRound, Mail, AlertTriangle, ShieldCheck, HelpCircle,
-  Building, UserPlus, ArrowLeft, Paintbrush, Smile, Info
+  Building, UserPlus, ArrowLeft, Paintbrush, Smile, Info,
+  Activity, Sparkles, Gem, Shield
 } from 'lucide-react';
 
 export default function Login({ initialView = 'login', onBack }) {
@@ -293,7 +294,18 @@ export default function Login({ initialView = 'login', onBack }) {
               ) ? (
                 <img src={currentTheme.logo_url} className="h-10 object-contain rounded-lg" alt={currentTheme.name} />
               ) : currentTheme?.logo_url && currentTheme.logo_url.trim().length <= 4 ? (
-                <span className="text-3xl filter drop-shadow">{currentTheme.logo_url}</span>
+                (() => {
+                  const logoMap = {
+                    '🦷': Activity,
+                    '✨': Sparkles,
+                    '💎': Gem,
+                    '🏥': Building,
+                    '🛡️': Shield,
+                    '⚕️': Activity
+                  };
+                  const IconComponent = logoMap[currentTheme.logo_url] || Activity;
+                  return <IconComponent className="h-10 w-10 text-white" style={{ color: currentTheme.secondary_color }} />;
+                })()
               ) : (
                 <Logo collapsed={false} className="h-10 w-auto text-white" />
               )}

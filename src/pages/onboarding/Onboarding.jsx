@@ -41,7 +41,9 @@ export default function Onboarding({ onComplete }) {
   // Buscar dados da clínica existente para pré-preencher
   useEffect(() => {
     if (clinic?.name) {
-      setClinicaNome(clinic.name);
+      Promise.resolve().then(() => {
+        setClinicaNome(clinic.name);
+      });
     }
   }, [clinic]);
 
@@ -103,7 +105,7 @@ export default function Onboarding({ onComplete }) {
     setTimeout(() => {
       setWhatsappChat(prev => [
         ...prev,
-        { id: 3, sender: 'bot', text: 'Excelente! Sua presença foi confirmada e o Dr. Carlos já foi notificado. Até amanhã! 🚀' }
+        { id: 3, sender: 'bot', text: 'Excelente! Sua presença foi confirmada e o Dr. Carlos já foi notificado. Até amanhã!' }
       ]);
       setChatStage('bot_confirmed');
       setShowConfetti(true);
@@ -189,102 +191,7 @@ export default function Onboarding({ onComplete }) {
     'Captação de pacientes'
   ];
 
-  // Componente Blob IA
-  function AiBlob() {
-    return (
-      <div className="relative w-28 h-28 flex items-center justify-center mb-6">
-        {/* Glow de fundo */}
-        <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
-        
-        {/* Blob em movimento */}
-        <motion.div
-          animate={{
-            borderRadius: [
-              "42% 58% 70% 30% / 45% 45% 55% 55%",
-              "70% 30% 52% 48% / 60% 40% 60% 40%",
-              "50% 50% 35% 65% / 40% 60% 40% 60%",
-              "42% 58% 70% 30% / 45% 45% 55% 55%"
-            ],
-            rotate: [0, 120, 240, 360],
-          }}
-          transition={{
-            duration: 8,
-            ease: "easeInOut",
-            repeat: Infinity,
-          }}
-          className="w-20 h-20 bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 shadow-[0_8px_30px_rgba(99,102,241,0.25)] border border-white/20"
-        />
-        {/* Reflexo sutil de vidro para efeito 3D / Depth */}
-        <div className="absolute w-20 h-20 rounded-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-      </div>
-    );
-  }
-
-  // Componente do Mockup de Smartphone
-  function SmartphoneMockup() {
-    return (
-      <div className="border-[8px] border-slate-900 bg-slate-100 shadow-2xl rounded-[36px] w-72 h-[410px] overflow-hidden flex flex-col relative font-sans text-left">
-        {/* Notch do Celular */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-4 w-28 bg-slate-900 rounded-b-2xl z-20 flex items-center justify-center">
-          <div className="w-10 h-1 bg-slate-800 rounded-full mb-1" />
-        </div>
-        
-        {/* Cabeçalho do Chat */}
-        <div className="bg-[#0b141a] text-white pt-5 pb-2.5 px-3 flex items-center gap-2 border-b border-white/5 relative z-10">
-          <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
-            DF
-          </div>
-          <div>
-            <div className="font-bold text-[10px] flex items-center gap-1">
-              DentalFlow Bot
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
-            </div>
-            <div className="text-[8px] text-green-400 font-medium">online</div>
-          </div>
-        </div>
-
-        {/* Corpo de mensagens */}
-        <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-[#0b141a] flex flex-col justify-end">
-          {whatsappChat.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              className={`max-w-[85%] p-2 rounded-2xl text-[10px] leading-relaxed shadow-sm ${
-                msg.sender === 'bot' 
-                  ? 'bg-[#202c33] text-slate-100 self-start rounded-tl-none' 
-                  : 'bg-[#005c4b] text-white self-end rounded-tr-none'
-              }`}
-            >
-              {msg.typing ? (
-                <div className="flex gap-1 py-1 px-2 items-center">
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              ) : (
-                msg.text
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Input/Rodapé do Chat */}
-        <div className="p-2 bg-[#1f2c34] flex gap-2 items-center border-t border-white/5">
-          <div className="flex-1 bg-[#2a3942] rounded-full py-1.5 px-3 text-[9px] text-slate-400">
-            {chatStage === 'waiting_user' ? 'Responda SIM...' : 'Mensagem enviada'}
-          </div>
-          <button 
-            onClick={handleSimulateResponse}
-            disabled={chatStage !== 'waiting_user'}
-            className="w-7 h-7 rounded-full bg-[#00a884] disabled:opacity-40 flex items-center justify-center text-white active:scale-95 transition-transform"
-          >
-            <Send className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Componentes auxiliares movidos para escopo de arquivo para evitar recriação no render (eslint: react-hooks/static-components)
 
   // Nome simplificado do usuário
   const userFirstName = user?.full_name?.split(' ')[0] || 'Doutor(a)';
@@ -790,7 +697,7 @@ export default function Onboarding({ onComplete }) {
               </div>
               
               <div className="flex-shrink-0 relative">
-                <SmartphoneMockup />
+                <SmartphoneMockup whatsappChat={whatsappChat} chatStage={chatStage} handleSimulateResponse={handleSimulateResponse} />
                 {showConfetti && (
                   <div className="absolute inset-0 bg-green-500/10 pointer-events-none rounded-[36px] flex items-center justify-center animate-ping">
                     <Sparkles className="w-12 h-12 text-green-500" />
@@ -835,7 +742,7 @@ export default function Onboarding({ onComplete }) {
                   Tudo pronto, {userFirstName}!
                 </h2>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-                  A <span className="font-extrabold text-blue-600">{clinicaNome || 'sua clínica'}</span> está preparada para o futuro. Que comece uma nova fase de sucesso 🚀
+                  A <span className="font-extrabold text-blue-600">{clinicaNome || 'sua clínica'}</span> está preparada para o futuro. Que comece uma nova fase de sucesso
                 </p>
               </div>
 
@@ -887,6 +794,102 @@ export default function Onboarding({ onComplete }) {
           )}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Componentes estáticos fora do render do componente pai (Onboarding)
+function AiBlob() {
+  return (
+    <div className="relative w-28 h-28 flex items-center justify-center mb-6">
+      {/* Glow de fundo */}
+      <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
+      
+      {/* Blob em movimento */}
+      <motion.div
+        animate={{
+          borderRadius: [
+            "42% 58% 70% 30% / 45% 45% 55% 55%",
+            "70% 30% 52% 48% / 60% 40% 60% 40%",
+            "50% 50% 35% 65% / 40% 60% 40% 60%",
+            "42% 58% 70% 30% / 45% 45% 55% 55%"
+          ],
+          rotate: [0, 120, 240, 360],
+        }}
+        transition={{
+          duration: 8,
+          ease: "easeInOut",
+          repeat: Infinity,
+        }}
+        className="w-20 h-20 bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 shadow-[0_8px_30px_rgba(99,102,241,0.25)] border border-white/20"
+      />
+      {/* Reflexo sutil de vidro para efeito 3D / Depth */}
+      <div className="absolute w-20 h-20 rounded-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+    </div>
+  );
+}
+
+function SmartphoneMockup({ whatsappChat, chatStage, handleSimulateResponse }) {
+  return (
+    <div className="border-[8px] border-slate-900 bg-slate-100 shadow-2xl rounded-[36px] w-72 h-[410px] overflow-hidden flex flex-col relative font-sans text-left">
+      {/* Notch do Celular */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-4 w-28 bg-slate-900 rounded-b-2xl z-20 flex items-center justify-center">
+        <div className="w-10 h-1 bg-slate-800 rounded-full mb-1" />
+      </div>
+      
+      {/* Cabeçalho do Chat */}
+      <div className="bg-[#0b141a] text-white pt-5 pb-2.5 px-3 flex items-center gap-2 border-b border-white/5 relative z-10">
+        <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
+          DF
+        </div>
+        <div>
+          <div className="font-bold text-[10px] flex items-center gap-1">
+            DentalFlow Bot
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
+          </div>
+          <div className="text-[8px] text-green-400 font-medium">online</div>
+        </div>
+      </div>
+
+      {/* Corpo de mensagens */}
+      <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-[#0b141a] flex flex-col justify-end">
+        {whatsappChat.map((msg) => (
+          <motion.div
+            key={msg.id}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className={`max-w-[85%] p-2 rounded-2xl text-[10px] leading-relaxed shadow-sm ${
+              msg.sender === 'bot' 
+                ? 'bg-[#202c33] text-slate-100 self-start rounded-tl-none' 
+                : 'bg-[#005c4b] text-white self-end rounded-tr-none'
+            }`}
+          >
+            {msg.typing ? (
+              <div className="flex gap-1 py-1 px-2 items-center">
+                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            ) : (
+              msg.text
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Input/Rodapé do Chat */}
+      <div className="p-2 bg-[#1f2c34] flex gap-2 items-center border-t border-white/5">
+        <div className="flex-1 bg-[#2a3942] rounded-full py-1.5 px-3 text-[9px] text-slate-400">
+          {chatStage === 'waiting_user' ? 'Responda SIM...' : 'Mensagem enviada'}
+        </div>
+        <button 
+          onClick={handleSimulateResponse}
+          disabled={chatStage !== 'waiting_user'}
+          className="w-7 h-7 rounded-full bg-[#00a884] disabled:opacity-40 flex items-center justify-center text-white active:scale-95 transition-transform"
+        >
+          <Send className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,8 @@ import {
   BarChart3, Clock, X, UserPlus, Search, Bell, Lock, Headphones,
   Star, Brain, Plug, TrendingUp, ClipboardList, Zap, Heart,
   ExternalLink, Mail, Phone, MapPin, Globe, ChevronRight,
-  Play, Monitor, Smartphone, Tablet, Activity, Award
+  Play, Monitor, Smartphone, Tablet, Activity, Award,
+  Folder, CreditCard, Bot, Link
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Logo from '../components/Logo';
@@ -112,7 +113,7 @@ export default function LandingPage({ onLogin, onRegister }) {
       clinic_id: defaultClinicId,
       name: leadData.name,
       phone: leadData.phone.replace(/\D/g, '') || '5511999999999',
-      avatar: '👤',
+      avatar: '',
       stage: 0,
       priority: 'medium',
       budget_amount: leadData.budget || 0.00,
@@ -286,7 +287,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                   {/* Agenda */}
                   <div className="landing-dashboard__panel">
                     <div className="landing-dashboard__panel-header">
-                      <span>📅 Agenda do dia</span>
+                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-secondary" /> Agenda do dia</span>
                       <span className="landing-dashboard__panel-link">Ver todas →</span>
                     </div>
                     {[
@@ -646,23 +647,28 @@ export default function LandingPage({ onLogin, onRegister }) {
 
         <div className="landing-integrations__grid">
           {[
-            { name: 'WhatsApp', icon: '💬', desc: 'Mensagens automatizadas' },
-            { name: 'Google Calendar', icon: '📅', desc: 'Sincronização de agenda' },
-            { name: 'Google Drive', icon: '📁', desc: 'Armazenamento de arquivos' },
-            { name: 'Gmail', icon: '✉️', desc: 'E-mails automáticos' },
-            { name: 'Stripe', icon: '💳', desc: 'Pagamentos online' },
-            { name: 'OpenAI', icon: '🤖', desc: 'Inteligência artificial' },
-            { name: 'n8n', icon: '⚡', desc: 'Automação de workflows' },
-            { name: 'Meta', icon: '📱', desc: 'Anúncios e leads' },
-            { name: 'Microsoft', icon: '🪟', desc: 'Produtividade' },
-            { name: 'API', icon: '🔗', desc: 'Integração personalizada' },
-          ].map((item, i) => (
-            <AnimatedSection key={i} delay={i * 0.05} className="landing-integrations__card">
-              <span className="landing-integrations__card-icon">{item.icon}</span>
-              <span className="landing-integrations__card-name">{item.name}</span>
-              <span className="landing-integrations__card-desc">{item.desc}</span>
-            </AnimatedSection>
-          ))}
+            { name: 'WhatsApp', icon: MessageSquare, desc: 'Mensagens automatizadas', color: 'text-emerald-500' },
+            { name: 'Google Calendar', icon: Calendar, desc: 'Sincronização de agenda', color: 'text-blue-500' },
+            { name: 'Google Drive', icon: Folder, desc: 'Armazenamento de arquivos', color: 'text-amber-500' },
+            { name: 'Gmail', icon: Mail, desc: 'E-mails automáticos', color: 'text-red-500' },
+            { name: 'Stripe', icon: CreditCard, desc: 'Pagamentos online', color: 'text-indigo-500' },
+            { name: 'OpenAI', icon: Bot, desc: 'Inteligência artificial', color: 'text-purple-500' },
+            { name: 'n8n', icon: Zap, desc: 'Automação de workflows', color: 'text-yellow-500' },
+            { name: 'Meta', icon: Smartphone, desc: 'Anúncios e leads', color: 'text-blue-600' },
+            { name: 'Microsoft', icon: Monitor, desc: 'Produtividade', color: 'text-sky-500' },
+            { name: 'API', icon: Link, desc: 'Integração personalizada', color: 'text-slate-500' },
+          ].map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <AnimatedSection key={i} delay={i * 0.05} className="landing-integrations__card">
+                <span className="landing-integrations__card-icon">
+                  <Icon className={`w-6 h-6 ${item.color}`} />
+                </span>
+                <span className="landing-integrations__card-name">{item.name}</span>
+                <span className="landing-integrations__card-desc">{item.desc}</span>
+              </AnimatedSection>
+            );
+          })}
         </div>
       </section>
 
@@ -906,7 +912,7 @@ export default function LandingPage({ onLogin, onRegister }) {
 
           <div className="landing-footer__bottom">
             <span>© {new Date().getFullYear()} DentalFlow. Todos os direitos reservados.</span>
-            <span>Feito com ❤️ para clínicas odontológicas</span>
+            <span className="flex items-center gap-1 justify-center">Feito com <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 inline" /> para clínicas odontológicas</span>
           </div>
         </div>
       </footer>

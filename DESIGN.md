@@ -1,6 +1,38 @@
+---
+version: alpha
+name: FlowDent / DentalFlow
+colors:
+  primary: "#0b0f19"
+  secondary: "#196bfb"
+  accent: "#d9e2ff"
+  background: "#0b0f19"
+  surface: "#151c2c"
+  border: "rgba(255,255,255,0.1)"
+  success: "#22c55e"
+  warning: "#eab308"
+  danger: "#ef4444"
+typography:
+  fontFamily: Geist, sans-serif
+  h1:
+    fontFamily: Geist
+    fontWeight: 900
+  body:
+    fontFamily: Geist
+    fontWeight: 400
+spacing:
+  xs: 4px
+  sm: 8px
+  md: 16px
+  lg: 24px
+  xl: 32px
+rounded:
+  default: 12px
+  button: 12px
+---
+
 # Contrato de Design (DESIGN.md) - Odonto CRM Whitelabel
 
-Este documento estabelece as diretrizes estéticas e os tokens de design do projeto **Odonto CRM**, servindo como contrato visual para desenvolvedores e agentes de IA.
+Este documento estabelece as diretrizes estéticas e os tokens de design do projeto **Odonto CRM**, servindo como contrato visual para desenvolvedores e agentes de IA, em conformidade com a especificação oficial `design.md` do Google Labs.
 
 ---
 
@@ -32,8 +64,7 @@ O sistema de cores do Odonto CRM é flexível. Em vez de utilizar classes de cor
 ## 📐 Tipografia
 
 Buscamos uma combinação elegante e funcional:
-- **Títulos (Headings):** Font-family `Outfit`, sans-serif. Traz modernidade, curvas amigáveis e sofisticação.
-- **Corpo (Body):** Font-family `Inter`, sans-serif. Excelente legibilidade para prontuários, tabelas de dados e cronogramas.
+- **Títulos (Headings) e Corpo (Body):** Família de fontes **Geist** (`'Geist', sans-serif`). Excelente legibilidade, visual moderno, curvas limpas e sofisticação premium em todas as telas de prontuários, tabelas e agendas.
 
 ---
 

@@ -5,10 +5,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { 
   Plus, Search, CheckSquare, MessageSquare, Paperclip, 
   Clock, X, Phone, Calendar, Send, Sparkles, Download, 
-  Check, FileText, ArrowRight, UserCheck, AlertCircle, HelpCircle
+  Check, FileText, ArrowRight, UserCheck, AlertCircle, HelpCircle,
+  User
 } from 'lucide-react';
 
-export default function CRM({ selectedLead, setSelectedLead }) {
+export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPrefilledLeadData }) {
   const { crmLeads, updateCrmLead, convertLeadToPatient, patients } = useClinic();
   const { user } = useAuth();
   const { currentTheme } = useTheme();
@@ -243,8 +244,8 @@ export default function CRM({ selectedLead, setSelectedLead }) {
         {/* HEADER DO LEAD */}
         <div className="p-6 border-b border-slate-100 dark:border-slate-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <span className="text-4xl p-2.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-              {selectedLead.avatar || '👤'}
+            <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 w-14 h-14">
+              {selectedLead.avatar && selectedLead.avatar !== '👤' ? selectedLead.avatar : <User className="w-8 h-8" />}
             </span>
             <div>
               <h2 className="text-lg font-black font-title text-slate-850 dark:text-white flex items-center gap-2">
@@ -296,7 +297,20 @@ export default function CRM({ selectedLead, setSelectedLead }) {
               </button>
 
               <button 
-                onClick={() => alert('Direcionando para a aba Agenda para marcar consulta...')}
+                onClick={() => {
+                  if (setActiveTab) {
+                    if (setPrefilledLeadData) {
+                      setPrefilledLeadData({
+                        name: selectedLead.name,
+                        phone: selectedLead.phone,
+                        email: selectedLead.email
+                      });
+                    }
+                    setActiveTab('agenda');
+                  } else {
+                    alert('Direcionando para a aba Agenda para marcar consulta...');
+                  }
+                }}
                 className="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-600 dark:text-slate-350 rounded-full flex items-center justify-center"
                 title="Agendar Consulta"
               >
@@ -594,182 +608,7 @@ export default function CRM({ selectedLead, setSelectedLead }) {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* COLUNA 3: PAINEL DE WIDGETS (DIREITA - 40% / 350px)                        */}
-      {/* ========================================================================= */}
-      <div className="w-96 min-w-[340px] flex flex-col gap-4 overflow-y-auto pr-1 flex-shrink-0">
-        
-        {/* WIDGET 1: INFORMAÇÕES DE INTERESSE (ROXO LAVANDA PASTEL) */}
-        <div className="widget-lavender rounded-[28px] p-5 flex flex-col gap-4 text-slate-800 dark:text-slate-150">
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="text-[10px] uppercase font-black text-[#8585D6] dark:text-[#A3A3FF] block tracking-wider">Interesse em Procedimento</span>
-              <h3 className="text-sm font-black font-title text-slate-900 dark:text-white mt-0.5">
-                {selectedLead.procedure_name || 'Consulta Geral'}
-              </h3>
-            </div>
-            
-            <a 
-              href="#"
-              onClick={(e) => { e.preventDefault(); setActiveCenterTab('details'); }}
-              className="p-1.5 bg-[#8585D6]/20 text-[#8585D6] dark:text-[#A3A3FF] rounded-lg hover:bg-[#8585D6]/30 transition-all active:scale-95"
-              title="Acessar dados cadastrais"
-            >
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
 
-          {/* Valor de Orçamento Previsto */}
-          <div className="py-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Orçamento Previsto</span>
-            <span className="text-2xl font-black font-title text-slate-900 dark:text-white">
-              {selectedLead.budget_amount ? `R$ ${selectedLead.budget_amount.toLocaleString('pt-BR')}` : 'Sob Consulta'}
-            </span>
-          </div>
-
-          {/* Seletor rápido de Estágio da Jornada */}
-          <div className="space-y-2 border-t border-slate-800/10 dark:border-slate-800/20 pt-3">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mudar Estágio do Paciente</label>
-            <select
-              value={selectedLead.stage}
-              onChange={(e) => handleUpdateStage(parseInt(e.target.value))}
-              className="w-full bg-white dark:bg-slate-800 text-slate-850 dark:text-white border border-slate-300/40 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-500 cursor-pointer"
-            >
-              {columns.map((col, idx) => (
-                <option key={idx} value={idx}>{col}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Critérios de Conversão (Checklist comercial) */}
-          <div className="space-y-2.5 border-t border-slate-800/10 dark:border-slate-800/20 pt-3">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Critérios de Fechamento</span>
-              <span className="text-[9px] bg-[#8585D6]/15 text-[#8585D6] dark:text-[#A3A3FF] font-black px-2 py-0.5 rounded-full">
-                {selectedLead.checklist?.filter(c => c.completed).length || 0}/{selectedLead.checklist?.length || 0}
-              </span>
-            </div>
-
-            {/* Lista do Checklist */}
-            <div className="space-y-1.5">
-              {(selectedLead.checklist || []).map(item => (
-                <label 
-                  key={item.id}
-                  className="flex items-center gap-2.5 cursor-pointer p-2 hover:bg-[#8585D6]/10 dark:hover:bg-[#8585D6]/5 rounded-xl transition-all"
-                >
-                  <input
-                    type="checkbox"
-                    checked={item.completed}
-                    onChange={() => handleToggleChecklist(item.id)}
-                    className="rounded text-violet-500 focus:ring-violet-500 w-3.5 h-3.5 bg-white dark:bg-slate-800 border-slate-350"
-                  />
-                  <span className={`text-xs font-semibold ${item.completed ? 'line-through text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
-                    {item.text}
-                  </span>
-                </label>
-              ))}
-
-              {/* Input rápido de novo critério */}
-              <form onSubmit={handleAddChecklistItem} className="flex gap-2 mt-2">
-                <input
-                  type="text"
-                  placeholder="Novo critério de fechamento..."
-                  value={newChecklistText}
-                  onChange={(e) => setNewChecklistText(e.target.value)}
-                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-300/40 rounded-lg p-1.5 text-[11px] text-slate-800 dark:text-white focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="px-2.5 py-1 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white dark:text-slate-100 rounded-lg text-[10px] font-bold transition-all"
-                >
-                  Add
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* WIDGET 2: TAREFA COMERCIAL (ESMERALDA) */}
-        <div className="widget-emerald rounded-[28px] p-5 flex flex-col gap-4 text-slate-800 dark:text-slate-155">
-          <div className="flex items-start justify-between">
-            <div>
-              <span className="text-[10px] uppercase font-black text-[#059669] dark:text-[#34D399] block tracking-wider font-title">Tarefa Comercial Ativa</span>
-              <h3 className="text-sm font-black font-title text-slate-900 dark:text-white mt-0.5">
-                Enviar proposta de tratamento
-              </h3>
-            </div>
-            
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF5B60] animate-ping" title="Ação Urgente" />
-          </div>
-
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
-            Elaborar o orçamento do procedimento de {selectedLead.procedure_name || 'Consulta Geral'} e encaminhar o PDF da proposta ao paciente via chat comercial.
-          </p>
-
-          {/* PDF de Proposta Rápida */}
-          <div className="bg-white/80 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-300/10 dark:border-slate-800/60 flex items-center justify-between hover:border-slate-300/50 transition-colors">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <FileText className="w-7 h-7 text-emerald-500 flex-shrink-0" />
-              <div className="overflow-hidden">
-                <span className="text-[11px] font-bold text-slate-800 dark:text-white block truncate">
-                  Proposta_{selectedLead.name.replace(' ', '_')}.pdf
-                </span>
-                <span className="text-[9px] text-slate-400 block mt-0.5">1.2 MB • Proposta Padrão</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleAttachMockFile(`Proposta_${selectedLead.name.replace(' ', '_')}.pdf`, '1.2 MB')}
-              className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-white transition-colors"
-              title="Anexar Proposta ao Histórico"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Footer Ações rápidas */}
-          <div className="flex gap-2 pt-2 border-t border-slate-850/5 dark:border-slate-800/20">
-            <button
-              onClick={() => {
-                alert('Mensagem enviada com link da proposta via WhatsApp (Simulado).');
-                setInputText(`Olá! Conforme conversamos, segue em anexo a proposta para o seu procedimento. Caso tenha alguma dúvida, estou à disposição.`);
-                setInputMode('whatsapp');
-              }}
-              className="flex-1 py-2 text-white font-extrabold text-[11px] rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow hover:opacity-90"
-              style={{ backgroundColor: currentTheme.secondary_color }}
-            >
-              <Send className="w-3 h-3 text-white" />
-              <span>Enviar Proposta</span>
-            </button>
-
-            <button
-              onClick={() => {
-                alert('Tarefa marcada como concluída!');
-                // Registrar no histórico
-                const updated = {
-                  ...selectedLead,
-                  history: [
-                    ...(selectedLead.history || []),
-                    {
-                      date: new Date().toISOString(),
-                      type: 'TASK_COMPLETE',
-                      description: 'Concluiu a tarefa: "Enviar proposta de tratamento"',
-                      user: user?.full_name || 'Profissional'
-                    }
-                  ]
-                };
-                updateCrmLead(updated);
-                setSelectedLead(updated);
-              }}
-              className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white rounded-xl flex items-center justify-center active:scale-95 transition-all border border-slate-300/40"
-              title="Marcar tarefa como resolvida"
-            >
-              <Check className="w-4 h-4 text-emerald-500 font-bold" />
-            </button>
-          </div>
-        </div>
-
-      </div>
 
     </div>
   );

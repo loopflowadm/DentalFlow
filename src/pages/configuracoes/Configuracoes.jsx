@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Settings, Clock, Trash2, Check, 
   Smartphone, Calendar, Mail, Key, QrCode, X, Palette, Image,
-  Sparkles, Building, Type, Globe, Compass, Lock
+  Sparkles, Building, Type, Globe, Compass, Lock,
+  Activity, DollarSign, User, Gem, Shield
 } from 'lucide-react';
 
 const BRAND_PRESETS = [
@@ -110,7 +111,7 @@ export default function Configuracoes() {
           setCPrimary(clinic.primary_color || '#03269A');
           setCSecondary(clinic.secondary_color || '#196BFB');
           setCAccent(clinic.accent_color || '#D9E2FF');
-          setCFontFamily(clinic.font_family || 'Inter');
+          setCFontFamily(clinic.font_family || 'Geist');
           setCThemeBase(clinic.theme_base || 'light');
           setCFaviconUrl(clinic.favicon_url || '');
           setCLoginTitle(clinic.login_title || 'Bem-vindo ao seu portal');
@@ -420,7 +421,20 @@ export default function Configuracoes() {
                           {isImageUrl ? (
                             <img src={cLogo} alt="Logo" className="w-8 h-8 object-contain" />
                           ) : (
-                            <span>{cLogo || '🦷'}</span>
+                            <span>
+                              {(() => {
+                                const logoMap = {
+                                  '🦷': Activity,
+                                  '✨': Sparkles,
+                                  '💎': Gem,
+                                  '🏥': Building,
+                                  '🛡️': Shield,
+                                  '⚕️': Activity
+                                };
+                                const IconComponent = logoMap[cLogo] || Activity;
+                                return <IconComponent className="w-5 h-5 text-secondary" />;
+                              })()}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -482,7 +496,7 @@ export default function Configuracoes() {
                           onChange={(e) => setCFontFamily(e.target.value)}
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-2.5 text-xs text-slate-800 dark:text-white focus:outline-none cursor-pointer"
                         >
-                          {['Inter', 'Outfit', 'Poppins', 'Montserrat', 'Roboto'].map(font => (
+                          {['Geist', 'Inter', 'Outfit', 'Poppins', 'Montserrat', 'Roboto'].map(font => (
                             <option key={font} value={font}>{font}</option>
                           ))}
                         </select>
@@ -542,7 +556,20 @@ export default function Configuracoes() {
                         {cLogo && (cLogo.startsWith('http') || cLogo.startsWith('data:image/') || cLogo.includes('.')) ? (
                           <img src={cLogo} alt="Logo" className="w-4 h-4 object-contain" />
                         ) : (
-                          <span>{cLogo || '🦷'}</span>
+                          <span>
+                            {(() => {
+                              const logoMap = {
+                                '🦷': Activity,
+                                '✨': Sparkles,
+                                '💎': Gem,
+                                '🏥': Building,
+                                '🛡️': Shield,
+                                '⚕️': Activity
+                              };
+                              const IconComponent = logoMap[cLogo] || Activity;
+                              return <IconComponent className="w-3.5 h-3.5 text-white" />;
+                            })()}
+                          </span>
                         )}
                       </div>
 
@@ -592,7 +619,18 @@ export default function Configuracoes() {
                           {cLogo && (cLogo.startsWith('http') || cLogo.startsWith('data:image/') || cLogo.includes('.')) ? (
                             <img src={cLogo} alt="Logo" className="w-3 h-3 object-contain" />
                           ) : (
-                            <span className="text-[8px] font-bold text-slate-700">{cLogo || '🦷'}</span>
+                            (() => {
+                              const logoMap = {
+                                '🦷': Activity,
+                                '✨': Sparkles,
+                                '💎': Gem,
+                                '🏥': Building,
+                                '🛡️': Shield,
+                                '⚕️': Activity
+                              };
+                              const IconComponent = logoMap[cLogo] || Activity;
+                              return <IconComponent className="w-2.5 h-2.5 text-secondary" />;
+                            })()
                           )}
                         </div>
                         <span className="text-[9px] font-black text-slate-800 tracking-wide truncate max-w-[60px]">{cName || 'Sorrisoclinica'}</span>
@@ -687,7 +725,13 @@ export default function Configuracoes() {
                           isFinancial ? 'bg-amber-50/80 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/40' :
                           'bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 border-emerald-100 dark:border-emerald-900/40'
                         }`}>
-                          {isDoctor ? '🦷 Dentista' : isFinancial ? '📊 Financeiro' : '💼 Recepção'}
+                          {isDoctor ? (
+                            <span className="flex items-center gap-1"><Activity className="w-3 h-3 text-indigo-500" /> Dentista</span>
+                          ) : isFinancial ? (
+                            <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-amber-500" /> Financeiro</span>
+                          ) : (
+                            <span className="flex items-center gap-1"><User className="w-3 h-3 text-emerald-500" /> Recepção</span>
+                          )}
                         </span>
                       </td>
                     </tr>

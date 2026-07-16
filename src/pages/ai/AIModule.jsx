@@ -23,7 +23,7 @@ export default function AIModule() {
 
   // States do Simulator Chat
   const [simMessages, setSimMessages] = useState([
-    { sender: 'BOT', text: 'Olá! Sou a Sofia, assistente virtual inteligente da clínica Sorriso Perfeito. Como posso lhe ajudar hoje? 🦷', time: '10:00' }
+    { sender: 'BOT', text: 'Olá! Sou a Sofia, assistente virtual inteligente da clínica Sorriso Perfeito. Como posso lhe ajudar hoje?', time: '10:00' }
   ]);
   const [simInput, setSimInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -89,17 +89,17 @@ export default function AIModule() {
       if (lowercaseQuery.includes('agendar') || lowercaseQuery.includes('marcar') || lowercaseQuery.includes('consulta')) {
         intent = 'Agendar Consulta';
         confidence = '98%';
-        responseText = 'Perfeito! Tenho horários disponíveis amanhã às 14:00 ou na sexta-feira às 10:00. Qual desses horários fica melhor para você? 🦷';
+        responseText = 'Perfeito! Tenho horários disponíveis amanhã às 14:00 ou na sexta-feira às 10:00. Qual desses horários fica melhor para você?';
         action = 'Verificar grade e propor slots de agendamento.';
       } else if (lowercaseQuery.includes('confirmar') || lowercaseQuery.includes('vou sim') || lowercaseQuery.includes('confirmado')) {
         intent = 'Confirmar Consulta';
         confidence = '95%';
-        responseText = 'Excelente! Sua consulta foi confirmada em nosso sistema. Dra. Ana Paula estará te aguardando. Até lá! ✨';
+        responseText = 'Excelente! Sua consulta foi confirmada em nosso sistema. Dra. Ana Paula estará te aguardando. Até lá!';
         action = 'Atualizar status da consulta para CONFIRMED.';
       } else if (lowercaseQuery.includes('cancelar') || lowercaseQuery.includes('desmarcar') || lowercaseQuery.includes('nao vou')) {
         intent = 'Cancelar Consulta';
         confidence = '92%';
-        responseText = 'Entendo. Cancelei sua consulta em nosso sistema. Gostaria de reagendar para a próxima semana? 📅';
+        responseText = 'Entendo. Cancelei sua consulta em nosso sistema. Gostaria de reagendar para a próxima semana?';
         action = 'Atualizar status da consulta para CANCELLED e disparar fluxo de reagendamento.';
       } else if (lowercaseQuery.includes('reagendar') || lowercaseQuery.includes('mudar horario')) {
         intent = 'Reagendar Consulta';
@@ -109,16 +109,16 @@ export default function AIModule() {
       } else if (lowercaseQuery.includes('convenio') || lowercaseQuery.includes('amil') || lowercaseQuery.includes('unimed')) {
         intent = 'Dúvidas - Convênios';
         confidence = '97%';
-        responseText = 'Atendemos Amil Dental, Unimed Odonto, Bradesco e SulAmérica. Se seu plano for outro, podemos emitir recibo para reembolso! 🩺';
+        responseText = 'Atendemos Amil Dental, Unimed Odonto, Bradesco e SulAmérica. Se seu plano for outro, podemos emitir recibo para reembolso!';
         action = 'Buscar resposta na Base de Conhecimento.';
       } else if (lowercaseQuery.includes('falar com humano') || lowercaseQuery.includes('atendente') || lowercaseQuery.includes('pessoa')) {
         intent = 'Transição Humana';
         confidence = '99%';
-        responseText = 'Tudo bem! Estou transferindo nossa conversa para um atendente humano. Por favor, aguarde um momento. 🧑‍💻';
+        responseText = 'Tudo bem! Estou transferindo nossa conversa para um atendente humano. Por favor, aguarde um momento.';
         action = 'Pausar IA no banco de dados e notificar a equipe de recepção via alerta.';
       } else {
         // Resposta base de conhecimento genérica
-        responseText = 'Entendi! Vou repassar para nossa equipe de atendimento para que possam responder com precisão. Em alguns instantes eles entrarão em contato. 🦷';
+        responseText = 'Entendi! Vou repassar para nossa equipe de atendimento para que possam responder com precisão. Em alguns instantes eles entrarão em contato.';
       }
 
       const botMsg = {

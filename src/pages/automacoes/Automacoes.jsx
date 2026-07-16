@@ -94,7 +94,7 @@ export default function Automacoes() {
           tags: ['Instagram Ads', 'Implante']
         };
         addCrmLead(newLead);
-        logStep('✅ Ação Executada: Lead "Julio Cesar" adicionado à coluna [Novo Lead] no CRM.');
+        logStep('[SUCESSO] Ação Executada: Lead "Julio Cesar" adicionado à coluna [Novo Lead] no CRM.');
       }, 1500);
 
       setTimeout(() => {
@@ -102,16 +102,16 @@ export default function Automacoes() {
         const patId = patients[0]?.id || 'patient-1';
         sendWhatsAppMessage(
           patId, 
-          'Olá, Julio! Recebemos seu interesse em implantes dentários pelo nosso anúncio no Instagram. Gostaria de agendar uma consulta avaliativa com o Dr. Pedro Ramos? 🦷', 
+          'Olá, Julio! Recebemos seu interesse em implantes dentários pelo nosso anúncio no Instagram. Gostaria de agendar uma consulta avaliativa com o Dr. Pedro Ramos?', 
           'BOT', 
           'text'
         );
-        logStep('✅ Ação Executada: WhatsApp de boas-vindas enviado pela IA Sofia.');
+        logStep('[SUCESSO] Ação Executada: WhatsApp de boas-vindas enviado pela IA Sofia.');
       }, 3000);
 
       setTimeout(() => {
         // Passo 4: Finalizar
-        logStep('🎉 Automação concluída com sucesso! Os painéis do CRM e do WhatsApp foram atualizados.');
+        logStep('[FIM] Automação concluída com sucesso! Os painéis do CRM e do WhatsApp foram atualizados.');
         setRunningSim(null);
       }, 4500);
       
@@ -132,9 +132,9 @@ export default function Automacoes() {
             ]
           };
           updateCrmLead(updated);
-          logStep(`✅ Ação Executada: Lead "${targetLead.name}" movido para a etapa [Retorno] no Kanban CRM.`);
+          logStep(`[SUCESSO] Ação Executada: Lead "${targetLead.name}" movido para a etapa [Retorno] no Kanban CRM.`);
         } else {
-          logStep('⚠️ Ação Cancelada: Nenhum lead correspondente na etapa de confirmação.');
+          logStep('[AVISO] Ação Cancelada: Nenhum lead correspondente na etapa de confirmação.');
         }
       }, 1500);
 
@@ -144,15 +144,15 @@ export default function Automacoes() {
         const patId = targetLead?.id || 'patient-1';
         sendWhatsAppMessage(
           patId,
-          'Olá! Notamos que você não pôde comparecer à sua consulta de avaliação hoje. Aconteceu algo? Se quiser, posso te ajudar a reagendar para quinta-feira no mesmo horário! 🦷📅',
+          'Olá! Notamos que você não pôde comparecer à sua consulta de avaliação hoje. Aconteceu algo? Se quiser, posso te ajudar a reagendar para quinta-feira no mesmo horário!',
           'BOT',
           'text'
         );
-        logStep('✅ Ação Executada: Mensagem WhatsApp de reagendamento enviada automaticamente.');
+        logStep('[SUCESSO] Ação Executada: Mensagem WhatsApp de reagendamento enviada automaticamente.');
       }, 3000);
 
       setTimeout(() => {
-        logStep('🎉 Automação concluída! O Kanban comercial e o histórico de mensagens foram atualizados.');
+        logStep('[FIM] Automação concluída! O Kanban comercial e o histórico de mensagens foram atualizados.');
         setRunningSim(null);
       }, 4500);
     }

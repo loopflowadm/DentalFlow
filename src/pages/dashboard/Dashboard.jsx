@@ -5,7 +5,8 @@ import { supabase } from '../../lib/supabase';
 import { 
   Users, UserPlus, Calendar, Award, TrendingUp, AlertTriangle, 
   MessageSquare, MessagesSquare, CheckSquare, FileText, ArrowUpRight, 
-  ArrowDownRight, Star, ChevronRight, Phone, Clock, Sparkles
+  ArrowDownRight, Star, ChevronRight, Phone, Clock, Sparkles,
+  User, Check
 } from 'lucide-react';
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, 
@@ -56,7 +57,7 @@ export default function Dashboard() {
             specialty: 'Cirurgião-Dentista',
             exp: 'Membro',
             rating: 5.0,
-            avatar: '👨‍⚕️'
+            avatar: ''
           }));
           setDoctorsList(formatted);
         }
@@ -289,7 +290,9 @@ export default function Dashboard() {
                         </td>
                         <td className="text-right font-semibold">
                           {app.status === 'completed' || app.status === 'Concluído' ? (
-                            <span className="text-[10px] text-slate-400 font-bold">✔️ Concluído</span>
+                            <span className="text-[10px] text-slate-400 font-bold flex items-center justify-end gap-1">
+                              <Check className="w-3.5 h-3.5 text-emerald-500" /> Concluído
+                            </span>
                           ) : app.status === 'em_atendimento' || app.status === 'em_consulta' ? (
                             <button
                               onClick={() => handleUpdateAppStatus(app, 'completed')}
@@ -496,8 +499,8 @@ export default function Dashboard() {
         {doctorsList.length > 0 ? (
           <div className="bg-secondary border border-secondary/10 text-white rounded-2xl p-4 shadow-md shadow-secondary/10">
             <div className="flex items-center gap-3">
-              <span className="text-2xl bg-white/20 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10">
-                👩‍⚕️
+              <span className="bg-white/20 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10">
+                <User className="w-5 h-5 text-white" />
               </span>
               <div>
                 <h5 className="text-xs font-bold">{doctorsList[0].name}</h5>
