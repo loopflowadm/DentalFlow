@@ -8,7 +8,8 @@ import {
   Trash2, X, PlusCircle, CheckCircle, Clock, Edit, FileDigit,
   ArrowRight, AlertCircle, Printer, Download, Sparkles, Send,
   Check, MoreVertical, Bold, Italic, Link2, AlignLeft, AlignCenter,
-  AlignRight, List, Undo, Redo, ImageIcon, HelpCircle
+  AlignRight, List, Undo, Redo, ImageIcon, HelpCircle,
+  Gift, Tag, AlertTriangle, Lock, Shield, ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -211,44 +212,46 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     const history = parseHistory(selectedPatient.medical_history);
     const anamnese = history.anamnese_estruturada || {};
 
-    setQueixaPrincipal(anamnese.queixa_principal || '');
-    setHasPressaoAlta(anamnese.has_pressao_alta || 'Nao');
-    setHasPressaoAltaDetail(anamnese.has_pressao_alta_detail || '');
-    setHasAlergia(anamnese.has_alergia || 'Nao');
-    setHasAlergiaDetail(anamnese.has_alergia_detail || '');
-    setHasAlteracaoSangue(anamnese.has_alteracao_sangue || 'Nao');
-    setHasAlteracaoSangueDetail(anamnese.has_alteracao_sangue_detail || '');
-    setHasHemorragia(anamnese.has_hemorragia || 'Nao');
-    setHasAlteracaoCardio(anamnese.has_alteracao_cardio || 'Nao');
-    setHasAlteracaoCardioDetail(anamnese.has_alteracao_cardio_detail || '');
-    setHasDiabetes(anamnese.has_diabetes || 'Nao');
-    setHasDiabetesDetail(anamnese.has_diabetes_detail || '');
-    setHasAsma(anamnese.has_asma || 'Nao');
-    setHasXerostomia(anamnese.has_xerostomia || 'Nao');
-    setHasDisfuncaoHepatica(anamnese.has_disfuncao_hepatica || 'Nao');
-    setHasDisfuncaoHepaticaDetail(anamnese.has_disfuncao_hepatica_detail || '');
-    setHasDisfuncaoRenal(anamnese.has_disfuncao_renal || 'Nao');
-    setHasDisfuncaoRenalDetail(anamnese.has_disfuncao_renal_detail || '');
-    setHasDisfuncaoRespiratoria(anamnese.has_disfuncao_respiratoria || 'Nao');
-    setHasDisfuncaoRespiratoriaDetail(anamnese.has_disfuncao_respiratoria_detail || '');
-    setHasAlteracaoOssea(anamnese.has_alteracao_ossea || 'Nao');
-    setHasAlteracaoOsseaDetail(anamnese.has_alteracao_ossea_detail || '');
-    setHasDoencaTransmissivel(anamnese.has_doenca_transmissivel || 'Nao');
-    setHasDoencaTransmissivelDetail(anamnese.has_doenca_transmissivel_detail || '');
-    setHasOutraDoenca(anamnese.has_outra_doenca || 'Nao');
-    setHasOutraDoencaDetail(anamnese.has_outra_doenca_detail || '');
-    setHasAlergiaAnestesia(anamnese.has_alergia_anestesia || 'Nao');
-    setHasAlergiaAnestesiaDetail(anamnese.has_alergia_anestesia_detail || '');
-    setHasGastriteRefluxo(anamnese.has_gastrite_refluxo || 'Nao');
-    setHasDificuldadeBoca(anamnese.has_dificuldade_boca || 'Nao');
-    setHasFebreReumatica(anamnese.has_febre_reumatica || 'Nao');
-    setHasEstaloBoca(anamnese.has_estalo_boca || 'Nao');
-    setIsGestante(anamnese.is_gestante || 'Nao');
-    setIsGestanteDetail(anamnese.is_gestante_detail || '');
-    setIsAmamentando(anamnese.is_amamentando || 'Nao');
-    setIsAnticoncepcional(anamnese.is_anticoncepcional || 'Nao');
-    setIsAnticoncepcionalDetail(anamnese.is_anticoncepcional_detail || '');
-    setAnamneseNotes(anamnese.anamnese_notes || '');
+    Promise.resolve().then(() => {
+      setQueixaPrincipal(anamnese.queixa_principal || '');
+      setHasPressaoAlta(anamnese.has_pressao_alta || 'Nao');
+      setHasPressaoAltaDetail(anamnese.has_pressao_alta_detail || '');
+      setHasAlergia(anamnese.has_alergia || 'Nao');
+      setHasAlergiaDetail(anamnese.has_alergia_detail || '');
+      setHasAlteracaoSangue(anamnese.has_alteracao_sangue || 'Nao');
+      setHasAlteracaoSangueDetail(anamnese.has_alteracao_sangue_detail || '');
+      setHasHemorragia(anamnese.has_hemorragia || 'Nao');
+      setHasAlteracaoCardio(anamnese.has_alteracao_cardio || 'Nao');
+      setHasAlteracaoCardioDetail(anamnese.has_alteracao_cardio_detail || '');
+      setHasDiabetes(anamnese.has_diabetes || 'Nao');
+      setHasDiabetesDetail(anamnese.has_diabetes_detail || '');
+      setHasAsma(anamnese.has_asma || 'Nao');
+      setHasXerostomia(anamnese.has_xerostomia || 'Nao');
+      setHasDisfuncaoHepatica(anamnese.has_disfuncao_hepatica || 'Nao');
+      setHasDisfuncaoHepaticaDetail(anamnese.has_disfuncao_hepatica_detail || '');
+      setHasDisfuncaoRenal(anamnese.has_disfuncao_renal || 'Nao');
+      setHasDisfuncaoRenalDetail(anamnese.has_disfuncao_renal_detail || '');
+      setHasDisfuncaoRespiratoria(anamnese.has_disfuncao_respiratoria || 'Nao');
+      setHasDisfuncaoRespiratoriaDetail(anamnese.has_disfuncao_respiratoria_detail || '');
+      setHasAlteracaoOssea(anamnese.has_alteracao_ossea || 'Nao');
+      setHasAlteracaoOsseaDetail(anamnese.has_alteracao_ossea_detail || '');
+      setHasDoencaTransmissivel(anamnese.has_doenca_transmissivel || 'Nao');
+      setHasDoencaTransmissivelDetail(anamnese.has_doenca_transmissivel_detail || '');
+      setHasOutraDoenca(anamnese.has_outra_doenca || 'Nao');
+      setHasOutraDoencaDetail(anamnese.has_outra_doenca_detail || '');
+      setHasAlergiaAnestesia(anamnese.has_alergia_anestesia || 'Nao');
+      setHasAlergiaAnestesiaDetail(anamnese.has_alergia_anestesia_detail || '');
+      setHasGastriteRefluxo(anamnese.has_gastrite_refluxo || 'Nao');
+      setHasDificuldadeBoca(anamnese.has_dificuldade_boca || 'Nao');
+      setHasFebreReumatica(anamnese.has_febre_reumatica || 'Nao');
+      setHasEstaloBoca(anamnese.has_estalo_boca || 'Nao');
+      setIsGestante(anamnese.is_gestante || 'Nao');
+      setIsGestanteDetail(anamnese.is_gestante_detail || '');
+      setIsAmamentando(anamnese.is_amamentando || 'Nao');
+      setIsAnticoncepcional(anamnese.is_anticoncepcional || 'Nao');
+      setIsAnticoncepcionalDetail(anamnese.is_anticoncepcional_detail || '');
+      setAnamneseNotes(anamnese.anamnese_notes || '');
+    });
   }, [selectedPatient]);
 
   // Odontograma FDI Teeth Arrays
@@ -262,7 +265,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   const lowerTeethDecRight = [85, 84, 83, 82, 81];
   const lowerTeethDecLeft = [71, 72, 73, 74, 75];
 
-  const parseHistory = (historyText) => {
+  function parseHistory(historyText) {
     try {
       if (historyText && typeof historyText === 'object') {
         return {
@@ -280,7 +283,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       console.warn('Erro ao parsear historico do paciente:', e);
     }
     return { notes: typeof historyText === 'string' ? historyText : '', odontogram: {}, evolutions: [], exams: [] };
-  };
+  }
 
   // Calcular idade exata do paciente
   const calculateAge = (birthDateString) => {
@@ -545,8 +548,6 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     
     // 1. Salva no histórico do paciente (JSONB)
     await saveOdontogramData(updatedOdontogram);
-    
-    // 2. Determina o status geral para sincronização com a tabela tooth_records
     let status = 'TREATED';
     const conds = toothData.conditions || [];
     if (conds.includes('Extraído') || conds.includes('Ausente')) {
@@ -555,10 +556,6 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       status = 'IMPLANT';
     } else if (conds.some(c => ['Cárie', 'Fratura', 'Lesão Cervical'].includes(c))) {
       status = 'NEED_TREATMENT';
-    } else if (conds.some(c => ['Restauração Resina', 'Restauração Amálgama', 'Coroa', 'Faceta', 'Endodontia', 'Selante', 'Outros / Obs.'].includes(c))) {
-      status = 'TREATED';
-    } else {
-      status = 'TREATED';
     }
     
     const primaryProc = conds.find(c => c !== 'Saudável') || 'Saudável';
@@ -881,8 +878,8 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
             <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800 flex-shrink-0 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {/* Big Avatar */}
-                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-2xl border border-slate-200/35 dark:border-white/5 shadow-inner">
-                  👤
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-2xl border border-slate-200/35 dark:border-white/5 shadow-inner text-slate-400 dark:text-slate-500">
+                  <User className="w-8 h-8" />
                 </div>
                 
                 <div>
@@ -893,14 +890,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     
                     {/* Alertas */}
                     {criticalConditions.length > 0 && (
-                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-0.5 leading-none">
-                        ⚠️ {criticalConditions.length} Alerta de Saúde
+                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
+                        <AlertTriangle className="w-2.5 h-2.5" /> {criticalConditions.length} Alerta de Saúde
                       </span>
                     )}
 
                     {isBirthdayTomorrow(selectedHistory.birth_date) && (
-                      <span className="px-2 py-0.5 bg-violet-500/15 text-violet-550 border border-violet-500/20 rounded-lg text-[9px] font-black uppercase leading-none">
-                        🎂 Aniversário amanhã
+                      <span className="px-2 py-0.5 bg-violet-500/15 text-violet-550 border border-violet-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
+                        <Gift className="w-2.5 h-2.5" /> Aniversário amanhã
                       </span>
                     )}
                   </div>
@@ -921,9 +918,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                   <button
                     onClick={() => alert('Categorizar paciente em desenvolvimento.')}
-                    className="mt-1 px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-200 rounded-lg text-[9px] font-bold transition-all border border-slate-200/40 dark:border-white/5 active:scale-95"
+                    className="mt-1 px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-200 rounded-lg text-[9px] font-bold transition-all border border-slate-200/40 dark:border-white/5 active:scale-95 flex items-center gap-1"
                   >
-                    🏷️ Categorizar
+                    <Tag className="w-2.5 h-2.5" /> Categorizar
                   </button>
                 </div>
               </div>
@@ -988,7 +985,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-3">
                       <div className="flex justify-between items-center">
                         <h4 className="text-xs font-black text-slate-850 dark:text-white font-title flex items-center gap-1.5">
-                          📋 Tarefas
+                          <ClipboardList className="w-3.5 h-3.5 text-secondary" style={{ color: currentTheme.secondary_color }} /> Tarefas
                         </h4>
                         <button
                           onClick={() => alert('Para criar tarefas, use a nova aba "Tarefa" no botão Agendar da Agenda.')}
@@ -1104,7 +1101,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-4">
                       <div className="flex justify-between items-center">
                         <h4 className="text-xs font-black text-slate-855 dark:text-white font-title flex items-center gap-1.5">
-                          🦷 Odontograma de Resumo
+                          <Activity className="w-3.5 h-3.5 text-secondary" /> Odontograma de Resumo
                         </h4>
 
                         {/* Legenda de Status */}
@@ -1189,7 +1186,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                           <div key={rec.id} className="p-3 bg-slate-50 dark:bg-black/15 border border-slate-200/30 dark:border-slate-800/40 rounded-xl space-y-1.5 text-left">
                             <p className="text-[11px] font-bold text-slate-800 dark:text-white leading-relaxed">{rec.description}</p>
                             <div className="flex items-center justify-between text-[8px] font-black text-slate-400 uppercase tracking-wider">
-                              <span className="flex items-center gap-1">👤 Dr(a) {rec.dentistName || 'Dentista'} · 🕒 {new Date(rec.created_at).toLocaleDateString('pt-BR')}</span>
+                              <span className="flex items-center gap-1"><User className="w-2.5 h-2.5 text-slate-500" /> Dr(a) {rec.dentistName || 'Dentista'} · <Clock className="w-2.5 h-2.5 text-slate-400" /> {new Date(rec.created_at).toLocaleDateString('pt-BR')}</span>
                               <span>🔑 HASH {rec.signature_hash ? rec.signature_hash.substring(0, 10) : '-'}</span>
                             </div>
                           </div>
@@ -1256,7 +1253,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl gap-3">
                     <div>
                       <h4 className="text-xs font-black text-slate-855 dark:text-white font-title uppercase tracking-wider flex items-center gap-1.5">
-                        📝 Ficha de Anamnese Padrão
+                        <FileText className="w-3.5 h-3.5 text-secondary" /> Ficha de Anamnese Padrão
                       </h4>
                       <p className="text-[10px] text-slate-455 font-bold mt-1">Preencha o questionário completo do paciente para a integridade do prontuário.</p>
                     </div>
@@ -2186,6 +2183,21 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             </div>
                           )}
                         </div>
+
+                        {/* Legenda de Cores do Odontograma */}
+                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 w-full">
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2 text-center lg:text-left">
+                            Legenda de Marcações (Status e Tratamentos)
+                          </span>
+                          <div className="flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-2 text-[10px] font-bold text-slate-600 dark:text-slate-350">
+                            {tools.map(tool => (
+                              <div key={tool.id} className="flex items-center gap-1.5 shrink-0 select-none">
+                                <span className={`w-2.5 h-2.5 rounded-full ${tool.color} shrink-0`} />
+                                <span>{tool.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
                       {/* COLUNA 3: DETALHES DO DENTE SELECIONADO */}
@@ -2347,8 +2359,8 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                   {/* Filters row */}
                   <div className="flex gap-2.5 flex-wrap items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl shadow-sm text-xs font-semibold">
-                    <button className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold">
-                      📅 Selecionar período
+                    <button className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-500" /> Selecionar período
                     </button>
 
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/40 dark:border-slate-800/80 gap-1 pl-1">
@@ -2535,11 +2547,11 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         </h4>
                         
                         <div className="flex gap-2">
-                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm">
-                            ✒️ Assinar digitalmente
+                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
+                            <Edit className="w-3 h-3" /> Assinar digitalmente
                           </button>
-                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm">
-                            🖨️ Imprimir
+                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
+                            <Printer className="w-3 h-3" /> Imprimir
                           </button>
                         </div>
                       </div>
@@ -2557,7 +2569,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <p className="font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">{rec.description}</p>
                               {rec.signature_hash && (
                                 <div className="text-[8px] text-emerald-500 font-mono flex items-center gap-1">
-                                  🛡️ ASSINATURA ELETRÔNICA CFO: {rec.signature_hash}
+                                  <Shield className="w-3 h-3 text-emerald-500" /> ASSINATURA ELETRÔNICA CFO: {rec.signature_hash}
                                 </div>
                               )}
                             </div>
@@ -2654,7 +2666,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                                 <td className="py-3.5 px-4 font-bold text-slate-850 dark:text-white">{p.title}</td>
                                 <td className="py-3.5 px-4 font-semibold">{p.dentistName}</td>
                                 <td className="py-3.5 px-4 font-mono text-[9px] text-slate-400 select-all" title={p.signature_hash}>
-                                  🔒 SIGN: {p.signature_hash.substring(0, 12)}...
+                                  <Lock className="w-3 h-3 text-indigo-500 inline mr-1" /> SIGN: {p.signature_hash.substring(0, 12)}...
                                 </td>
                                 <td className="py-3.5 px-4 text-right flex justify-end gap-1.5">
                                   <button
@@ -3194,7 +3206,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <h4 className="text-sm font-black font-title text-slate-900 dark:text-white uppercase tracking-wider">{clinic?.name || 'FlowDent Clinic'}</h4>
                     <span className="text-[10px] text-slate-400 font-bold block">INTEGRIDADE CLÍNICA • CFO</span>
                   </div>
-                  <span className="text-xl">🦷</span>
+                  <Activity className="w-6 h-6 text-secondary" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-[10px] bg-slate-100/50 dark:bg-slate-850 p-3 rounded-xl">
@@ -3224,7 +3236,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                     <div className="space-y-1 pt-1 border-t border-slate-200/40 dark:border-slate-800/60">
                       <span className="text-[9px] text-emerald-500 font-extrabold flex items-center gap-1">
-                        🛡️ Assinatura Conforme ICP-Brasil / CFO
+                        <Shield className="w-3.5 h-3.5 text-emerald-500 inline" /> Assinatura Conforme ICP-Brasil / CFO
                       </span>
                       <span className="block font-mono text-[8px] text-slate-400 select-all leading-tight break-all">
                         HASH: {viewingPrescription.signature_hash}
