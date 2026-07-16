@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Kanban, Users, Calendar, MessageSquare, 
   Bot, Zap, Megaphone, DollarSign, BarChart3, Settings, 
   LogOut, ChevronLeft, ChevronRight, Sparkles, Search, 
-  Plus, CheckSquare, Clock, ArrowUpRight, Phone, AlertCircle, Cloud
+  Plus, CheckSquare, Clock, ArrowUpRight, Phone, AlertCircle, Cloud,
+  User
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -46,7 +47,9 @@ export default function Sidebar({
   // Sync mini calendar date when agendaDate changes
   React.useEffect(() => {
     if (agendaDate) {
-      setMiniCalDate(new Date(agendaDate));
+      Promise.resolve().then(() => {
+        setMiniCalDate(new Date(agendaDate));
+      });
     }
   }, [agendaDate]);
 
@@ -101,6 +104,7 @@ export default function Sidebar({
 
   // Controlar exibição do modal de Novo Lead a partir da sidebar
   const [showAddLeadSidebar, setShowAddLeadSidebar] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [newLeadName, setNewLeadName] = useState('');
   const [newLeadPhone, setNewLeadPhone] = useState('');
   const [newLeadProcedure, setNewLeadProcedure] = useState('Consulta Geral');
@@ -185,7 +189,7 @@ export default function Sidebar({
       {/* ========================================================================= */}
       {/* COLUNA 1: BARRA DE ÍCONES DE NAVEGAÇÃO (FIXA 80px)                        */}
       {/* ========================================================================= */}
-      <aside className="w-20 border border-slate-900/60 flex flex-col justify-between items-center py-5 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative" style={{ backgroundColor: currentTheme.sidebar_bg_1 }}>
+      <aside className="hidden md:flex w-20 border border-slate-900/60 flex-col justify-between items-center py-5 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative" style={{ backgroundColor: currentTheme.sidebar_bg_1 }}>
         <div className="flex flex-col items-center gap-6 w-full">
           {/* Logo compacta - DentalFlow Symbol */}
           <div 
@@ -244,7 +248,18 @@ export default function Sidebar({
       {/* COLUNA 2: SUB-SIDEBAR CONTEXTUAL (OPCIONAL E COLAPSÁVEL, 260px)           */}
       {/* ========================================================================= */}
       {hasSubSidebar && !collapsed && (
-        <aside className="w-64 border border-slate-900/60 flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250" style={{ backgroundColor: currentTheme.sidebar_bg_2 }}>
+        <>
+          {/* Backdrop escuro para fechar ao clicar fora (Mobile/Tablet) */}
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-35 md:hidden"
+            onClick={() => setCollapsed(true)}
+          />
+          <aside 
+            className={`border border-slate-900/60 flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 ${
+              collapsed ? 'hidden' : 'fixed inset-4 w-[calc(100vw-32px)] md:relative md:inset-auto md:w-64'
+            }`} 
+            style={{ backgroundColor: currentTheme.sidebar_bg_2 }}
+          >
           
           {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
           <div className="px-4 py-3 border-b border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-950/5">
@@ -332,7 +347,12 @@ export default function Sidebar({
                     return (
                       <div
                         key={lead.id}
-                        onClick={() => setSelectedLead(lead)}
+                        onClick={() => {
+                          setSelectedLead(lead);
+                          if (window.innerWidth < 768) {
+                            setCollapsed(true);
+                          }
+                        }}
                         className={`p-3 rounded-2xl cursor-pointer relative transition-all border group ${
                           isActive 
                             ? 'border-transparent text-white shadow-md' 
@@ -351,7 +371,9 @@ export default function Sidebar({
                         )}
 
                         <div className="flex items-center gap-2.5 pl-1.5">
-                          <span className="text-xl flex-shrink-0">{lead.avatar || '👤'}</span>
+                          <span className="text-xl flex-shrink-0 flex items-center justify-center text-slate-400">
+                            {lead.avatar && lead.avatar !== '👤' ? lead.avatar : <User className="w-5 h-5" />}
+                          </span>
                           <div className="overflow-hidden flex-1">
                             <h4 className={`text-xs font-bold truncate ${isActive ? 'text-white font-black' : 'text-white'}`}>
                               {lead.name}
@@ -420,7 +442,12 @@ export default function Sidebar({
                     return (
                       <div
                         key={patient.id}
-                        onClick={() => setSelectedPatient(patient)}
+                        onClick={() => {
+                          setSelectedPatient(patient);
+                          if (window.innerWidth < 768) {
+                            setCollapsed(true);
+                          }
+                        }}
                         className={`p-3 rounded-2xl cursor-pointer transition-all border ${
                           isActive 
                             ? 'border-transparent text-white shadow-md' 
@@ -493,6 +520,9 @@ export default function Sidebar({
                           type="button"
                           onClick={() => {
                             setAgendaDate(day.date);
+                            if (window.innerWidth < 768) {
+                              setCollapsed(true);
+                            }
                           }}
                           className={`py-1 rounded-md transition-all font-semibold ${
                             isSelected 
@@ -640,7 +670,8 @@ export default function Sidebar({
 
           </div>
         </aside>
-      )}
+      </>
+    )}
 
       {/* ========================================================================= */}
       {/* MODAL INTEGRADO DE CADASTRO DE LEAD (SIDEBAR)                            */}
@@ -744,6 +775,153 @@ export default function Sidebar({
           <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
         </button>
       )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* DRAWER / SHEET "MAIS" PARA DISPOSITIVOS MÓVEIS               */}
+      {/* ------------------------------------------------------------- */}
+      {showMoreMenu && (
+        <>
+          {/* Backdrop para fechar o menu */}
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-45 md:hidden"
+            onClick={() => setShowMoreMenu(false)}
+          />
+          {/* Menu de mais opções */}
+          <div className="fixed bottom-20 left-4 right-4 bg-slate-900/95 border border-white/10 rounded-[32px] p-5 shadow-2xl z-50 animate-in slide-in-from-bottom duration-250 text-left md:hidden max-h-[70vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 pl-1">
+              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest font-title">
+                Mais Opções
+              </span>
+              <button 
+                onClick={() => setShowMoreMenu(false)}
+                className="text-[10px] font-bold text-white/50 hover:text-white"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {menuItems.filter(item => !['dashboard', 'crm', 'pacientes', 'agenda'].includes(item.id) && item.roles.includes(userRole)).map(item => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                       setActiveTab(item.id);
+                       setShowMoreMenu(false);
+                    }}
+                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all border ${
+                      isActive 
+                        ? 'border-transparent text-white font-bold' 
+                        : 'bg-black/20 border-white/5 text-slate-300 hover:text-white'
+                    }`}
+                    style={isActive ? { backgroundColor: currentTheme.secondary_color } : {}}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs font-bold truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+
+              {/* Logout no mobile */}
+              <button
+                onClick={() => {
+                  logout();
+                  setShowMoreMenu(false);
+                }}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 hover:text-red-300 col-span-2 mt-1"
+              >
+                <LogOut className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs font-bold">Sair do Sistema</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* BARRA DE NAVEGAÇÃO INFERIOR (BOTTOM NAVIGATION) - MOBILE      */}
+      {/* ------------------------------------------------------------- */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-slate-950 border-t border-white/10 z-40 flex items-center justify-around px-4 rounded-t-2xl shadow-[0_-4px_25px_rgba(0,0,0,0.25)] md:hidden">
+        {/* Item 1: Dashboard */}
+        <button
+          onClick={() => {
+            setActiveTab('dashboard');
+            setShowMoreMenu(false);
+          }}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
+            activeTab === 'dashboard' ? 'text-white' : 'text-white/50'
+          }`}
+          style={activeTab === 'dashboard' ? { color: currentTheme.secondary_color } : {}}
+        >
+          <LayoutDashboard className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Início</span>
+        </button>
+
+        {/* Item 2: CRM */}
+        {menuItems.find(m => m.id === 'crm').roles.includes(userRole) && (
+          <button
+            onClick={() => {
+              setActiveTab('crm');
+              setShowMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
+              activeTab === 'crm' ? 'text-white' : 'text-white/50'
+            }`}
+            style={activeTab === 'crm' ? { color: currentTheme.secondary_color } : {}}
+          >
+            <Kanban className="w-5 h-5" />
+            <span className="text-[9px] font-bold mt-0.5">Jornada</span>
+          </button>
+        )}
+
+        {/* Item 3: Pacientes */}
+        {menuItems.find(m => m.id === 'pacientes').roles.includes(userRole) && (
+          <button
+            onClick={() => {
+              setActiveTab('pacientes');
+              setShowMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
+              activeTab === 'pacientes' ? 'text-white' : 'text-white/50'
+            }`}
+            style={activeTab === 'pacientes' ? { color: currentTheme.secondary_color } : {}}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-[9px] font-bold mt-0.5">Fichas</span>
+          </button>
+        )}
+
+        {/* Item 4: Agenda */}
+        {menuItems.find(m => m.id === 'agenda').roles.includes(userRole) && (
+          <button
+            onClick={() => {
+              setActiveTab('agenda');
+              setShowMoreMenu(false);
+            }}
+            className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
+              activeTab === 'agenda' ? 'text-white' : 'text-white/50'
+            }`}
+            style={activeTab === 'agenda' ? { color: currentTheme.secondary_color } : {}}
+          >
+            <Calendar className="w-5 h-5" />
+            <span className="text-[9px] font-bold mt-0.5">Agenda</span>
+          </button>
+        )}
+
+        {/* Item 5: Mais */}
+        <button
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
+            showMoreMenu ? 'text-white' : 'text-white/50'
+          }`}
+          style={showMoreMenu ? { color: currentTheme.secondary_color } : {}}
+        >
+          <Plus className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Mais</span>
+        </button>
+      </div>
 
     </div>
   );
