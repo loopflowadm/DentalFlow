@@ -1129,130 +1129,78 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       </div>
 
                       {/* Visual Teeth Arcadas */}
-                      <div className="p-4 bg-slate-50/50 dark:bg-slate-955/20 border border-slate-200/20 dark:border-slate-800 rounded-2xl flex flex-col justify-center items-center gap-6 overflow-x-auto">
-                        {arcadaType === 'permanentes' ? (
-                          <>
-                            {/* Arcada Superior */}
-                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                              <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest mb-1.5">Arcada Superior</span>
-                              <div className="flex gap-1">
-                                {upperTeethRight.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span>{t}</span>
-                                    <span className="text-[9px]">🦷</span>
-                                  </button>
-                                ))}
-                                <div className="w-px bg-slate-200 dark:bg-slate-800 h-8 self-center mx-1" />
-                                {upperTeethLeft.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span>{t}</span>
-                                    <span className="text-[9px]">🦷</span>
-                                  </button>
-                                ))}
+                      <div className="p-4 bg-slate-50/50 dark:bg-slate-955/20 border border-slate-200/20 dark:border-slate-800 rounded-2xl flex flex-col justify-center items-center gap-6 overflow-x-auto w-full">
+                        {(() => {
+                          const odontogram = getOdontogramData();
+                          
+                          const renderMiniToothBlock = (t, isLower = false) => {
+                            const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
+                            return (
+                              <div 
+                                key={t}
+                                onClick={() => {
+                                  setSelectedTooth(t);
+                                  setActiveSubTab('odontograma');
+                                }}
+                                className="flex flex-col items-center p-1.5 rounded-xl border border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/40 cursor-pointer transition-all active:scale-[0.93] shrink-0"
+                              >
+                                {!isLower && <ToothOutline number={t} conditions={data.conditions || []} />}
+                                <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
+                                {isLower && <ToothOutline number={t} conditions={data.conditions || []} />}
+                              </div>
+                            );
+                          };
+
+                          return arcadaType === 'permanentes' ? (
+                            <div className="space-y-6 flex flex-col items-center min-w-[650px] w-full">
+                              {/* Arcada Superior */}
+                              <div className="flex flex-col items-center w-full">
+                                <span className="text-[8px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2">Arcada Superior</span>
+                                <div className="flex gap-1 items-start justify-center w-full">
+                                  {upperTeethRight.map(t => renderMiniToothBlock(t, false))}
+                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
+                                  {upperTeethLeft.map(t => renderMiniToothBlock(t, false))}
+                                </div>
+                              </div>
+                              
+                              <div className="w-full h-px bg-slate-200/40 dark:bg-slate-800/40" />
+
+                              {/* Arcada Inferior */}
+                              <div className="flex flex-col items-center w-full">
+                                <div className="flex gap-1 items-start justify-center w-full">
+                                  {lowerTeethRight.map(t => renderMiniToothBlock(t, true))}
+                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
+                                  {lowerTeethLeft.map(t => renderMiniToothBlock(t, true))}
+                                </div>
+                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mt-3">Arcada Inferior</span>
                               </div>
                             </div>
-                            {/* Arcada Inferior */}
-                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                              <div className="flex gap-1">
-                                {lowerTeethRight.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span className="text-[9px]">🦷</span>
-                                    <span>{t}</span>
-                                  </button>
-                                ))}
-                                <div className="w-px bg-slate-200 dark:bg-slate-800 h-8 self-center mx-1" />
-                                {lowerTeethLeft.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span className="text-[9px]">🦷</span>
-                                    <span>{t}</span>
-                                  </button>
-                                ))}
+                          ) : (
+                            <div className="space-y-6 flex flex-col items-center min-w-[500px] w-full">
+                              {/* Decíduos Superior */}
+                              <div className="flex flex-col items-center w-full">
+                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mb-2">Arcada Decídua Superior</span>
+                                <div className="flex gap-1 items-start justify-center w-full">
+                                  {upperTeethDecRight.map(t => renderMiniToothBlock(t, false))}
+                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
+                                  {upperTeethDecLeft.map(t => renderMiniToothBlock(t, false))}
+                                </div>
                               </div>
-                              <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest mt-1.5">Arcada Inferior</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* Arcada Decídua Superior */}
-                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                              <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest mb-1.5">Arcada Decídua Superior</span>
-                              <div className="flex gap-1">
-                                {upperTeethDecRight.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span>{t}</span>
-                                    <span className="text-[9px]">🦷</span>
-                                  </button>
-                                ))}
-                                <div className="w-px bg-slate-200 dark:bg-slate-800 h-8 self-center mx-1" />
-                                {upperTeethDecLeft.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span>{t}</span>
-                                    <span className="text-[9px]">🦷</span>
-                                  </button>
-                                ))}
+                              
+                              <div className="w-full h-px bg-slate-200/40 dark:bg-slate-800/40" />
+
+                              {/* Decíduos Inferior */}
+                              <div className="flex flex-col items-center w-full">
+                                <div className="flex gap-1 items-start justify-center w-full">
+                                  {lowerTeethDecRight.map(t => renderMiniToothBlock(t, true))}
+                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
+                                  {lowerTeethDecLeft.map(t => renderMiniToothBlock(t, true))}
+                                </div>
+                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mt-3">Arcada Decídua Inferior</span>
                               </div>
                             </div>
-                            {/* Arcada Decídua Inferior */}
-                            <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                              <div className="flex gap-1">
-                                {lowerTeethDecRight.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span className="text-[9px]">🦷</span>
-                                    <span>{t}</span>
-                                  </button>
-                                ))}
-                                <div className="w-px bg-slate-200 dark:bg-slate-800 h-8 self-center mx-1" />
-                                {lowerTeethDecLeft.map(t => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => handleToothClick(t)}
-                                    className={`w-8 h-10 rounded-lg text-[10px] font-bold flex flex-col items-center justify-between p-1 border transition-all active:scale-90 ${getToothColor(t)}`}
-                                  >
-                                    <span className="text-[9px]">🦷</span>
-                                    <span>{t}</span>
-                                  </button>
-                                ))}
-                              </div>
-                              <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest mt-1.5">Arcada Decídua Inferior</span>
-                            </div>
-                          </>
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
 
