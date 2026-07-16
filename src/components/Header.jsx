@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Bell, Search, Sun, Moon, Sparkles, Building, ChevronDown, Check } from 'lucide-react';
+import { Bell, Search, Sun, Moon, Sparkles, Building, ChevronDown, Check, LogOut } from 'lucide-react';
 import Breadcrumbs from './Breadcrumbs';
 import { mockDb } from '../lib/mockDatabase';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export default function Header({ activeTab, onSearchChange }) {
   const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
@@ -29,8 +30,13 @@ export default function Header({ activeTab, onSearchChange }) {
     <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20">
       <div className="flex items-center gap-4">
         {/* Breadcrumbs */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3.5">
           <Breadcrumbs activeTab={activeTab} />
+          {!isSupabaseConfigured && (
+            <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] rounded-full uppercase tracking-wider select-none animate-pulse">
+              Modo Demo (Sem BD)
+            </span>
+          )}
         </div>
       </div>
 
@@ -190,8 +196,9 @@ export default function Header({ activeTab, onSearchChange }) {
                     </div>
                   ))
                 ) : (
-                  <div className="p-6 text-center text-[11px] text-slate-450 font-medium">
-                    🔔 Sem novas notificações
+                  <div className="p-6 text-center text-[11px] text-slate-455 font-medium flex items-center justify-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Sem novas notificações</span>
                   </div>
                 )}
               </div>
@@ -222,7 +229,8 @@ export default function Header({ activeTab, onSearchChange }) {
                 }}
                 className="w-full mt-1.5 flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 rounded-lg transition-colors text-left"
               >
-                🚪 Sair do Sistema
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sair do Sistema</span>
               </button>
             </div>
           )}
