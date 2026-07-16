@@ -18,7 +18,8 @@ const unpackClinicData = (clinic) => {
         theme_base: parsed.theme_base || 'light',
         favicon_url: parsed.favicon_url || '',
         login_title: parsed.login_title || 'Bem-vindo ao seu portal',
-        login_bg: parsed.login_bg || ''
+        login_bg: parsed.login_bg || '',
+        address: parsed.address || null
       };
     } catch (e) {
       console.error('Failed to parse clinic whitelabel config from logo_url:', e);
@@ -31,7 +32,8 @@ const unpackClinicData = (clinic) => {
     theme_base: clinic.theme_base || 'light',
     favicon_url: clinic.favicon_url || '',
     login_title: clinic.login_title || 'Bem-vindo ao seu portal',
-    login_bg: clinic.login_bg || ''
+    login_bg: clinic.login_bg || '',
+    address: null
   };
 };
 
@@ -241,7 +243,8 @@ export function AuthProvider({ children }) {
       theme_base: updatedClinic.theme_base || 'light',
       favicon_url: updatedClinic.favicon_url || '',
       login_title: updatedClinic.login_title || 'Bem-vindo ao seu portal',
-      login_bg: updatedClinic.login_bg || ''
+      login_bg: updatedClinic.login_bg || '',
+      address: updatedClinic.address || null
     });
 
     const supabasePayload = {

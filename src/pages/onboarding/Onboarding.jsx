@@ -138,16 +138,16 @@ export default function Onboarding({ onComplete }) {
         try {
           await updateClinic({ 
             name: clinicaNome,
-            // Armazena informações de endereço nos metadados da clínica se necessário
-            logo_url: JSON.stringify({
-              address_cep: endereco.cep,
-              address_street: endereco.logradouro,
-              address_number: endereco.numero,
-              address_complement: endereco.complemento,
-              address_neighborhood: endereco.bairro,
-              address_city: endereco.cidade,
-              address_uf: endereco.uf
-            })
+            logo_url: clinic?.logo_url || '🦷',
+            address: {
+              cep: endereco.cep,
+              logradouro: endereco.logradouro,
+              numero: endereco.numero,
+              complemento: endereco.complemento,
+              bairro: endereco.bairro,
+              cidade: endereco.cidade,
+              uf: endereco.uf
+            }
           });
         } catch (err) {
           console.error('Erro ao atualizar dados da clínica no onboarding:', err);
