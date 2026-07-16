@@ -192,10 +192,12 @@ export default function WhatsApp() {
 
   // Modelos de Mensagens Rápidas
   const quickReplies = [
-    { label: 'Confirmar Consulta', text: 'Olá! Confirmamos sua consulta marcada para amanhã. Podemos confirmar sua presença? 🦷' },
-    { label: 'Preparo Canal', text: 'Lembramos que para o procedimento de canal é recomendado não estar em jejum absoluto. Qualquer dúvida estamos à disposição. ✨' },
-    { label: 'Agradecimento', text: 'Obrigado pela visita hoje! Seu feedback é muito importante para nós. Tenha um excelente dia! 💎' }
+    { label: 'Confirmar Consulta', text: 'Olá! Confirmamos sua consulta marcada para amanhã. Podemos confirmar sua presença?' },
+    { label: 'Preparo Canal', text: 'Lembramos que para o procedimento de canal é recomendado não estar em jejum absoluto. Qualquer dúvida estamos à disposição.' },
+    { label: 'Agradecimento', text: 'Obrigado pela visita hoje! Seu feedback é muito importante para nós. Tenha um excelente dia!' }
   ];
+
+  const [showMobileList, setShowMobileList] = useState(true);
 
   // Chat selecionado
   const activeChat = whatsappChats.find(c => c.patientId === selectedPatientId);
@@ -264,7 +266,7 @@ export default function WhatsApp() {
     <div className="h-full flex border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur shadow-sm">
       
       {/* 1. Lista de Conversas (Esquerda) */}
-      <div className="w-80 border-r border-slate-200/50 dark:border-slate-800 flex flex-col flex-shrink-0 bg-slate-50/20 dark:bg-slate-950/10">
+      <div className={`w-full md:w-80 border-r border-slate-200/50 dark:border-slate-800 flex flex-col flex-shrink-0 bg-slate-50/20 dark:bg-slate-950/10 ${showMobileList ? 'flex' : 'hidden md:flex'}`}>
         
         {/* Barra de Busca Conversas */}
         <div className="p-4 border-b border-slate-200/50 dark:border-slate-800 space-y-2 flex-shrink-0">
@@ -282,7 +284,12 @@ export default function WhatsApp() {
           </div>
           
           <button 
-            onClick={() => setShowEvolutionSettings(!showEvolutionSettings)}
+            onClick={() => {
+              setShowEvolutionSettings(!showEvolutionSettings);
+              if (window.innerWidth < 768) {
+                setShowMobileList(false);
+              }
+            }}
             className={`w-full py-1.5 rounded-lg border text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all ${
               showEvolutionSettings 
                 ? 'bg-secondary text-white border-secondary' 
@@ -306,6 +313,7 @@ export default function WhatsApp() {
                 onClick={() => {
                   setSelectedPatientId(chat.patientId);
                   setShowEvolutionSettings(false);
+                  setShowMobileList(false);
                 }}
                 className={`w-full text-left p-4 hover:bg-slate-100/50 dark:hover:bg-slate-850/50 flex items-start gap-3 transition-all relative ${
                   isSelected ? 'bg-slate-100/50 dark:bg-slate-850/50 border-r-2 border-secondary' : ''
@@ -343,11 +351,23 @@ export default function WhatsApp() {
       </div>
 
       {/* 2. Chat Central (Meio) */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-slate-900/10">
+      <div className={`flex-1 flex flex-col overflow-hidden bg-slate-50/50 dark:bg-slate-900/10 ${!showMobileList ? 'flex' : 'hidden md:flex'}`}>
         
         {showEvolutionSettings ? (
           /* PAINEL DE CONFIGURAÇÕES EVOLUTION API */
           <div className="flex-1 overflow-y-auto p-6 space-y-6 text-slate-800 dark:text-slate-200 text-left">
+            <div className="flex items-center gap-2 mb-2 md:hidden">
+              <button
+                onClick={() => {
+                  setShowEvolutionSettings(false);
+                  setShowMobileList(true);
+                }}
+                className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                type="button"
+              >
+                <ChevronLeft className="w-4 h-4" /> Voltar
+              </button>
+            </div>
             <div>
               <h3 className="text-sm font-bold font-title">Integração com Evolution API</h3>
               <p className="text-[11px] text-slate-450 mt-0.5">Gerencie a conexão da sua VPS, gere o QR Code e ative o robô de inteligência artificial.</p>
@@ -364,6 +384,11 @@ export default function WhatsApp() {
                   onChange={(e) => setEvolutionUrl(e.target.value)}
                   className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
+                {evolutionUrl && !evolutionUrl.startsWith('https://') && (
+                  <span className="text-[10px] text-amber-500 font-semibold block mt-1 leading-normal">
+                    ⚠️ Atenção: Use HTTPS para evitar bloqueios de conteúdo misto (Mixed Content) no navegador.
+                  </span>
+                )}
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider flex items-center gap-1">
@@ -468,6 +493,15 @@ export default function WhatsApp() {
             {/* Top Bar Chat */}
             <div className="p-4 border-b border-slate-200/50 dark:border-slate-800 bg-white dark:bg-slate-900/60 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
+                {/* Botão Voltar (Mobile) */}
+                <button
+                  onClick={() => setShowMobileList(true)}
+                  className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 md:hidden"
+                  title="Voltar para conversas"
+                  type="button"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
                 <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center font-bold text-slate-500 text-xs">
                   {activeChat.name.charAt(0)}
                 </div>

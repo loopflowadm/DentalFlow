@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Plus, Calendar as CalIcon, ChevronLeft, ChevronRight,
   Clock, MapPin, Check, X, ShieldAlert, ArrowLeftRight,
-  Phone, User, Edit, Copy, CheckSquare, AlertCircle, FileText
+  Phone, User, Edit, Copy, CheckSquare, AlertCircle, FileText,
+  ClipboardList, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,7 +22,9 @@ export default function Agenda({
   view,
   setView,
   setActiveTab,
-  setSelectedPatient
+  setSelectedPatient,
+  prefilledLeadData,
+  setPrefilledLeadData
 }) {
   const { 
     appointments, 
@@ -37,17 +40,112 @@ export default function Agenda({
   const { currentTheme } = useTheme();
   const { user } = useAuth();
 
+  // Refs e Helpers para Autocomplete e Conflitos
+  const autocompleteRef = useRef(null);
+  const taskAutocompleteRef = useRef(null);
+
+  const normalizeString = (str) => {
+    if (!str) return '';
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  };
+
+  const getSchedulingConflict = (dateStr, timeStr, durationMin, doctorId, chairId, excludeAppId = null) => {
+    if (!dateStr || !timeStr || !durationMin) return null;
+    
+    const start = new Date(`${dateStr}T${timeStr}:00`);
+    const end = new Date(start.getTime() + durationMin * 60 * 1000);
+    
+    // Filtrar agendamentos ativos na mesma data
+    const dateApps = appointments.filter(app => {
+      if (app.id === excludeAppId) return false;
+      if (app.status === 'CANCELLED') return false;
+      
+      const appStart = new Date(app.start_time);
+      return appStart.getFullYear() === start.getFullYear() &&
+             appStart.getMonth() === start.getMonth() &&
+             appStart.getDate() === start.getDate();
+    });
+    
+    for (const app of dateApps) {
+      const appStart = new Date(app.start_time);
+      const appEnd = new Date(app.end_time);
+      
+      // Sobreposição de intervalos
+      const isOverlapping = (start < appEnd) && (end > appStart);
+      
+      if (isOverlapping) {
+        if (chairId && app.chair_id === chairId) {
+          return {
+            type: 'CHAIR',
+            message: `A Cadeira ${chairs.find(c => c.id === chairId)?.name || ''} já está ocupada por ${app.patientName || app.title || 'Consulta'} neste horário (${appStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - ${appEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).`
+          };
+        }
+        if (doctorId && app.doctor_id === doctorId) {
+          const docName = dentists.find(d => d.id === doctorId)?.full_name || 'Dentista';
+          return {
+            type: 'DOCTOR',
+            message: `O(A) Dr(a). ${docName} já possui um compromisso neste horário (${appStart.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - ${appEnd.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).`
+          };
+        }
+      }
+    }
+    return null;
+  };
+
   // Diálogos
   const [showAddApp, setShowAddApp] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState('consulta'); // 'consulta' | 'compromisso' | 'tarefa'
+  const [editingApp, setEditingApp] = useState(null);
+
+  // Fechar autocomplete ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+      if (taskAutocompleteRef.current && !taskAutocompleteRef.current.contains(event.target)) {
+        setShowTaskPatientSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Consumir dados de Lead vindo do CRM para preenchimento
+  useEffect(() => {
+    if (prefilledLeadData) {
+      setActiveModalTab('consulta');
+      setShowAddApp(true);
+      setShowQuickPatientForm(true);
+      setQuickPatientName(prefilledLeadData.name || '');
+      setQuickPatientPhone(prefilledLeadData.phone || '');
+      if (setPrefilledLeadData) {
+        setPrefilledLeadData(null);
+      }
+    }
+  }, [prefilledLeadData, setPrefilledLeadData]);
 
   // Sincronizar com agendamento selecionado da sidebar
   useEffect(() => {
     if (selectedAppointment) {
-      setSelectedApp(selectedAppointment);
+      Promise.resolve().then(() => {
+        setSelectedApp(selectedAppointment);
+      });
     }
   }, [selectedAppointment]);
+
+  // Forçar visualização "Dia" no mobile (abaixo de 640px)
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640 && view !== 'day' && view !== 'month') {
+        setView('day');
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [view, setView]);
 
   // ==========================================
   // ESTADOS DOS FORMULÁRIOS
@@ -95,15 +193,17 @@ export default function Agenda({
   // Inicializar IDs padrões no modal ao abrir
   useEffect(() => {
     if (showAddApp) {
-      if (chairs && chairs.length > 0 && !appChairId) {
-        setAppChairId(chairs[0].id);
-      }
-      if (dentists && dentists.length > 0 && !appDoctorId) {
-        setAppDoctorId(dentists[0].id);
-        setCompDoctorId(dentists[0].id);
-      }
+      Promise.resolve().then(() => {
+        if (chairs && chairs.length > 0 && !appChairId) {
+          setAppChairId(chairs[0].id);
+        }
+        if (dentists && dentists.length > 0 && !appDoctorId) {
+          setAppDoctorId(dentists[0].id);
+          setCompDoctorId(dentists[0].id);
+        }
+      });
     }
-  }, [showAddApp, chairs, dentists]);
+  }, [showAddApp, chairs, dentists, appChairId, appDoctorId]);
 
   // Filtro de consultas
   const filteredApps = appointments.filter(app => {
@@ -195,6 +295,65 @@ export default function Agenda({
     setCurrentDate(temp);
   };
 
+  // Abrir o formulário de agendamento em modo de edição
+  const handleStartEditApp = (app) => {
+    setEditingApp(app);
+    setSelectedApp(null); // fecha o popover de detalhes
+    
+    // Configura a aba do modal baseada no tipo do agendamento
+    if (app.type === 'CONSULTA') {
+      setActiveModalTab('consulta');
+      setAppPatientId(app.patient_id || '');
+      const pat = patients.find(p => p.id === app.patient_id);
+      setPatientSearch(pat ? pat.name : (app.patientName || ''));
+      setAppProcedureId(app.procedure_id || '');
+      
+      const startDate = new Date(app.start_time);
+      const tzOffset = startDate.getTimezoneOffset() * 60000;
+      const localStartDate = new Date(startDate.getTime() - tzOffset);
+      setAppDate(localStartDate.toISOString().split('T')[0]);
+      setAppTime(localStartDate.toISOString().split('T')[1].substring(0, 5));
+      setAppChairId(app.chair_id || '');
+      setAppDoctorId(app.doctor_id || '');
+      setAppDuration(app.duration || 30);
+      setAppObservations(app.observations || '');
+      setAppSendConfirmation(app.send_confirmation !== false);
+      setAppReturnDays(app.return_days ? String(app.return_days) : '');
+      setAppLabel(app.label || 'Agendada');
+      
+    } else if (app.type === 'COMPROMISSO') {
+      setActiveModalTab('compromisso');
+      setCompDoctorId(app.doctor_id || '');
+      setCompTitle(app.title || '');
+      const start = new Date(app.start_time);
+      const end = new Date(app.end_time);
+      const tzOffset = start.getTimezoneOffset() * 60000;
+      const localStart = new Date(start.getTime() - tzOffset);
+      const localEnd = new Date(end.getTime() - tzOffset);
+      setCompStartDate(localStart.toISOString().split('T')[0]);
+      setCompStartTime(localStart.toISOString().split('T')[1].substring(0, 5));
+      setCompEndDate(localEnd.toISOString().split('T')[0]);
+      setCompEndTime(localEnd.toISOString().split('T')[1].substring(0, 5));
+      setCompIsRecurring(app.is_recurring || false);
+      
+    } else if (app.type === 'TAREFA') {
+      setActiveModalTab('tarefa');
+      setTaskTitle(app.title || '');
+      setTaskDescription(app.observations || '');
+      const start = new Date(app.start_time);
+      const tzOffset = start.getTimezoneOffset() * 60000;
+      const localStart = new Date(start.getTime() - tzOffset);
+      setTaskDueDate(localStart.toISOString().split('T')[0]);
+      setTaskDueTime(localStart.toISOString().split('T')[1].substring(0, 5));
+      setTaskList(app.label || 'Entrada');
+      setTaskPatientId(app.patient_id || '');
+      const pat = patients.find(p => p.id === app.patient_id);
+      setTaskPatientSearch(pat ? pat.name : '');
+    }
+    
+    setShowAddApp(true);
+  };
+
   // Submissão do novo agendamento
   const handleAddAppSubmit = async (e) => {
     e.preventDefault();
@@ -207,7 +366,9 @@ export default function Agenda({
       const matchedChair = chairs.find(c => c.id === appChairId);
 
       // RN-001 de Contas a Receber: Bloqueio de Prontuário por Inadimplência
-      if (checkPatientInadimplente(appPatientId)) {
+      // Apenas bloquear se for um novo agendamento ou se o paciente tiver sido alterado durante a edição
+      const shouldCheckInadimplente = !editingApp || editingApp.patient_id !== appPatientId;
+      if (shouldCheckInadimplente && checkPatientInadimplente(appPatientId)) {
         const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') || 
                             matchedProc?.name?.toLowerCase().includes('canal') || 
                             matchedProc?.name?.toLowerCase().includes('dor');
@@ -224,7 +385,7 @@ export default function Agenda({
       const start = new Date(`${appDate}T${appTime}:00`);
       const end = new Date(start.getTime() + appDuration * 60 * 1000);
 
-      await addAppointment({
+      const appData = {
         patient_id: appPatientId,
         patientName: matchedPat?.name || 'Paciente Novo',
         patientPhone: matchedPat?.phone || '',
@@ -241,9 +402,22 @@ export default function Agenda({
         send_confirmation: appSendConfirmation,
         return_days: appReturnDays ? parseInt(appReturnDays) : null,
         label: appLabel,
-        type: 'CONSULTA',
-        status: 'PENDING'
-      });
+        type: 'CONSULTA'
+      };
+
+      if (editingApp) {
+        await updateAppointment({
+          ...editingApp,
+          ...appData
+        });
+        alert('Agendamento atualizado com sucesso!');
+      } else {
+        await addAppointment({
+          ...appData,
+          status: 'PENDING'
+        });
+        alert('Agendamento cadastrado com sucesso!');
+      }
 
       // Limpar formulário
       setAppPatientId('');
@@ -258,15 +432,28 @@ export default function Agenda({
       const start = new Date(`${compStartDate}T${compStartTime}:00`);
       const end = new Date(`${compEndDate}T${compEndTime}:00`);
 
-      await addAppointment({
+      const compData = {
         title: compTitle,
         doctor_id: compDoctorId,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         type: 'COMPROMISSO',
-        is_recurring: compIsRecurring,
-        status: 'CONFIRMED' // Blocker já nasce confirmado
-      });
+        is_recurring: compIsRecurring
+      };
+
+      if (editingApp) {
+        await updateAppointment({
+          ...editingApp,
+          ...compData
+        });
+        alert('Compromisso atualizado com sucesso!');
+      } else {
+        await addAppointment({
+          ...compData,
+          status: 'CONFIRMED'
+        });
+        alert('Compromisso cadastrado com sucesso!');
+      }
 
       setCompTitle('');
       setCompIsRecurring(false);
@@ -277,16 +464,29 @@ export default function Agenda({
       const start = new Date(`${taskDueDate}T${taskDueTime}:00`);
       const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 min padrão
 
-      await addAppointment({
+      const taskData = {
         title: taskTitle,
         observations: taskDescription,
         start_time: start.toISOString(),
         end_time: end.toISOString(),
         patient_id: taskPatientId || null,
         label: taskList,
-        type: 'TAREFA',
-        status: 'PENDING'
-      });
+        type: 'TAREFA'
+      };
+
+      if (editingApp) {
+        await updateAppointment({
+          ...editingApp,
+          ...taskData
+        });
+        alert('Tarefa atualizada com sucesso!');
+      } else {
+        await addAppointment({
+          ...taskData,
+          status: 'PENDING'
+        });
+        alert('Tarefa criada com sucesso!');
+      }
 
       setTaskTitle('');
       setTaskDescription('');
@@ -294,6 +494,7 @@ export default function Agenda({
       setTaskPatientSearch('');
     }
 
+    setEditingApp(null);
     setShowAddApp(false);
   };
 
@@ -360,6 +561,10 @@ export default function Agenda({
   const handleStatusChange = (appId, newStatus) => {
     const app = appointments.find(a => a.id === appId);
     if (app) {
+      if (newStatus === 'CANCELLED') {
+        const confirmCancel = window.confirm(`⚠️ Tem certeza de que deseja CANCELAR a consulta de ${app.patientName}?`);
+        if (!confirmCancel) return;
+      }
       updateAppointment({ ...app, status: newStatus });
       setSelectedApp(null);
       if (selectedAppointment) {
@@ -408,14 +613,17 @@ export default function Agenda({
   };
 
   // Filtrar pacientes autocomplete
-  const filteredPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
-    p.phone.includes(patientSearch)
-  );
+  const filteredPatients = patients.filter(p => {
+    const term = normalizeString(patientSearch);
+    if (!term) return false;
+    return normalizeString(p.name).includes(term) || p.phone.includes(term);
+  });
 
-  const filteredTaskPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(taskPatientSearch.toLowerCase())
-  );
+  const filteredTaskPatients = patients.filter(p => {
+    const term = normalizeString(taskPatientSearch);
+    if (!term) return false;
+    return normalizeString(p.name).includes(term);
+  });
 
   return (
     <div className="h-full flex flex-col space-y-4 overflow-hidden text-slate-800 dark:text-slate-100">
@@ -450,19 +658,22 @@ export default function Agenda({
 
           {/* View Toggle */}
           <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex border border-slate-200/30 dark:border-slate-700/30">
-            {['day', 'week', 'month', 'chair'].map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                  view === v 
-                    ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
-                    : 'text-slate-555 hover:text-slate-700 dark:hover:text-slate-350'
-                }`}
-              >
-                {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
-              </button>
-            ))}
+            {['day', 'week', 'month', 'chair'].map(v => {
+              if (window.innerWidth < 640 && (v === 'week' || v === 'chair')) return null;
+              return (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                    view === v 
+                      ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
+                      : 'text-slate-555 hover:text-slate-700 dark:hover:text-slate-350'
+                  }`}
+                >
+                  {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -845,8 +1056,8 @@ export default function Agenda({
               <div className="space-y-5 text-xs text-left">
                 {/* Header Paciente / Título */}
                 <div className="flex items-center gap-3.5 pr-6">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 text-xl shadow-inner border border-slate-200/30 dark:border-white/5">
-                    {selectedApp.type === 'CONSULTA' ? '👤' : (selectedApp.type === 'TAREFA' ? '📋' : '🔒')}
+                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 shadow-inner border border-slate-200/30 dark:border-white/5">
+                    {selectedApp.type === 'CONSULTA' ? <User className="w-5 h-5 text-slate-400" /> : (selectedApp.type === 'TAREFA' ? <ClipboardList className="w-5 h-5 text-slate-400" /> : <Lock className="w-5 h-5 text-slate-400" />)}
                   </div>
                   <div className="overflow-hidden">
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate font-title leading-tight">
@@ -892,10 +1103,7 @@ export default function Agenda({
                 {/* Botão de Edição */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
-                      alert('Funcionalidade de edição avançada: em breve!');
-                      setSelectedApp(null);
-                    }}
+                    onClick={() => handleStartEditApp(selectedApp)}
                     className="flex-1 py-2.5 bg-secondary text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_4px_15px_rgba(var(--color-secondary),0.3)] hover:opacity-95 active:scale-[0.98] border border-white/10 transition-all text-xs"
                     style={{ backgroundColor: currentTheme.secondary_color }}
                   >
@@ -1002,6 +1210,7 @@ export default function Agenda({
                 onClick={() => {
                   setShowAddApp(false);
                   setShowQuickPatientForm(false);
+                  setEditingApp(null);
                 }}
                 className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-250 transition-colors"
               >
@@ -1009,22 +1218,28 @@ export default function Agenda({
               </button>
 
               {/* TABS DE SELEÇÃO */}
-              <div className="flex bg-slate-100 dark:bg-black/40 p-1.5 rounded-2xl border border-slate-200/30 dark:border-slate-800/80 mb-5 max-w-xs">
-                {['consulta', 'compromisso', 'tarefa'].map(tab => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveModalTab(tab)}
-                    className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                      activeModalTab === tab 
-                        ? 'bg-white dark:bg-slate-750 text-slate-850 dark:text-white shadow-sm' 
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
+              {!editingApp ? (
+                <div className="flex bg-slate-100 dark:bg-black/40 p-1.5 rounded-2xl border border-slate-200/30 dark:border-slate-800/80 mb-5 max-w-xs">
+                  {['consulta', 'compromisso', 'tarefa'].map(tab => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveModalTab(tab)}
+                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                        activeModalTab === tab 
+                          ? 'bg-white dark:bg-slate-750 text-slate-850 dark:text-white shadow-sm' 
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <h3 className="text-sm font-black text-slate-800 dark:text-white mb-5 uppercase tracking-wider pl-1 font-title">
+                  Editar {editingApp.type === 'CONSULTA' ? 'Consulta' : (editingApp.type === 'COMPROMISSO' ? 'Compromisso' : 'Tarefa')}
+                </h3>
+              )}
 
               {/* FORMULÁRIO */}
               <form onSubmit={handleAddAppSubmit} className="space-y-4 text-left">
@@ -1076,76 +1291,119 @@ export default function Agenda({
                         </button>
                       </div>
 
-                      {showQuickPatientForm ? (
-                        /* Subform Cadastro Rápido */
-                        <div className="p-3.5 bg-slate-100/50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                          <div>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Nome completo..."
-                              value={quickPatientName}
-                              onChange={(e) => setQuickPatientName(e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
-                            />
+                      <div ref={autocompleteRef}>
+                        {showQuickPatientForm ? (
+                          /* Subform Cadastro Rápido */
+                          <div className="p-3.5 bg-slate-100/50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div>
+                              <input
+                                type="text"
+                                required
+                                placeholder="Nome completo..."
+                                value={quickPatientName}
+                                onChange={(e) => setQuickPatientName(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                required
+                                placeholder="Celular (ex: 88999699232)..."
+                                value={quickPatientPhone}
+                                onChange={(e) => setQuickPatientPhone(e.target.value)}
+                                className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleQuickPatientSave}
+                                className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow border border-white/5 active:scale-95"
+                                style={{ backgroundColor: currentTheme.secondary_color }}
+                              >
+                                Salvar
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              required
-                              placeholder="Celular (ex: 88999699232)..."
-                              value={quickPatientPhone}
-                              onChange={(e) => setQuickPatientPhone(e.target.value)}
-                              className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleQuickPatientSave}
-                              className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow border border-white/5 active:scale-95"
-                              style={{ backgroundColor: currentTheme.secondary_color }}
-                            >
-                              Salvar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Autocomplete Input */
-                        <>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Busque por nome, telefone, CPF..."
-                            value={patientSearch}
-                            onChange={(e) => {
-                              setPatientSearch(e.target.value);
-                              setShowSuggestions(true);
-                            }}
-                            onFocus={() => setShowSuggestions(true)}
-                            className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
-                          />
-                          {showSuggestions && patientSearch && (
-                            <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
-                              {filteredPatients.slice(0, 5).map(p => (
+                        ) : (
+                          /* Autocomplete ou Badge */
+                          <>
+                            {appPatientId ? (
+                              <div className="flex items-center justify-between bg-slate-50 dark:bg-black/45 border border-slate-250 dark:border-slate-800 rounded-xl p-2.5 px-3 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <User className="w-3.5 h-3.5 text-secondary animate-pulse" style={{ color: currentTheme.secondary_color }} />
+                                  <div className="text-left">
+                                    <span className="font-extrabold text-slate-800 dark:text-white">
+                                      {patients.find(p => p.id === appPatientId)?.name || patientSearch}
+                                    </span>
+                                    <span className="text-[10px] text-slate-450 dark:text-slate-500 block mt-0.5">
+                                      {patients.find(p => p.id === appPatientId)?.phone || ''}
+                                    </span>
+                                  </div>
+                                </div>
                                 <button
-                                  key={p.id}
                                   type="button"
                                   onClick={() => {
-                                    setAppPatientId(p.id);
-                                    setPatientSearch(p.name);
-                                    setShowSuggestions(false);
+                                    setAppPatientId('');
+                                    setPatientSearch('');
                                   }}
-                                  className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-colors"
+                                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
                                 >
-                                  {p.name} <span className="opacity-60">({p.phone})</span>
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
-                              ))}
-                              {filteredPatients.length === 0 && (
-                                <div className="p-2 text-center text-xs text-slate-500">Nenhum paciente encontrado</div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="Busque por nome, telefone, CPF..."
+                                  value={patientSearch}
+                                  onChange={(e) => {
+                                    setPatientSearch(e.target.value);
+                                    setShowSuggestions(true);
+                                  }}
+                                  onFocus={() => setShowSuggestions(true)}
+                                  className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                                />
+                                {showSuggestions && patientSearch && (
+                                  <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
+                                    {filteredPatients.slice(0, 5).map(p => (
+                                      <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setAppPatientId(p.id);
+                                          setPatientSearch(p.name);
+                                          setShowSuggestions(false);
+                                        }}
+                                        className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors"
+                                      >
+                                        {p.name} <span className="opacity-60">({p.phone})</span>
+                                      </button>
+                                    ))}
+                                    {filteredPatients.length === 0 && (
+                                      <div className="p-2 text-center text-xs text-slate-550 flex flex-col gap-1.5 items-center">
+                                        <span>Nenhum paciente encontrado</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setQuickPatientName(patientSearch);
+                                            setShowQuickPatientForm(true);
+                                            setShowSuggestions(false);
+                                          }}
+                                          className="px-2 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 text-[10px] font-bold rounded-lg transition-all"
+                                        >
+                                          Cadastrar "{patientSearch}" rápido
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* Procedimento */}
@@ -1426,41 +1684,104 @@ export default function Agenda({
                           <option value="Financeiro">Financeiro</option>
                         </select>
                       </div>
-                      <div className="relative">
+                      <div className="relative" ref={taskAutocompleteRef}>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Paciente (Opcional)</label>
-                        <input
-                          type="text"
-                          placeholder="Buscar paciente..."
-                          value={taskPatientSearch}
-                          onChange={(e) => {
-                            setTaskPatientSearch(e.target.value);
-                            setShowTaskPatientSuggestions(true);
-                          }}
-                          onFocus={() => setShowTaskPatientSuggestions(true)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
-                        />
-                        {showTaskPatientSuggestions && taskPatientSearch && (
-                          <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
-                            {filteredTaskPatients.slice(0, 5).map(p => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => {
-                                  setTaskPatientId(p.id);
-                                  setTaskPatientSearch(p.name);
-                                  setShowTaskPatientSuggestions(false);
-                                }}
-                                className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-colors"
-                              >
-                                {p.name}
-                              </button>
-                            ))}
+                        {taskPatientId ? (
+                          <div className="flex items-center justify-between bg-slate-50 dark:bg-black/45 border border-slate-250 dark:border-slate-800 rounded-xl p-2 px-3 text-xs">
+                            <div className="flex items-center gap-2 text-left">
+                              <User className="w-3.5 h-3.5 text-slate-450 dark:text-slate-400" />
+                              <span className="font-extrabold text-slate-800 dark:text-white truncate max-w-[120px]">
+                                {patients.find(p => p.id === taskPatientId)?.name || taskPatientSearch}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTaskPatientId('');
+                                setTaskPatientSearch('');
+                              }}
+                              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
+                        ) : (
+                          <>
+                            <input
+                              type="text"
+                              placeholder="Buscar paciente..."
+                              value={taskPatientSearch}
+                              onChange={(e) => {
+                                setTaskPatientSearch(e.target.value);
+                                setShowTaskPatientSuggestions(true);
+                              }}
+                              onFocus={() => setShowTaskPatientSuggestions(true)}
+                              className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                            />
+                            {showTaskPatientSuggestions && taskPatientSearch && (
+                              <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
+                                {filteredTaskPatients.slice(0, 5).map(p => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setTaskPatientId(p.id);
+                                      setTaskPatientSearch(p.name);
+                                      setShowTaskPatientSuggestions(false);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors"
+                                  >
+                                    {p.name}
+                                  </button>
+                                ))}
+                                {filteredTaskPatients.length === 0 && (
+                                  <div className="p-2 text-center text-xs text-slate-550">Nenhum paciente encontrado</div>
+                                )}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
                   </>
                 )}
+
+                {/* Alerta de conflito de horários em tempo real */}
+                {(() => {
+                  if (activeModalTab === 'tarefa') return null;
+                  
+                  let duration = appDuration;
+                  if (activeModalTab === 'compromisso') {
+                    try {
+                      const start = new Date(`${compStartDate}T${compStartTime}:00`);
+                      const end = new Date(`${compEndDate}T${compEndTime}:00`);
+                      const diffMs = end - start;
+                      duration = diffMs > 0 ? diffMs / (60 * 1000) : 30;
+                    } catch (e) {
+                      duration = 30;
+                    }
+                  }
+                  
+                  const conflict = activeModalTab === 'consulta'
+                    ? getSchedulingConflict(appDate, appTime, appDuration, appDoctorId, appChairId)
+                    : getSchedulingConflict(compStartDate, compStartTime, duration, compDoctorId, null);
+                  
+                  if (!conflict) return null;
+                  
+                  return (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl flex gap-2.5 text-[11px] font-semibold leading-relaxed animate-in fade-in"
+                    >
+                      <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-extrabold block">Aviso de Conflito de Horário</span>
+                        <span>{conflict.message}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })()}
 
                 {/* BOTÕES DE SUBMISSÃO */}
                 <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800/85">
@@ -1469,6 +1790,7 @@ export default function Agenda({
                     onClick={() => {
                       setShowAddApp(false);
                       setShowQuickPatientForm(false);
+                      setEditingApp(null);
                     }}
                     className="px-4 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
                   >
@@ -1479,9 +1801,13 @@ export default function Agenda({
                     className="px-5 py-2.5 bg-secondary text-white font-bold rounded-xl text-xs shadow-lg active:scale-95 transition-all flex items-center gap-1.5 border border-white/5"
                     style={{ backgroundColor: currentTheme.secondary_color }}
                   >
-                    {activeModalTab === 'consulta' && 'Agendar consulta'}
-                    {activeModalTab === 'compromisso' && 'Salvar compromisso'}
-                    {activeModalTab === 'tarefa' && 'Criar tarefa'}
+                    {editingApp ? 'Salvar alterações' : (
+                      <>
+                        {activeModalTab === 'consulta' && 'Agendar consulta'}
+                        {activeModalTab === 'compromisso' && 'Salvar compromisso'}
+                        {activeModalTab === 'tarefa' && 'Criar tarefa'}
+                      </>
+                    )}
                   </button>
                 </div>
 
