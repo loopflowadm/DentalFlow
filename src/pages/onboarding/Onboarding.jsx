@@ -31,7 +31,7 @@ export default function Onboarding({ onComplete }) {
   const [sistemaAnterior, setSistemaAnterior] = useState('');
   
   // WhatsApp Mockup State
-  const [celular, setCelular] = useState(user?.phone || '');
+  const [celular, setCelular] = useState(() => user?.phone || localStorage.getItem('df_temp_phone') || '');
   const [whatsappChat, setWhatsappChat] = useState([
     { id: 1, sender: 'bot', text: 'Enviando convite de confirmação...', typing: true }
   ]);
@@ -45,6 +45,12 @@ export default function Onboarding({ onComplete }) {
     return `(${nums.slice(0, 2)}) ${nums.slice(2, 7)}-${nums.slice(7)}`;
   };
 
+  const handleCelularChange = (val) => {
+    const formatted = formatPhone(val);
+    setCelular(formatted);
+    localStorage.setItem('df_temp_phone', formatted);
+  };
+
   // Buscar dados da clínica e usuário existente para pré-preencher
   useEffect(() => {
     if (clinic?.name) {
@@ -52,8 +58,9 @@ export default function Onboarding({ onComplete }) {
         setClinicaNome(clinic.name);
       });
     }
-    if (user?.phone) {
-      setCelular(user.phone);
+    const savedPhone = user?.phone || localStorage.getItem('df_temp_phone');
+    if (savedPhone) {
+      setCelular(savedPhone);
     }
   }, [clinic, user]);
 
@@ -671,16 +678,36 @@ export default function Onboarding({ onComplete }) {
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-2xl px-2 relative">
               <div className="flex-1 space-y-4 text-center md:text-left">
                 <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 font-title leading-tight">
-                  {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número{' '}
-                  <input
-                    type="tel"
-                    value={celular}
-                    onChange={(e) => setCelular(formatPhone(e.target.value))}
-                    placeholder="(88) 99969-9232"
-                    className="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-black px-2.5 py-0.5 rounded-xl text-lg md:text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 shadow-sm"
-                  />{' '}
-                  para você ver como o paciente confirma a consulta no DentalFlow.
+                  {!celular ? (
+                    <>
+                      {userFirstName}, digite seu número de WhatsApp abaixo para ver a simulação da IA Sofia em tempo real:
+                    </>
+                  ) : (
+                    <>
+                      {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número{' '}
+                      <input
+                        type="tel"
+                        value={celular}
+                        onChange={(e) => handleCelularChange(e.target.value)}
+                        placeholder="(DDD) 9XXXX-XXXX"
+                        className="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-black px-2.5 py-0.5 rounded-xl text-lg md:text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 shadow-sm"
+                      />{' '}
+                      para você ver como o paciente confirma a consulta no DentalFlow.
+                    </>
+                  )}
                 </h2>
+                {!celular && (
+                  <div className="pt-1">
+                    <input
+                      type="tel"
+                      value={celular}
+                      onChange={(e) => handleCelularChange(e.target.value)}
+                      placeholder="(DDD) 9XXXX-XXXX"
+                      className="w-full max-w-xs bg-white border border-slate-300 text-blue-600 font-black px-4 py-2.5 rounded-2xl text-base text-center focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      autoFocus
+                    />
+                  </div>
+                )}
                 <p className="text-xs font-bold text-slate-750 font-title">
                   Pode responder?
                 </p>

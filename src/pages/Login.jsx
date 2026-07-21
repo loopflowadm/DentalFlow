@@ -27,13 +27,19 @@ export default function Login({ initialView = 'login', onBack }) {
   const [regLogo, setRegLogo] = useState('🦷');
   const [regRole, setRegRole] = useState('CLINIC_OWNER'); // Default role when registering clinic
   const [regFullName, setRegFullName] = useState('');
-  const [regPhone, setRegPhone] = useState('');
+  const [regPhone, setRegPhone] = useState(() => localStorage.getItem('df_temp_phone') || '');
 
   const formatPhone = (val) => {
     const nums = val.replace(/\D/g, '').slice(0, 11);
     if (nums.length <= 2) return nums ? `(${nums}` : '';
     if (nums.length <= 7) return `(${nums.slice(0, 2)}) ${nums.slice(2)}`;
     return `(${nums.slice(0, 2)}) ${nums.slice(2, 7)}-${nums.slice(7)}`;
+  };
+
+  const handlePhoneChange = (val) => {
+    const formatted = formatPhone(val);
+    setRegPhone(formatted);
+    localStorage.setItem('df_temp_phone', formatted);
   };
 
   // Forgot Form States
@@ -483,9 +489,9 @@ export default function Login({ initialView = 'login', onBack }) {
                 </label>
                 <input
                   type="tel"
-                  placeholder="(88) 99999-9999"
+                  placeholder="(DDD) 9XXXX-XXXX"
                   value={regPhone}
-                  onChange={(e) => setRegPhone(formatPhone(e.target.value))}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
                   className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
                 />
               </div>

@@ -100,6 +100,7 @@ export default function LandingPage({ onLogin, onRegister }) {
     if (!name || !email || !phone) return;
     setFormLoading(true);
     try {
+      localStorage.setItem('df_temp_phone', phone);
       await addLeadToDatabase({ name, email, phone, procedure, budget: parseFloat(budget) || 150 });
       setFormSuccess(true);
       setName(''); setEmail(''); setPhone('');
@@ -112,7 +113,7 @@ export default function LandingPage({ onLogin, onRegister }) {
     const newLead = {
       clinic_id: defaultClinicId,
       name: leadData.name,
-      phone: leadData.phone.replace(/\D/g, '') || '5511999999999',
+      phone: leadData.phone.replace(/\D/g, ''),
       avatar: '',
       stage: 0,
       priority: 'medium',
