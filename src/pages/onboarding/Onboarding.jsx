@@ -31,21 +31,31 @@ export default function Onboarding({ onComplete }) {
   const [sistemaAnterior, setSistemaAnterior] = useState('');
   
   // WhatsApp Mockup State
-  const [celular, setCelular] = useState(user?.phone || '(88) 99969-9232');
+  const [celular, setCelular] = useState(user?.phone || '');
   const [whatsappChat, setWhatsappChat] = useState([
     { id: 1, sender: 'bot', text: 'Enviando convite de confirmação...', typing: true }
   ]);
   const [chatStage, setChatStage] = useState('waiting_user'); // 'waiting_user' | 'user_responded' | 'bot_confirmed'
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Buscar dados da clínica existente para pré-preencher
+  const formatPhone = (val) => {
+    const nums = val.replace(/\D/g, '').slice(0, 11);
+    if (nums.length <= 2) return nums ? `(${nums}` : '';
+    if (nums.length <= 7) return `(${nums.slice(0, 2)}) ${nums.slice(2)}`;
+    return `(${nums.slice(0, 2)}) ${nums.slice(2, 7)}-${nums.slice(7)}`;
+  };
+
+  // Buscar dados da clínica e usuário existente para pré-preencher
   useEffect(() => {
     if (clinic?.name) {
       Promise.resolve().then(() => {
         setClinicaNome(clinic.name);
       });
     }
-  }, [clinic]);
+    if (user?.phone) {
+      setCelular(user.phone);
+    }
+  }, [clinic, user]);
 
   // Efeito de digitação e envio no WhatsApp Mockup
   useEffect(() => {
@@ -661,7 +671,15 @@ export default function Onboarding({ onComplete }) {
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-2xl px-2 relative">
               <div className="flex-1 space-y-4 text-center md:text-left">
                 <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 font-title leading-tight">
-                  {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número <span className="text-blue-600 underline font-black">{celular}</span> para você ver como o paciente confirma a consulta no DentalFlow.
+                  {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número{' '}
+                  <input
+                    type="tel"
+                    value={celular}
+                    onChange={(e) => setCelular(formatPhone(e.target.value))}
+                    placeholder="(88) 99969-9232"
+                    className="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-black px-2.5 py-0.5 rounded-xl text-lg md:text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 shadow-sm"
+                  />{' '}
+                  para você ver como o paciente confirma a consulta no DentalFlow.
                 </h2>
                 <p className="text-xs font-bold text-slate-750 font-title">
                   Pode responder?

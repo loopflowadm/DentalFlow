@@ -27,6 +27,14 @@ export default function Login({ initialView = 'login', onBack }) {
   const [regLogo, setRegLogo] = useState('🦷');
   const [regRole, setRegRole] = useState('CLINIC_OWNER'); // Default role when registering clinic
   const [regFullName, setRegFullName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+
+  const formatPhone = (val) => {
+    const nums = val.replace(/\D/g, '').slice(0, 11);
+    if (nums.length <= 2) return nums ? `(${nums}` : '';
+    if (nums.length <= 7) return `(${nums.slice(0, 2)}) ${nums.slice(2)}`;
+    return `(${nums.slice(0, 2)}) ${nums.slice(2, 7)}-${nums.slice(7)}`;
+  };
 
   // Forgot Form States
   const [forgotEmail, setForgotEmail] = useState('');
@@ -178,7 +186,8 @@ export default function Login({ initialView = 'login', onBack }) {
             data: {
               clinic_id: clinicData.id,
               role: 'CLINIC_ADMIN',
-              full_name: regFullName.trim() || 'Administrador'
+              full_name: regFullName.trim() || 'Administrador',
+              phone: regPhone.trim()
             }
           }
         });
@@ -212,6 +221,7 @@ export default function Login({ initialView = 'login', onBack }) {
           password: regPassword,
           role: 'CLINIC_ADMIN', // CLINIC_OWNER / CLINIC_ADMIN
           full_name: regFullName.trim() || 'Administrador',
+          phone: regPhone.trim(),
           clinic_id: savedClinic.id
         };
         mockDb.saveUser(newUser);
@@ -463,6 +473,19 @@ export default function Login({ initialView = 'login', onBack }) {
                   placeholder="Dr. Thácio Maikon"
                   value={regFullName}
                   onChange={(e) => setRegFullName(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                  WhatsApp / Celular
+                </label>
+                <input
+                  type="tel"
+                  placeholder="(88) 99999-9999"
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(formatPhone(e.target.value))}
                   className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
                 />
               </div>

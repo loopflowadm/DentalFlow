@@ -41,22 +41,27 @@ export default function Header({ activeTab, onSearchChange }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Seletor de Clínica para SuperAdmin */}
-        {user?.role === 'SUPER_ADMIN' && (
+        {/* Seletor de Clínica para SuperAdmin ou Plano Enterprise */}
+        {(user?.role === 'SUPER_ADMIN' || clinic?.plan_type === 'enterprise') && (
           <div className="relative">
             <button
               onClick={() => setShowClinicSelector(!showClinicSelector)}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all border border-slate-200/50 dark:border-slate-700/50"
             >
-              <Building className="w-3.5 h-3.5" />
+              <Building className="w-3.5 h-3.5 text-blue-500" />
               <span>{clinic?.name || 'Administrando SaaS'}</span>
+              {clinic?.plan_type === 'enterprise' && (
+                <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] font-black rounded uppercase">
+                  Multi-Filial
+                </span>
+              )}
               <ChevronDown className="w-3 h-3" />
             </button>
 
             {showClinicSelector && (
               <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-slate-850 shadow-xl border border-slate-150 dark:border-slate-800 p-1.5 z-50 text-slate-800 dark:text-white">
                 <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Selecionar Clínica
+                  Alternar Clínica / Filial
                 </div>
                 <button
                   onClick={() => {
@@ -65,11 +70,11 @@ export default function Header({ activeTab, onSearchChange }) {
                   }}
                   className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
                     !clinic 
-                      ? 'bg-violet-500/10 text-violet-500' 
+                      ? 'bg-blue-500/10 text-blue-500' 
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350'
                   }`}
                 >
-                  <span>Geral / Todos</span>
+                  <span>Visão Consolidada</span>
                   {!clinic && <Check className="w-3.5 h-3.5" />}
                 </button>
                 {clinics.map(c => (
@@ -81,7 +86,7 @@ export default function Header({ activeTab, onSearchChange }) {
                     }}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all text-left mt-0.5 ${
                       clinic?.id === c.id 
-                        ? 'bg-violet-500/10 text-violet-500' 
+                        ? 'bg-blue-500/10 text-blue-500' 
                         : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-350'
                     }`}
                   >
@@ -91,6 +96,20 @@ export default function Header({ activeTab, onSearchChange }) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Badge do Plano da Clínica */}
+        {clinic && (
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 text-[10px] font-black uppercase tracking-wider">
+            <span className="text-slate-400">Plano:</span>
+            <span className={
+              clinic.plan_type === 'starter' ? 'text-emerald-500' :
+              clinic.plan_type === 'enterprise' ? 'text-purple-500 font-extrabold' :
+              'text-blue-500 font-extrabold'
+            }>
+              {clinic.plan_type === 'starter' ? 'Starter' : clinic.plan_type === 'enterprise' ? 'Enterprise' : 'Professional'}
+            </span>
           </div>
         )}
 

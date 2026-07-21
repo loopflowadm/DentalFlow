@@ -1161,7 +1161,200 @@ export default function Configuracoes() {
         </div>
       )}
 
-      {/* MODAL: ADICIONAR CONVÊNIO */}
+      {/* SUB-ABA: INTEGRAÇÕES API & WEBHOOKS */}
+      {activeSubTab === 'integracoes' && (
+        <div className="space-y-6 text-left animate-in fade-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            
+            {/* 1. WhatsApp Evolution API */}
+            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    evolutionStatus === 'CONNECTED' 
+                      ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' 
+                      : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                  }`}>
+                    {evolutionStatus === 'CONNECTED' ? '● Ativo' : '○ Aguardando Conexão'}
+                  </span>
+                </div>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">WhatsApp Meta / Evolution API</h3>
+                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                  Disparo de mensagens automáticas de confirmação, lembretes de consultas e robô Sofia.
+                </p>
+              </div>
+
+              <div className="space-y-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <input
+                  type="text"
+                  placeholder="URL da API (ex: https://api.whatsapp.com)"
+                  value={evolutionUrl}
+                  onChange={(e) => setEvolutionUrl(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem(`evolution_url_${clinic?.id}`, evolutionUrl);
+                    localStorage.setItem(`evolution_status_${clinic?.id}`, 'CONNECTED');
+                    setEvolutionStatus('CONNECTED');
+                    alert('Instância do WhatsApp configurada com sucesso!');
+                  }}
+                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-3.5 h-3.5" /> Salvar Conexão WhatsApp
+                </button>
+              </div>
+            </div>
+
+            {/* 2. Google Calendar Sync */}
+            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    gcalConnected 
+                      ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30' 
+                      : 'bg-slate-500/15 text-slate-400 border border-slate-500/30'
+                  }`}>
+                    {gcalConnected ? '● Sincronizado' : '○ Desconectado'}
+                  </span>
+                </div>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">Google Calendar</h3>
+                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                  Sincronização bidirecional em tempo real de agendamentos entre o OdontoCRM e o Google Agenda.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGcalConnected(!gcalConnected);
+                    alert(gcalConnected ? 'Google Calendar desconectado.' : 'Google Calendar conectado com sucesso!');
+                  }}
+                  className={`w-full py-2 font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 ${
+                    gcalConnected 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300' 
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  {gcalConnected ? 'Desconectar Google Calendar' : 'Conectar Conta Google'}
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Gateway de Pagamentos Stripe / PIX */}
+            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                    ● Ativo
+                  </span>
+                </div>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">Stripe / Pagamentos PIX & Cartão</h3>
+                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                  Geração de links de cobrança e QR Code PIX diretamente nos orçamentos dos pacientes.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <input
+                  type="password"
+                  placeholder="Chave Secreta Stripe (sk_live_...)"
+                  defaultValue="sk_live_demo_key_odontocrm_2026"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => alert('Configurações de pagamento atualizadas com sucesso!')}
+                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm"
+                >
+                  Salvar Gateway
+                </button>
+              </div>
+            </div>
+
+            {/* 4. n8n / Webhooks de Automação */}
+            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/15 text-blue-500 border border-blue-500/30">
+                    Webhooks On
+                  </span>
+                </div>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">n8n / Webhooks de Automação</h3>
+                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                  Disparos de eventos HTTP POST para automação de CRM com n8n, Make ou Zapier.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <input
+                  type="url"
+                  placeholder="URL do Webhook (https://n8n.suaclinica.com/webhook/...)"
+                  defaultValue="https://n8n.odontocrm.com/webhook/clinic-events"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => alert('Webhook de automação ativado com sucesso!')}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm"
+                >
+                  Testar Webhook
+                </button>
+              </div>
+            </div>
+
+            {/* 5. OpenAI / Gemini AI API Key */}
+            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-500 border border-purple-500/30">
+                    IA Ativa
+                  </span>
+                </div>
+                <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">Agente de IA (Gemini / OpenAI)</h3>
+                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                  Chave customizada para processamento de linguagem natural do Robô Sofia e diagnósticos.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <input
+                  type="password"
+                  placeholder="Chave de API (AIzaSy... ou sk-...)"
+                  defaultValue="AIzaSy_demo_gemini_key_2026"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => alert('Chave de IA atualizada com sucesso!')}
+                  className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs transition-all shadow-sm"
+                >
+                  Salvar Chave de IA
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
       {showAddInsurance && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left">

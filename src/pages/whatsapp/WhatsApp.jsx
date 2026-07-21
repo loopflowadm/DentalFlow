@@ -270,6 +270,26 @@ export default function WhatsApp() {
         
         {/* Barra de Busca Conversas */}
         <div className="p-4 border-b border-slate-200/50 dark:border-slate-800 space-y-2 flex-shrink-0">
+          
+          {/* Badge de Nível de Plano WhatsApp */}
+          <div className={`p-2 rounded-xl border text-[10px] font-bold flex items-center justify-between gap-1 ${
+            clinic?.plan_type === 'starter' 
+              ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' 
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+          }`}>
+            <div className="flex items-center gap-1.5 truncate">
+              <Bot className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">
+                {clinic?.plan_type === 'starter' ? 'WhatsApp Básico (Envio Manual)' : 'WhatsApp Completo + Robô Sofia 24/7'}
+              </span>
+            </div>
+            {clinic?.plan_type === 'starter' && (
+              <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded text-[8px] font-black uppercase">
+                Upgrade
+              </span>
+            )}
+          </div>
+
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
               <Search className="w-4 h-4" />

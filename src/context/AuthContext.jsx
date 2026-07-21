@@ -19,7 +19,9 @@ const unpackClinicData = (clinic) => {
         favicon_url: parsed.favicon_url || '',
         login_title: parsed.login_title || 'Bem-vindo ao seu portal',
         login_bg: parsed.login_bg || '',
-        address: parsed.address || null
+        address: parsed.address || null,
+        plan_type: parsed.plan_type || clinic.plan_type || 'professional',
+        trial_ends_at: parsed.trial_ends_at || clinic.trial_ends_at || null
       };
     } catch (e) {
       console.error('Failed to parse clinic whitelabel config from logo_url:', e);
@@ -33,7 +35,9 @@ const unpackClinicData = (clinic) => {
     favicon_url: clinic.favicon_url || '',
     login_title: clinic.login_title || 'Bem-vindo ao seu portal',
     login_bg: clinic.login_bg || '',
-    address: null
+    address: null,
+    plan_type: clinic.plan_type || 'professional',
+    trial_ends_at: clinic.trial_ends_at || null
   };
 };
 
@@ -107,6 +111,7 @@ export function AuthProvider({ children }) {
         email: data.user.email,
         role: profile.role,
         full_name: profile.full_name,
+        phone: profile.phone || data.user.user_metadata?.phone || '',
         clinic_id: profile.clinic_id
       };
 
@@ -187,6 +192,7 @@ export function AuthProvider({ children }) {
             email: session.user.email,
             role: profile.role,
             full_name: profile.full_name,
+            phone: profile.phone || session.user.user_metadata?.phone || '',
             clinic_id: profile.clinic_id
           };
           setUser(sessionUser);
@@ -244,7 +250,9 @@ export function AuthProvider({ children }) {
       favicon_url: updatedClinic.favicon_url || '',
       login_title: updatedClinic.login_title || 'Bem-vindo ao seu portal',
       login_bg: updatedClinic.login_bg || '',
-      address: updatedClinic.address || null
+      address: updatedClinic.address || null,
+      plan_type: updatedClinic.plan_type || 'professional',
+      trial_ends_at: updatedClinic.trial_ends_at || null
     });
 
     const supabasePayload = {
