@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Send, Phone, User, Check, ShieldAlert, Tag, FileText, 
   Smile, Mic, Image, Paperclip, MoreVertical, Search, Bot, Zap,
-  Smartphone, Key, Globe, Plus, AlertCircle, CheckCircle2 
+  Smartphone, Key, Globe, Plus, AlertCircle, CheckCircle2, ChevronLeft 
 } from 'lucide-react';
 
 export default function WhatsApp() {
