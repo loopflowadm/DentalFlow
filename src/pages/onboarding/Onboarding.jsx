@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   Sparkles, ChevronLeft, Check, Smartphone, Send, 
   Gift, HeartHandshake, MapPin, Building2, HelpCircle, 
-  ShieldCheck, AlertCircle 
+  ShieldCheck, AlertCircle, ArrowRight 
 } from 'lucide-react';
 
 export default function Onboarding({ onComplete }) {
@@ -32,6 +32,7 @@ export default function Onboarding({ onComplete }) {
   
   // WhatsApp Mockup State
   const [celular, setCelular] = useState(() => user?.phone || localStorage.getItem('df_temp_phone') || '');
+  const [hasConfirmedPhone, setHasConfirmedPhone] = useState(false);
   const [whatsappChat, setWhatsappChat] = useState([
     { id: 1, sender: 'bot', text: 'Enviando convite de confirmação...', typing: true }
   ]);
@@ -663,7 +664,7 @@ export default function Onboarding({ onComplete }) {
                 <button
                   onClick={nextStep}
                   disabled={!sistemaAnterior}
-                  className="px-8 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 disabled:opacity-40 transition-all hover:bg-blue-700 active:scale-95 shadow-[0_4px_12px_rgba(59,130,246,0.3)]"
+                  className="px-8 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 disabled:opacity-40 transition-all hover:bg-blue-700 active:scale-95 shadow-[0_4px_12px_rgba(59,130,246,0.3)] cursor-pointer"
                 >
                   Continuar
                 </button>
@@ -672,93 +673,156 @@ export default function Onboarding({ onComplete }) {
           )}
 
           {/* ============================================== */}
-          {/* PASSO 10: Teste do WhatsApp                   */}
+          {/* PASSO 10: Coleta & Teste do WhatsApp          */}
           {/* ============================================== */}
           {step === 10 && (
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-2xl px-2 relative">
-              <div className="flex-1 space-y-4 text-center md:text-left">
-                <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 font-title leading-tight">
-                  {!celular ? (
-                    <>
-                      {userFirstName}, digite seu número de WhatsApp abaixo para ver a simulação da IA Sofia em tempo real:
-                    </>
-                  ) : (
-                    <>
-                      {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número{' '}
-                      <input
-                        type="tel"
-                        value={celular}
-                        onChange={(e) => handleCelularChange(e.target.value)}
-                        placeholder="(DDD) 9XXXX-XXXX"
-                        className="inline-block bg-blue-50 border border-blue-200 text-blue-700 font-black px-2.5 py-0.5 rounded-xl text-lg md:text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 shadow-sm"
-                      />{' '}
-                      para você ver como o paciente confirma a consulta no DentalFlow.
-                    </>
-                  )}
-                </h2>
-                {!celular && (
-                  <div className="pt-1">
+            <div className="w-full max-w-2xl px-2">
+              {!hasConfirmedPhone ? (
+                /* ESTÁGIO 1: Pedir o WhatsApp do Usuário Explicitamente */
+                <div className="flex flex-col items-center justify-center text-center space-y-5 max-w-md mx-auto py-2">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center shadow-inner">
+                    <Smartphone className="w-8 h-8" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 font-title leading-snug">
+                      Qual é o seu WhatsApp, {userFirstName}?
+                    </h2>
+                    <p className="text-xs md:text-sm text-slate-500 font-medium">
+                      Vou te enviar uma mensagem para você ver como a IA Sofia confirma consultas automaticamente com seus pacientes.
+                    </p>
+                  </div>
+
+                  <div className="w-full space-y-3 pt-2">
                     <input
                       type="tel"
                       value={celular}
                       onChange={(e) => handleCelularChange(e.target.value)}
                       placeholder="(DDD) 9XXXX-XXXX"
-                      className="w-full max-w-xs bg-white border border-slate-300 text-blue-600 font-black px-4 py-2.5 rounded-2xl text-base text-center focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      className="w-full bg-white border border-slate-300 text-blue-600 font-black px-4 py-3.5 rounded-2xl text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
                       autoFocus
                     />
+                    
+                    <button
+                      onClick={() => {
+                        if (celular.replace(/\D/g, '').length >= 10) {
+                          setHasConfirmedPhone(true);
+                        }
+                      }}
+                      disabled={celular.replace(/\D/g, '').length < 10}
+                      className={`w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md ${
+                        celular.replace(/\D/g, '').length >= 10
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5 active:scale-98 cursor-pointer'
+                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      <span>Receber Mensagem de Teste</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
-                )}
-                <p className="text-xs font-bold text-slate-750 font-title">
-                  Pode responder?
-                </p>
-                <div className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                  Esperando você responder a mensagem enviada via WhatsApp. Ao responder (enviando SIM), vamos passar à próxima etapa automaticamente.
                 </div>
-                
-                {/* Botão extra para simulação assistida */}
-                {chatStage === 'waiting_user' && (
-                  <button
-                    onClick={handleSimulateResponse}
-                    className="mx-auto md:mx-0 flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow-[0_4px_10px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:scale-95"
-                  >
-                    <Smartphone className="w-4 h-4" />
-                    Simular Resposta (Enviar SIM)
-                  </button>
-                )}
-                
-                {chatStage === 'user_responded' && (
-                  <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5 justify-center md:justify-start">
-                    <Sparkles className="w-4 h-4 animate-spin" />
-                    Robô digitando resposta...
-                  </div>
-                )}
+              ) : (
+                /* ESTÁGIO 2: Simulação Interativa com Celular Virtual */
+                <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full relative">
+                  <div className="flex-1 space-y-4 text-center md:text-left">
+                    <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 font-title leading-tight">
+                      {userFirstName}, acabei de enviar uma mensagem via WhatsApp no número{' '}
+                      <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 font-black px-2.5 py-0.5 rounded-xl text-base md:text-lg">
+                        {celular}
+                        <button 
+                          onClick={() => setHasConfirmedPhone(false)}
+                          className="text-[10px] underline text-blue-500 hover:text-blue-700 ml-1"
+                          title="Alterar número"
+                        >
+                          alterar
+                        </button>
+                      </span>{' '}
+                      para você ver como o paciente confirma a consulta no DentalFlow.
+                    </h2>
+                    
+                    <p className="text-xs font-bold text-slate-750 font-title">
+                      Pode responder?
+                    </p>
+                    
+                    <div className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                      Esperando você responder a mensagem enviada via WhatsApp. Ao responder (enviando SIM), vamos passar à próxima etapa automaticamente.
+                    </div>
+                    
+                    {chatStage === 'waiting_user' && (
+                      <button
+                        onClick={handleSimulateResponse}
+                        className="mx-auto md:mx-0 flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition-all shadow-[0_4px_10px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:scale-95 cursor-pointer"
+                      >
+                        <Smartphone className="w-4 h-4" />
+                        Simular Resposta (Enviar SIM)
+                      </button>
+                    )}
+                    
+                    {chatStage === 'user_responded' && (
+                      <div className="text-xs font-bold text-amber-500 flex items-center gap-1.5 justify-center md:justify-start">
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                        Robô digitando resposta...
+                      </div>
+                    )}
 
-                {chatStage === 'bot_confirmed' && (
-                  <div className="text-xs font-bold text-green-600 flex items-center gap-1.5 justify-center md:justify-start">
-                    <ShieldCheck className="w-5 h-5 animate-bounce" />
-                    Consulta confirmada com sucesso!
+                    {chatStage === 'bot_confirmed' && (
+                      <div className="text-xs font-bold text-green-600 flex items-center gap-1.5 justify-center md:justify-start">
+                        <Check className="w-4 h-4" />
+                        Consulta Confirmada! Avançando...
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              <div className="flex-shrink-0 relative">
-                <SmartphoneMockup whatsappChat={whatsappChat} chatStage={chatStage} handleSimulateResponse={handleSimulateResponse} />
-                {showConfetti && (
-                  <div className="absolute inset-0 bg-green-500/10 pointer-events-none rounded-[36px] flex items-center justify-center animate-ping">
-                    <Sparkles className="w-12 h-12 text-green-500" />
-                  </div>
-                )}
-              </div>
 
-              {/* Botão de Pular */}
-              <div className="w-full flex justify-center md:absolute md:-bottom-12 md:right-0">
-                <button
-                  onClick={() => setStep(11)}
-                  className="w-full md:w-auto px-5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all mt-4 md:mt-0"
-                >
-                  Não quero testar
-                </button>
-              </div>
+                  {/* Celular Virtual (Direita) */}
+                  <div className="w-64 h-[420px] bg-slate-900 rounded-[36px] p-3 shadow-2xl border-4 border-slate-800 flex flex-col relative flex-shrink-0">
+                    <div className="w-16 h-3 bg-slate-800 rounded-full mx-auto mb-2 flex-shrink-0"></div>
+                    
+                    <div className="flex-1 bg-slate-950 rounded-[24px] p-3 flex flex-col justify-between overflow-hidden border border-slate-800/50">
+                      <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                        <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
+                          DF
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-white leading-none">DentalFlow Bot</div>
+                          <div className="text-[8px] text-emerald-400 font-medium">online</div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto space-y-2 py-2 text-[10px] scrollbar-none">
+                        {whatsappChat.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-[85%] p-2 rounded-xl leading-relaxed ${
+                                msg.sender === 'user'
+                                  ? 'bg-blue-600 text-white rounded-br-none font-semibold'
+                                  : 'bg-slate-800 text-slate-200 rounded-bl-none'
+                              }`}
+                            >
+                              {msg.text}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-800 flex items-center gap-1.5">
+                        <div className="flex-1 bg-slate-800/80 rounded-xl px-2.5 py-1 text-[9px] text-slate-400">
+                          Responda SIM...
+                        </div>
+                        <button
+                          onClick={handleSimulateResponse}
+                          disabled={chatStage !== 'waiting_user'}
+                          className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white disabled:opacity-50 cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
