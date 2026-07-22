@@ -827,76 +827,86 @@ export default function Onboarding({ onComplete }) {
           )}
 
           {/* ============================================== */}
-          {/* PASSO 11: Tela Final (Boas-Vindas)            */}
+          {/* PASSO 11: Tela Final (Conclusão & Sucesso)    */}
           {/* ============================================== */}
           {step === 11 && (
-            <div className="space-y-6 w-full max-w-lg text-center">
-              {/* Confete visual da IA */}
-              <div className="relative w-24 h-24 flex items-center justify-center mx-auto mb-2">
-                <div className="absolute inset-0 rounded-full bg-green-500/20 blur-xl animate-pulse" />
+            <div className="space-y-6 w-full max-w-xl text-center py-2">
+              {/* Ícone Celebrativo Animado */}
+              <div className="relative w-20 h-20 flex items-center justify-center mx-auto mb-1">
+                <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-16 h-16 rounded-full bg-gradient-to-tr from-green-400 to-emerald-500 shadow-[0_8px_30px_rgba(16,185,129,0.25)] flex items-center justify-center text-white"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-emerald-500 shadow-[0_10px_25px_rgba(37,99,235,0.3)] flex items-center justify-center text-white border border-white/20"
                 >
                   <Check className="w-8 h-8 stroke-[3]" />
                 </motion.div>
               </div>
 
+              {/* Mensagem de Boas-Vindas */}
               <div className="space-y-2">
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-widest font-title">
-                  Onboarding Concluído
+                <span className="px-3.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-extrabold uppercase tracking-widest font-title">
+                  Configuração Concluída
                 </span>
-                <h2 className="text-3xl font-extrabold text-slate-900 font-title">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 font-title leading-tight">
                   Tudo pronto, {userFirstName}!
                 </h2>
-                <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-                  A <span className="font-extrabold text-blue-600">{clinicaNome || 'sua clínica'}</span> está preparada para o futuro. Que comece uma nova fase de sucesso
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed max-w-md mx-auto font-medium">
+                  A <span className="font-extrabold text-blue-600">{clinicaNome || 'sua clínica'}</span> está 100% configurada e pronta para automatizar agendamentos e faturar mais.
                 </p>
               </div>
 
-              {/* Cards de Presente (Print 12) */}
-              <div className="space-y-3 w-full text-left pt-2">
-                {/* Presente de Boas-Vindas */}
-                <div className="p-4 bg-white border border-slate-200 rounded-2xl flex items-start gap-4 shadow-sm relative overflow-hidden group hover:border-slate-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200/50 flex items-center justify-center text-emerald-500 flex-shrink-0 shadow-sm animate-pulse">
-                    <Gift className="w-6 h-6 stroke-[1.5]" />
+              {/* 3 Pilares do Sucesso (Cards Visuais Elegantes) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full text-left pt-2">
+                {/* Pilar 1: IA Sofia */}
+                <div className="p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-1.5 hover:border-blue-300 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    <Sparkles className="w-4 h-4" />
                   </div>
-                  <div className="space-y-1">
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[9px] uppercase tracking-wider">
-                      Presente de Boas-Vindas
-                    </span>
-                    <h4 className="text-xs font-black text-slate-800 font-title">
-                      100 créditos de confirmação de consulta
-                    </h4>
-                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                      Basta adicionar o telefone do paciente no cadastro, nós cuidamos do resto enviando mensagens automáticas de confirmação.
-                    </p>
-                  </div>
+                  <h4 className="text-xs font-extrabold text-slate-800 font-title">
+                    IA Sofia 24/7
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                    Confirmações e reagendamentos automáticos por WhatsApp.
+                  </p>
                 </div>
 
-                {/* Suporte Humano */}
-                <div className="p-4 bg-white border border-slate-200 rounded-2xl flex items-start gap-4 shadow-sm relative overflow-hidden group hover:border-slate-300 transition-colors">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200/50 flex items-center justify-center text-blue-500 flex-shrink-0 shadow-sm">
-                    <HeartHandshake className="w-6 h-6 stroke-[1.5]" />
+                {/* Pilar 2: Prontuário & Odontograma */}
+                <div className="p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-1.5 hover:border-emerald-300 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-black text-slate-800 font-title">
-                      Gente de verdade pra te ajudar
-                    </h4>
-                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                      Nosso suporte responde rápido por chat e telefone, de segunda a sexta das 7h às 22h, e aos sábados das 9h às 13h.
-                    </p>
+                  <h4 className="text-xs font-extrabold text-slate-800 font-title">
+                    Nuvem Segura
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                    Prontuários e dados clínicos protegidos com backup em tempo real.
+                  </p>
+                </div>
+
+                {/* Pilar 3: Suporte Humano */}
+                <div className="p-3.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm space-y-1.5 hover:border-purple-300 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">
+                    <HeartHandshake className="w-4 h-4" />
                   </div>
+                  <h4 className="text-xs font-extrabold text-slate-800 font-title">
+                    Suporte VIP
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                    Equipe de atendimento humana pronta para te ajudar.
+                  </p>
                 </div>
               </div>
 
-              <div className="pt-4">
+              {/* Botão de Acesso Principal */}
+              <div className="pt-3">
                 <button
                   onClick={onComplete}
-                  className="w-full md:w-auto px-10 py-3.5 rounded-2xl font-black text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all shadow-[0_4px_15px_rgba(59,130,246,0.35)]"
+                  className="w-full py-4 rounded-2xl font-extrabold text-sm text-white bg-blue-600 hover:bg-blue-700 active:scale-98 transition-all shadow-[0_8px_20px_rgba(37,99,235,0.35)] hover:-translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Entrar no DentalFlow
+                  <span>Acessar Painel do DentalFlow</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
