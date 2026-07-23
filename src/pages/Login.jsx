@@ -316,26 +316,26 @@ export default function Login({ initialView = 'login', onBack }) {
                   })()
                 )
               ) : (
-                <Logo collapsed={false} className="h-10 w-auto text-white" />
+                <Logo collapsed={false} className="h-11 sm:h-12 w-auto text-white drop-shadow-[0_4px_20px_rgba(25,107,251,0.35)]" />
               )}
             </div>
 
             {view === 'login' && (
-              <h2 className="text-xl font-extrabold tracking-tight text-white mb-0.5 font-title">
-                {clinic?.login_title || `Portal ${currentTheme?.name || 'Sorrisoclinica'}`}
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mb-1 font-title">
+                {clinic?.login_title ? clinic.login_title : (currentTheme?.name && currentTheme.name !== 'ODONTO CRM' ? `Portal ${currentTheme.name}` : 'Portal DentalFlow')}
               </h2>
             )}
 
             {(view === 'register' || view === 'forgot') && (
-              <h2 className="text-2.5xl font-extrabold tracking-tight text-white mb-1 font-title">
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mb-1 font-title">
                 {view === 'register' && 'Crie sua Conta SaaS'}
                 {view === 'forgot' && 'Recuperar Senha'}
               </h2>
             )}
-            <p className="text-xs text-slate-400 mt-1">
-              {view === 'login' && 'Faça login no painel operacional da clínica'}
+            <p className="text-xs text-slate-400 mt-1 max-w-xs">
+              {view === 'login' && 'Acesse com suas credenciais para gerenciar o painel da clínica'}
               {view === 'register' && 'Cadastre sua clínica e customize seu tema em segundos'}
-              {view === 'forgot' && 'Digite seu e-mail para receber o link de recuperação'}
+              {view === 'forgot' && 'Digite seu e-mail para receber as instruções de recuperação'}
             </p>
           </div>
 

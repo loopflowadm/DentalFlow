@@ -146,9 +146,9 @@ export default function Logo({ collapsed = false, className = '' }) {
           <path fill="url(#dfFluidGradFull2)" d={fullSymbolPath3} />
         </g>
 
-        {/* Texto da Marca Oficial (Dental em Escuro/Branco Adaptativo + Flow em Azul #196BFB) */}
+        {/* Texto da Marca Oficial (Dental em Escuro/Branco Adaptativo via currentColor + Flow em Azul #196BFB) */}
         <g className="transition-colors duration-300">
-          <path d={fullTextDental} className="fill-slate-900 dark:fill-white" />
+          <path d={fullTextDental} fill="currentColor" />
           <path d={fullTextFlow} fill="#196BFB" />
         </g>
       </g>

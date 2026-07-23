@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useCallback } 
 const ThemeContext = createContext();
 
 export const defaultTheme = {
-  name: 'ODONTO CRM',
+  name: 'DentalFlow',
   primary_color: '#03269A',    // Deep Navy Blue
   secondary_color: '#196BFB',  // Electric Blue
   accent_color: '#D9E2FF',     // Ice Blue

@@ -10,7 +10,7 @@ const STORAGE_KEYS = {
 const initialClinics = [
   {
     id: 'clinic-sorriso-perfeito',
-    name: 'ODONTO CRM',
+    name: 'DentalFlow',
     subdomain: 'sorriso',
     logo_url: '/logo-brand.png',
     primary_color: '#03269A', // Deep Blue
