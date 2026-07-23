@@ -72,72 +72,9 @@ const initialUsers = [
   }
 ];
 
-const initialPatients = [
-  {
-    id: 'patient-1',
-    clinic_id: 'clinic-sorriso-perfeito',
-    name: 'João Silva',
-    phone: '5511999998888',
-    email: 'joao@email.com',
-    medical_history: 'Sensibilidade nos dentes inferiores. Fez canal há 2 anos.',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'patient-2',
-    clinic_id: 'clinic-sorriso-perfeito',
-    name: 'Maria Oliveira',
-    phone: '5511988887777',
-    email: 'maria@email.com',
-    medical_history: 'Hipertensa. Usa aparelho ortodôntico estético.',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'patient-3',
-    clinic_id: 'clinic-orto-clean',
-    name: 'Lucas Pereira',
-    phone: '5521977776666',
-    email: 'lucas@email.com',
-    medical_history: 'Manutenção mensal de aparelho autoligável.',
-    created_at: new Date().toISOString()
-  }
-];
+const initialPatients = [];
 
-const initialAppointments = [
-  {
-    id: 'app-1',
-    clinic_id: 'clinic-sorriso-perfeito',
-    patient_id: 'patient-1',
-    doctor_id: 'user-sorriso-doctor',
-    start_time: (() => {
-      const date = new Date();
-      date.setHours(9, 0, 0, 0);
-      return date.toISOString();
-    })(),
-    end_time: (() => {
-      const date = new Date();
-      date.setHours(10, 0, 0, 0);
-      return date.toISOString();
-    })(),
-    status: 'CONFIRMED'
-  },
-  {
-    id: 'app-2',
-    clinic_id: 'clinic-sorriso-perfeito',
-    patient_id: 'patient-2',
-    doctor_id: 'user-sorriso-doctor',
-    start_time: (() => {
-      const date = new Date();
-      date.setHours(14, 0, 0, 0);
-      return date.toISOString();
-    })(),
-    end_time: (() => {
-      const date = new Date();
-      date.setHours(15, 0, 0, 0);
-      return date.toISOString();
-    })(),
-    status: 'PENDING'
-  }
-];
+const initialAppointments = [];
 
 const initialWhatsApp = [
   {
@@ -165,7 +102,14 @@ const get = (key, fallback) => {
     localStorage.setItem(key, JSON.stringify(fallback));
     return fallback;
   }
-  let parsed = JSON.parse(data);
+  let parsed;
+  try {
+    parsed = JSON.parse(data);
+  } catch (e) {
+    console.warn(`[mockDb] Dados corrompidos na chave "${key}". Resetando para o padrão:`, e);
+    localStorage.setItem(key, JSON.stringify(fallback));
+    return fallback;
+  }
   
   // Migração automática de branding da logo
   if (key === STORAGE_KEYS.CLINICS && Array.isArray(parsed)) {

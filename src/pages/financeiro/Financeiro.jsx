@@ -4,7 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
   DollarSign, Plus, ArrowUpRight, ArrowDownRight, CreditCard, 
-  Award, FileText, Check, Calendar, User, Trash2, X 
+  Award, FileText, Check, Calendar, User, Trash2, X,
+  Download, Printer, Filter, ShieldCheck, Clock
 } from 'lucide-react';
 
 export default function Financeiro() {
@@ -24,7 +25,7 @@ export default function Financeiro() {
   const { user } = useAuth();
 
   // Estados locais
-  const [activeSubTab, setActiveSubTab] = useState('fluxo'); // 'fluxo' | 'comissoes' | 'parcelas'
+  const [activeSubTab, setActiveSubTab] = useState('fluxo'); // 'fluxo' | 'pagar' | 'comissoes' | 'parcelas'
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showAddSupplier, setShowAddSupplier] = useState(false);
   const [showAddPayable, setShowAddPayable] = useState(false);
@@ -36,7 +37,13 @@ export default function Financeiro() {
   const [category, setCategory] = useState('TREATMENT');
 
   // Estado da comissão do dentista
-  const [selectedDentist, setSelectedDentist] = useState('Dr. Pedro Ramos');
+  const [selectedDentist, setSelectedDentist] = useState(() => user?.full_name || '');
+  
+  // Regra de Liberação de Comissão: 'CAIXA' (Após quitação do paciente) | 'FATURAMENTO' (Conclusão do atendimento)
+  const [commissionReleaseRule, setCommissionReleaseRule] = useState('CAIXA');
+
+  // Mapeamento enriquecido de comissões com deduções de custos (Protético/Laboratório, Taxas de Cartão)
+  const [commissionLogs, setCommissionLogs] = useState([]);
 
   // Form Novo Fornecedor
   const [supName, setSupName] = useState('');
@@ -50,6 +57,27 @@ export default function Financeiro() {
   const [apDueDate, setApDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [apCategory, setApCategory] = useState('SUPPLIES');
   const [apSupplierId, setApSupplierId] = useState('');
+
+  // Função auxiliar de exportação para CSV
+  const exportToCSV = (filename, headers, dataRows) => {
+    const csvContent = [
+      headers.join(','),
+      ...dataRows.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintTable = () => {
+    window.print();
+  };
 
   const handleAddSupplierSubmit = (e) => {
     e.preventDefault();
@@ -94,13 +122,6 @@ export default function Financeiro() {
     status: inst.status
   }));
 
-  // Lista comissões de teste
-  const commissionLogs = [
-    { dentist: 'Dr. Pedro Ramos', patient: 'João Silva', procedure: 'Canal', total: 800, percent: 40, commission: 320, status: 'UNPAID', date: '2026-07-02' },
-    { dentist: 'Dra. Ana Paula', patient: 'Maria Oliveira', procedure: 'Clareamento', total: 900, percent: 40, commission: 360, status: 'PAID', date: '2026-06-28' },
-    { dentist: 'Dr. Pedro Ramos', patient: 'Fernanda Rocha', procedure: 'Limpeza', total: 150, percent: 35, commission: 52.5, status: 'UNPAID', date: '2026-07-01' }
-  ];
-
   const handleAddTransactionSubmit = (e) => {
     e.preventDefault();
     if (!desc || !amount) return;
@@ -121,15 +142,15 @@ export default function Financeiro() {
     payInstallment(id);
   };
 
-  const handlePayCommission = (dentistName, amountVal, patientName) => {
-    // Lançar despesa no fluxo
+  const handlePayCommission = (logId, dentistName, amountVal, patientName) => {
+    setCommissionLogs(prev => prev.map(item => item.id === logId ? { ...item, status: 'PAID' } : item));
     addTransaction({
       description: `Comissão paga a ${dentistName} - Paciente: ${patientName}`,
       amount: parseFloat(amountVal),
       type: 'EXPENSE',
       category: 'SALARY'
     });
-    alert(`Comissão de R$ ${amountVal} para ${dentistName} paga com sucesso!`);
+    alert(`Comissão de R$ ${amountVal.toFixed(2)} para ${dentistName} paga com sucesso!`);
   };
 
   // Cálculos fluxo de caixa
@@ -163,7 +184,7 @@ export default function Financeiro() {
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
                 activeSubTab === tab.id 
                   ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
                   : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
@@ -214,13 +235,33 @@ export default function Financeiro() {
           {/* Seção Operações e Lançamentos */}
           <div className="flex justify-between items-center flex-shrink-0">
             <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Histórico de Lançamentos</h3>
-            <button
-              onClick={() => setShowAddTransaction(true)}
-              className="px-3 py-1.5 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
-              style={{ backgroundColor: currentTheme.secondary_color }}
-            >
-              Novo Lançamento
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => exportToCSV(
+                  `fluxo-de-caixa-${new Date().toISOString().split('T')[0]}`,
+                  ['Descrição', 'Valor (R$)', 'Categoria', 'Tipo', 'Data'],
+                  financeTransactions.map(t => [t.description, t.amount, t.category, t.type === 'INCOME' ? 'Entrada' : 'Saída', t.date])
+                )}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Exportar em Planilha Excel / CSV"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV
+              </button>
+              <button
+                onClick={handlePrintTable}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Imprimir ou Salvar em PDF"
+              >
+                <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
+              </button>
+              <button
+                onClick={() => setShowAddTransaction(true)}
+                className="px-3.5 py-1.5 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] cursor-pointer"
+                style={{ backgroundColor: currentTheme.secondary_color }}
+              >
+                + Novo Lançamento
+              </button>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
@@ -261,16 +302,63 @@ export default function Financeiro() {
       {/* SUB-ABA: COMISSÕES DENTISTAS */}
       {activeSubTab === 'comissoes' && (
         <div className="space-y-6 text-left">
-          <div className="flex items-center gap-3 bg-white dark:bg-slate-850 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
-            <span className="text-xs font-bold text-slate-400 uppercase">Filtrar Dentista:</span>
-            <select
-              value={selectedDentist}
-              onChange={(e) => setSelectedDentist(e.target.value)}
-              className="bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-2 px-3 text-xs text-slate-600 focus:outline-none cursor-pointer font-bold"
-            >
-              <option value="Dr. Pedro Ramos">Dr. Pedro Ramos</option>
-              <option value="Dra. Ana Paula">Dra. Ana Paula</option>
-            </select>
+          {/* BARRA DE CONFIGURAÇÕES & FILTROS DE REPASSE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-slate-850 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4 text-violet-500 flex-shrink-0" />
+              <span className="text-xs font-bold text-slate-400 uppercase">Filtrar Dentista:</span>
+              <select
+                value={selectedDentist}
+                onChange={(e) => setSelectedDentist(e.target.value)}
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-bold flex-1"
+              >
+                <option value="Dr. Pedro Ramos">Dr. Pedro Ramos (Ortodontia & Implantes)</option>
+                <option value="Dra. Ana Paula">Dra. Ana Paula (Estética & Clareamento)</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <ShieldCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <span className="text-xs font-bold text-slate-400 uppercase">Regra de Liberação:</span>
+              <select
+                value={commissionReleaseRule}
+                onChange={(e) => setCommissionReleaseRule(e.target.value)}
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-1.5 px-3 text-xs text-emerald-600 dark:text-emerald-400 focus:outline-none cursor-pointer font-extrabold"
+              >
+                <option value="CAIXA">Caixa / Liquidação (Após quitação do paciente)</option>
+                <option value="FATURAMENTO">Faturamento / Realizado (Conclusão da consulta)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-slate-500 font-medium">
+              <span className="font-bold text-slate-700 dark:text-slate-300">Deduções automáticas aplicadas:</span> Taxa de Cartão/Maquininha (3.5%) + Custo de Protético/Laboratório.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => exportToCSV(
+                  `comissoes-${selectedDentist.replace(/\s+/g, '-')}`,
+                  ['Data', 'Dentista', 'Paciente', 'Procedimento', 'Valor Bruto (R$)', 'Abatimentos (R$)', 'Valor Líquido (R$)', '% Dentista', 'Comissão (R$)', 'Status Repasse'],
+                  commissionLogs.filter(log => log.dentist === selectedDentist).map(log => {
+                    const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
+                    const deductions = cardFee + (log.labCost || 0);
+                    const netAmount = Math.max(0, log.grossAmount - deductions);
+                    const commissionVal = (netAmount * log.percent) / 100;
+                    return [log.date, log.dentist, log.patient, log.procedure, log.grossAmount, deductions.toFixed(2), netAmount.toFixed(2), `${log.percent}%`, commissionVal.toFixed(2), log.status === 'PAID' ? 'Pago' : 'Pendente'];
+                  })
+                )}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV / Excel
+              </button>
+              <button
+                onClick={handlePrintTable}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" /> PDF / Imprimir
+              </button>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
@@ -278,37 +366,68 @@ export default function Financeiro() {
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
                   <th className="py-3 px-4 font-bold">Data</th>
-                  <th className="py-3 px-4 font-bold">Paciente</th>
-                  <th className="py-3 px-4 font-bold">Procedimento</th>
-                  <th className="py-3 px-4 font-bold">Valor Total</th>
-                  <th className="py-3 px-4 font-bold">Percentual</th>
-                  <th className="py-3 px-4 font-bold">Comissão Devida</th>
-                  <th className="py-3 px-4 font-bold">Ações</th>
+                  <th className="py-3 px-4 font-bold">Paciente & Procedimento</th>
+                  <th className="py-3 px-4 font-bold">Valor Bruto</th>
+                  <th className="py-3 px-4 font-bold">Abatimentos (Protético/Taxas)</th>
+                  <th className="py-3 px-4 font-bold">Base Líquida</th>
+                  <th className="py-3 px-4 font-bold">% Repasse</th>
+                  <th className="py-3 px-4 font-bold">Comissão Final</th>
+                  <th className="py-3 px-4 font-bold">Status & Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
-                {commissionLogs.filter(log => log.dentist === selectedDentist).map((log, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                    <td className="py-3 px-4 font-medium">{log.date}</td>
-                    <td className="py-3 px-4 font-bold">{log.patient}</td>
-                    <td className="py-3 px-4 font-semibold">{log.procedure}</td>
-                    <td className="py-3 px-4 font-bold">R$ {log.total}</td>
-                    <td className="py-3 px-4 font-bold">{log.percent}%</td>
-                    <td className="py-3 px-4 font-extrabold text-emerald-500">R$ {log.commission}</td>
-                    <td className="py-3 px-4">
-                      {log.status === 'UNPAID' ? (
-                        <button
-                          onClick={() => handlePayCommission(log.dentist, log.commission, log.patient)}
-                          className="px-2.5 py-1 bg-emerald-500 text-white font-bold rounded-lg text-[9px] hover:opacity-90 flex items-center gap-1"
-                        >
-                          <Check className="w-3.5 h-3.5" /> Pagar Dentista
-                        </button>
-                      ) : (
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">Pago</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {commissionLogs.filter(log => log.dentist === selectedDentist).map((log) => {
+                  const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
+                  const totalDeductions = cardFee + (log.labCost || 0);
+                  const netAmount = Math.max(0, log.grossAmount - totalDeductions);
+                  const commissionValue = (netAmount * log.percent) / 100;
+                  const isEligibleForPayment = commissionReleaseRule === 'FATURAMENTO' || log.patientPaymentStatus === 'PAID';
+
+                  return (
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <td className="py-3 px-4 font-medium">{log.date}</td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-850 dark:text-white">{log.patient}</div>
+                        <div className="text-[11px] text-slate-400 font-semibold">{log.procedure}</div>
+                      </td>
+                      <td className="py-3 px-4 font-bold">R$ {log.grossAmount.toFixed(2).replace('.', ',')}</td>
+                      <td className="py-3 px-4 text-red-500 font-medium">
+                        <div>- R$ {totalDeductions.toFixed(2).replace('.', ',')}</div>
+                        <div className="text-[9px] text-slate-400">
+                          {log.labCost > 0 ? `(Protético: R$ ${log.labCost} + Cartão: ${log.cardFeePercent}%)` : `(Taxa Cartão: ${log.cardFeePercent}%)`}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-slate-800 dark:text-slate-200">
+                        R$ {netAmount.toFixed(2).replace('.', ',')}
+                      </td>
+                      <td className="py-3 px-4 font-bold">{log.percent}%</td>
+                      <td className="py-3 px-4 font-extrabold text-emerald-500 text-sm">
+                        R$ {commissionValue.toFixed(2).replace('.', ',')}
+                      </td>
+                      <td className="py-3 px-4">
+                        {log.status === 'PAID' ? (
+                          <span className="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 font-extrabold text-[10px] uppercase">
+                            ✓ PAGO (LIQUIDADO)
+                          </span>
+                        ) : isEligibleForPayment ? (
+                          <button
+                            onClick={() => handlePayCommission(log.id, log.dentist, commissionValue, log.patient)}
+                            className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-[10px] shadow-xs flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" /> Pagar Dentista
+                          </button>
+                        ) : (
+                          <div className="space-y-1">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold text-[9px] uppercase block">
+                              Aguardando Quitação
+                            </span>
+                            <span className="text-[9px] text-slate-400 block">Paciente não pagou</span>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -318,6 +437,28 @@ export default function Financeiro() {
       {/* SUB-ABA: PARCELAMENTOS */}
       {activeSubTab === 'parcelas' && (
         <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Carnês e Parcelas de Pacientes</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => exportToCSV(
+                  `parcelas-pacientes-${new Date().toISOString().split('T')[0]}`,
+                  ['Paciente', 'Tratamento', 'Nº Parcela', 'Valor (R$)', 'Vencimento', 'Status'],
+                  installments.map(inst => [inst.patient, inst.desc, inst.number, inst.amount, inst.dueDate, inst.status === 'PAID' ? 'Pago' : 'Pendente'])
+                )}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV / Excel
+              </button>
+              <button
+                onClick={handlePrintTable}
+                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" /> PDF / Imprimir
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
@@ -350,7 +491,7 @@ export default function Financeiro() {
                       {inst.status === 'PENDING' ? (
                         <button
                           onClick={() => handlePayInstallment(inst.id, inst.amount, inst.patient, inst.desc)}
-                          className="px-2.5 py-1 bg-violet-600 text-white font-bold rounded-lg text-[9px] hover:opacity-90 flex items-center gap-1"
+                          className="px-2.5 py-1 bg-violet-600 text-white font-bold rounded-lg text-[9px] hover:opacity-90 flex items-center gap-1 cursor-pointer"
                         >
                           <Check className="w-3.5 h-3.5" /> Baixar Parcela
                         </button>

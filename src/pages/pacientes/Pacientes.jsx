@@ -12,8 +12,12 @@ import {
   Gift, Tag, AlertTriangle, Lock, Shield, ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import OdontogramView from './components/odontogram/OdontogramView';
+import VisaoGeralView from './components/views/VisaoGeralView';
+import PlanoTratamentoView from './components/views/PlanoTratamentoView';
 
-export default function Pacientes({ selectedPatient: propSelectedPatient, setSelectedPatient: propSetSelectedPatient }) {
+
+export default function Pacientes({ selectedPatient: propSelectedPatient, setSelectedPatient: propSetSelectedPatient, onOpenWhatsApp }) {
   const { 
     patients, 
     addPatient, 
@@ -865,50 +869,50 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   };
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-slate-950 font-body overflow-hidden">
+    <div className="h-full flex bg-slate-50 dark:bg-[#0B1220] font-body overflow-hidden transition-colors duration-300">
       
 
       {/* ========================================================================= */}
       {/* PAINEL DIREITO: DETALHES / PRONTUÁRIO                                    */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-[#0B1220] transition-colors duration-300">
         {selectedPatient ? (
           <>
             {/* 1. Header do Prontuário */}
-            <div className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800 flex-shrink-0 flex items-center justify-between">
+            <div className="p-6 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 flex items-center justify-between transition-colors duration-300">
               <div className="flex items-center gap-4">
                 {/* Big Avatar */}
-                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-2xl border border-slate-200/35 dark:border-white/5 shadow-inner text-slate-400 dark:text-slate-500">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1A2333] flex items-center justify-center text-2xl border border-slate-200/80 dark:border-white/10 shadow-inner text-blue-500 dark:text-blue-400">
                   <User className="w-8 h-8" />
                 </div>
                 
-                <div>
+                <div className="text-left">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-lg font-black text-slate-900 dark:text-white font-title leading-tight">
+                    <h2 className="text-lg font-black text-slate-800 dark:text-white font-title leading-tight">
                       {selectedPatient.name}
                     </h2>
                     
                     {/* Alertas */}
                     {criticalConditions.length > 0 && (
-                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
+                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
                         <AlertTriangle className="w-2.5 h-2.5" /> {criticalConditions.length} Alerta de Saúde
                       </span>
                     )}
 
                     {isBirthdayTomorrow(selectedHistory.birth_date) && (
-                      <span className="px-2 py-0.5 bg-violet-500/15 text-violet-550 border border-violet-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
+                      <span className="px-2 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
                         <Gift className="w-2.5 h-2.5" /> Aniversário amanhã
                       </span>
                     )}
                   </div>
 
                   {/* Sub details */}
-                  <div className="flex items-center gap-3.5 text-[10px] text-slate-500 mt-1.5 font-bold flex-wrap">
+                  <div className="flex items-center gap-3.5 text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 font-bold flex-wrap">
                     <a 
                       href={`https://wa.me/${selectedPatient.phone}`} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="flex items-center gap-1 text-emerald-500 hover:underline"
+                      className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline"
                     >
                       <MessageSquare className="w-3.5 h-3.5 fill-emerald-500/20" /> {selectedPatient.phone}
                     </a>
@@ -918,49 +922,47 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                   <button
                     onClick={() => alert('Categorizar paciente em desenvolvimento.')}
-                    className="mt-1 px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-200 rounded-lg text-[9px] font-bold transition-all border border-slate-200/40 dark:border-white/5 active:scale-95 flex items-center gap-1"
+                    className="mt-1.5 px-2.5 py-0.5 bg-slate-100 dark:bg-[#1A2333] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-[9px] font-bold transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 flex items-center gap-1"
                   >
-                    <Tag className="w-2.5 h-2.5" /> Categorizar
+                    <Tag className="w-2.5 h-2.5 text-blue-500 dark:text-blue-400" /> Categorizar
                   </button>
                 </div>
               </div>
 
-              {/* Botão de Edição */}
+              {/* Botão de Edição estilo macOS Depth UI */}
               <button
                 onClick={openEditModal}
-                className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/60 dark:border-white/5 transition-all shadow-sm"
+                className="px-4 py-2 bg-slate-100 dark:bg-[#1A2333] hover:bg-slate-200 dark:hover:bg-[#222d42] text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-sm active:scale-95"
               >
-                <Edit className="w-3.5 h-3.5 text-slate-500" />
-                Editar
+                <Edit className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                Editar Perfil
               </button>
             </div>
 
             {/* 2. Barra de Navegação das Abas do Prontuário */}
-            <div className="px-6 bg-white dark:bg-slate-900 border-b border-slate-200/50 dark:border-slate-800 flex-shrink-0 overflow-x-auto flex scrollbar-none">
+            <div className="px-6 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
               <div className="flex gap-4">
                 {[
                   { id: 'visao_geral', label: 'Visão Geral' },
                   { id: 'anamnese', label: 'Anamnese' },
-                  { id: 'orcamentos', label: 'Orçamentos' },
                   { id: 'odontograma', label: 'Odontograma' },
-                  { id: 'pagamentos', label: 'Pagamentos', badge: checkPatientInadimplente(selectedPatient.id) ? '1' : null },
+                  { id: 'orcamentos', label: 'Plano de Tratamento' },
                   { id: 'evolucao', label: 'Evoluções' },
                   { id: 'documentos', label: 'Documentos' },
-                  { id: 'arquivos', label: 'Arquivos' }
+                  { id: 'pagamentos', label: 'Pagamentos', badge: checkPatientInadimplente(selectedPatient.id) ? '1' : null }
                 ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveSubTab(tab.id)}
                     className={`py-3.5 text-xs font-bold transition-all border-b-2 px-1 flex items-center ${
                       activeSubTab === tab.id 
-                        ? 'border-secondary text-slate-900 dark:text-white font-black' 
-                        : 'border-transparent text-slate-450 hover:text-slate-700 dark:hover:text-slate-300'
+                        ? 'border-[#196BFB] text-[#196BFB] dark:text-blue-400 font-black' 
+                        : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                     }`}
-                    style={activeSubTab === tab.id ? { borderBottomColor: currentTheme.secondary_color } : {}}
                   >
                     <span>{tab.label}</span>
                     {tab.badge && (
-                      <span className="ml-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">
+                      <span className="ml-1.5 bg-red-500/80 text-white rounded-full px-1.5 py-0.2 text-[9px] font-bold">
                         {tab.badge}
                       </span>
                     )}
@@ -976,273 +978,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               {/* ABA: VISÃO GERAL (DASHBOARD DUPLO)        */}
               {/* ========================================== */}
               {activeSubTab === 'visao_geral' && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-left">
-                  
-                  {/* COLUNA ESQUERDA (Widgets de Informações e Tarefas) */}
-                  <div className="lg:col-span-4 space-y-6">
-                    
-                    {/* Widget: Tarefas */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-3">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-850 dark:text-white font-title flex items-center gap-1.5">
-                          <ClipboardList className="w-3.5 h-3.5 text-secondary" style={{ color: currentTheme.secondary_color }} /> Tarefas
-                        </h4>
-                        <button
-                          onClick={() => alert('Para criar tarefas, use a nova aba "Tarefa" no botão Agendar da Agenda.')}
-                          className="text-[9px] text-secondary hover:underline font-extrabold"
-                          style={{ color: currentTheme.secondary_color }}
-                        >
-                          + Nova
-                        </button>
-                      </div>
-
-                      {/* Filtrar tarefas */}
-                      {(() => {
-                        const patTasks = appointments.filter(a => a.patient_id === selectedPatient.id && a.type === 'TAREFA');
-                        return (
-                          <div className="space-y-2.5">
-                            {patTasks.map(t => (
-                              <div key={t.id} className="p-2.5 bg-slate-50 dark:bg-black/15 border border-slate-200/40 dark:border-slate-800/40 rounded-xl flex items-center justify-between text-[10px] text-slate-550">
-                                <div className="overflow-hidden flex-1 pr-2">
-                                  <h5 className="font-extrabold text-slate-800 dark:text-white truncate">{t.title}</h5>
-                                  <p className="opacity-80 truncate">{t.observations}</p>
-                                </div>
-                                <span className="px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500 font-bold flex-shrink-0">
-                                  {t.label || 'Entrada'}
-                                </span>
-                              </div>
-                            ))}
-                            {patTasks.length === 0 && (
-                              <p className="text-[10px] text-slate-450 py-1 text-center font-bold">
-                                Nenhuma tarefa cadastrada
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Widget: Informações */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-4 text-xs">
-                      <h4 className="text-xs font-black text-slate-855 dark:text-white font-title">
-                        Informações
-                      </h4>
-
-                      <div className="space-y-3 font-semibold text-slate-700 dark:text-slate-350">
-                        <div>
-                          <span className="text-[10px] text-slate-450 font-bold block uppercase tracking-wider">Código do paciente</span>
-                          <span className="font-bold text-slate-800 dark:text-white">
-                            {selectedPatient.id.substring(0, 8).toUpperCase()}
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-450 font-bold block uppercase tracking-wider">Preferência de lembretes</span>
-                          <span className="font-bold text-slate-800 dark:text-white">{selectedHistory.reminder_preference || 'WhatsApp'}</span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Celular</span>
-                          <span className="font-bold text-slate-800 dark:text-white">{selectedPatient.phone}</span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Email</span>
-                          <span className="font-bold text-slate-800 dark:text-white truncate block">{selectedPatient.email || 'Não cadastrado'}</span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Observações sobre o paciente</span>
-                          <span className="font-bold text-slate-800 dark:text-white whitespace-pre-wrap block">
-                            {selectedHistory.notes || 'Nenhuma observação clínica lançada.'}
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Data de nascimento</span>
-                          <span className="font-bold text-slate-800 dark:text-white">
-                            {selectedHistory.birth_date ? `${new Date(selectedHistory.birth_date).toLocaleDateString('pt-BR')} - ${calculateAge(selectedHistory.birth_date).split(' e ')[0]}` : 'Não cadastrada'}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Gênero</span>
-                            <span className="font-bold text-slate-855 dark:text-white">{selectedHistory.gender || 'Masculino'}</span>
-                          </div>
-                          <div>
-                            <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">CPF</span>
-                            <span className="font-bold text-slate-855 dark:text-white">{selectedHistory.cpf || '-'}</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">RG</span>
-                            <span className="font-bold text-slate-855 dark:text-white">{selectedHistory.rg || '-'}</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-455 font-bold block uppercase tracking-wider">Endereço</span>
-                          <span className="font-bold text-slate-800 dark:text-white leading-relaxed block">
-                            {selectedHistory.address || 'Não cadastrado'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* COLUNA DIREITA */}
-                  <div className="lg:col-span-8 space-y-6">
-                    
-                    {/* Widget: Odontograma FDI */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-855 dark:text-white font-title flex items-center gap-1.5">
-                          <Activity className="w-3.5 h-3.5 text-secondary" /> Odontograma de Resumo
-                        </h4>
-
-                        {/* Legenda de Status */}
-                        <div className="flex items-center gap-3 text-[9px] font-black text-slate-450 uppercase tracking-widest">
-                          <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Finalizado</div>
-                          <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-orange-500 rounded-full" /> Em aberto</div>
-                          <div className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-red-500 rounded-full" /> Ausente</div>
-                        </div>
-                      </div>
-
-                      {/* Visual Teeth Arcadas */}
-                      <div className="p-4 bg-slate-50/50 dark:bg-slate-955/20 border border-slate-200/20 dark:border-slate-800 rounded-2xl flex flex-col justify-center items-center gap-6 overflow-x-auto w-full">
-                        {(() => {
-                          const odontogram = getOdontogramData();
-                          
-                          const renderMiniToothBlock = (t, isLower = false) => {
-                            const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                            return (
-                              <div 
-                                key={t}
-                                onClick={() => {
-                                  setSelectedTooth(t);
-                                  setActiveSubTab('odontograma');
-                                }}
-                                className="flex flex-col items-center p-1.5 rounded-xl border border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/40 cursor-pointer transition-all active:scale-[0.93] shrink-0"
-                              >
-                                {!isLower && <ToothOutline number={t} conditions={data.conditions || []} />}
-                                <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                                {isLower && <ToothOutline number={t} conditions={data.conditions || []} />}
-                              </div>
-                            );
-                          };
-
-                          return (
-                            <div className="space-y-6 flex flex-col items-center min-w-[650px] w-full">
-                              {/* Arcada Superior */}
-                              <div className="flex flex-col items-center w-full">
-                                <span className="text-[8px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2">Arcada Superior</span>
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {upperTeethRight.map(t => renderMiniToothBlock(t, false))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
-                                  {upperTeethLeft.map(t => renderMiniToothBlock(t, false))}
-                                </div>
-                              </div>
-                              
-                              <div className="w-full h-px bg-slate-200/40 dark:bg-slate-800/40" />
-
-                              {/* Arcada Inferior */}
-                              <div className="flex flex-col items-center w-full">
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {lowerTeethRight.map(t => renderMiniToothBlock(t, true))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-16 mx-2 shrink-0 self-center" />
-                                  {lowerTeethLeft.map(t => renderMiniToothBlock(t, true))}
-                                </div>
-                                <span className="text-[8px] font-black text-slate-455 dark:text-slate-500 uppercase tracking-widest mt-3">Arcada Inferior</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Widget: Últimas Evoluções */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-3.5">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-855 dark:text-white font-title">
-                          Últimas Evoluções
-                        </h4>
-                        <button
-                          onClick={() => {
-                            setActiveSubTab('evolucao');
-                          }}
-                          className="px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-bold rounded-xl flex items-center gap-1 transition-all active:scale-95 text-slate-500"
-                        >
-                          <Plus className="w-3 h-3" /> Adicionar
-                        </button>
-                      </div>
-
-                      {/* Listar Evoluções */}
-                      <div className="space-y-3.5">
-                        {medicalRecords.filter(r => r.patient_id === selectedPatient.id && !r.is_adendo).slice(0, 2).map(rec => (
-                          <div key={rec.id} className="p-3 bg-slate-50 dark:bg-black/15 border border-slate-200/30 dark:border-slate-800/40 rounded-xl space-y-1.5 text-left">
-                            <p className="text-[11px] font-bold text-slate-800 dark:text-white leading-relaxed">{rec.description}</p>
-                            <div className="flex items-center justify-between text-[8px] font-black text-slate-400 uppercase tracking-wider">
-                              <span className="flex items-center gap-1"><User className="w-2.5 h-2.5 text-slate-500" /> Dr(a) {rec.dentistName || 'Dentista'} · <Clock className="w-2.5 h-2.5 text-slate-400" /> {new Date(rec.created_at).toLocaleDateString('pt-BR')}</span>
-                              <span>🔑 HASH {rec.signature_hash ? rec.signature_hash.substring(0, 10) : '-'}</span>
-                            </div>
-                          </div>
-                        ))}
-                        {medicalRecords.filter(r => r.patient_id === selectedPatient.id && !r.is_adendo).length === 0 && (
-                          <p className="text-[10px] text-slate-450 py-2 text-center font-bold">Nenhuma evolução lançada</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Widget: Histórico de Consultas */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm space-y-3.5">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-855 dark:text-white font-title">
-                          Histórico de consultas
-                        </h4>
-                        <button
-                          onClick={() => {
-                            setActiveSubTab('consultas');
-                          }}
-                          className="px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-bold rounded-xl flex items-center gap-1 transition-all active:scale-95 text-slate-500"
-                        >
-                          <Plus className="w-3 h-3" /> Adicionar
-                        </button>
-                      </div>
-
-                      {/* Listar Consultas */}
-                      <div className="space-y-2.5">
-                        {appointments.filter(a => a.patient_id === selectedPatient.id).slice(0, 2).map(app => (
-                          <div key={app.id} className="p-3 bg-slate-50 dark:bg-black/15 border border-slate-200/30 dark:border-slate-800/40 rounded-xl flex items-center justify-between text-[10px] text-slate-500">
-                            <div className="flex items-center gap-3">
-                              <Calendar className="w-4 h-4 text-slate-400" />
-                              <div>
-                                <span className="font-extrabold text-slate-800 dark:text-white">
-                                  {new Date(app.start_time).toLocaleDateString('pt-BR')} às {new Date(app.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                <p className="opacity-80 mt-0.5">Dentista: {dentists?.find(d => d.id === app.doctor_id)?.full_name || 'Jose'}</p>
-                              </div>
-                            </div>
-
-                            <span className={`px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 font-bold uppercase text-[8px] ${
-                              app.status === 'CONFIRMED' ? 'bg-emerald-500/10 text-emerald-500' : ''
-                            }`}>
-                              {app.status === 'CONFIRMED' ? 'Confirmada' : 'Agendada'}
-                            </span>
-                          </div>
-                        ))}
-                        {appointments.filter(a => a.patient_id === selectedPatient.id).length === 0 && (
-                          <p className="text-[10px] text-slate-450 py-2 text-center font-bold">Nenhum agendamento realizado</p>
-                        )}
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
+                <VisaoGeralView 
+                  patient={selectedPatient}
+                  history={selectedHistory}
+                  appointments={appointments}
+                  medicalRecords={medicalRecords}
+                  onNavigateToTab={setActiveSubTab}
+                  onOpenEditModal={openEditModal}
+                  onOpenWhatsApp={onOpenWhatsApp}
+                />
               )}
+
 
               {/* ========================================== */}
               {/* ABA: ANAMNESES (QUESTIONÁRIO 23 PERGUNTAS)  */}
@@ -1870,461 +1616,23 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               {/* ABA: ORÇAMENTOS                           */}
               {/* ========================================== */}
               {activeSubTab === 'orcamentos' && (
-                <div className="space-y-4 text-left animate-in fade-in">
-                  <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-5 rounded-2xl shadow-sm">
-                    <div>
-                      <h3 className="text-sm font-black text-slate-855 dark:text-white font-title">Orçamentos</h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => alert('Nova criação de orçamento em desenvolvimento.')}
-                      className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-white/10 shadow transition-all active:scale-95"
-                      style={{ backgroundColor: currentTheme.secondary_color }}
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Criar orçamento
-                    </button>
-                  </div>
-
-                  {showSerasaBanner && (
-                    <div className="bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/20 rounded-2xl p-4 flex gap-3 text-xs justify-between items-center animate-in fade-in">
-                      <div className="flex gap-2.5 items-center">
-                        <Sparkles className="w-4 h-4 text-sky-500" />
-                        <p className="font-semibold text-slate-700 dark:text-slate-350">
-                          Reduza o risco de inadimplência: Utilize a ferramenta de consulta ao Serasa para analisar o score e pendências do seu paciente! <a href="#serasa" className="text-secondary underline font-bold" style={{ color: currentTheme.secondary_color }}>Consulte agora.</a>
-                        </p>
-                      </div>
-                      <button onClick={() => setShowSerasaBanner(false)} className="text-slate-400 hover:text-slate-200">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="p-4 bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/10 rounded-2xl flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-sky-500" />
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white">Plano de tratamento de {selectedPatient.name}</h4>
-                        <span className="text-[10px] text-slate-450 font-bold block mt-0.5">13/07/2026 • #3323760</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="font-extrabold text-slate-900 dark:text-white text-xs">R$ 1.083,00</span>
-                      <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase flex items-center gap-0.5">
-                        ✓ Aprovado
-                      </span>
-                      <MoreVertical className="w-4 h-4 text-slate-400 cursor-pointer" />
-                    </div>
-                  </div>
-                </div>
+                <PlanoTratamentoView 
+                  patient={selectedPatient}
+                  onSavePatientData={updatePatient}
+                  onNavigateToTab={setActiveSubTab}
+                />
               )}
 
               {/* ========================================== */}
               {/* ABA: ODONTOGRAMA                           */}
               {/* ========================================== */}
-              {activeSubTab === 'odontograma' && (() => {
-                const odontogram = getOdontogramData();
-                const selectedToothData = odontogram[selectedTooth] || { faces: {}, conditions: [], observations: '', history: [] };
-                const conditionCounts = getConditionCounts();
-                
-                const tools = [
-                  { id: 'Cárie', label: 'Cárie', color: 'bg-red-500' },
-                  { id: 'Restauração Resina', label: 'Restauração Resina', color: 'bg-blue-500' },
-                  { id: 'Restauração Amálgama', label: 'Restauração Amálgama', color: 'bg-slate-500' },
-                  { id: 'Coroa', label: 'Coroa', color: 'bg-yellow-500' },
-                  { id: 'Faceta', label: 'Faceta', color: 'bg-purple-500' },
-                  { id: 'Implante', label: 'Implante', color: 'bg-indigo-500' },
-                  { id: 'Endodontia', label: 'Endodontia', color: 'bg-emerald-500' },
-                  { id: 'Selante', label: 'Selante', color: 'bg-cyan-500' },
-                  { id: 'Extraído', label: 'Extraído', color: 'bg-black dark:bg-white' },
-                  { id: 'Ausente', label: 'Ausente', color: 'border border-dashed border-slate-400 dark:border-slate-500' },
-                  { id: 'Fratura', label: 'Fratura', color: 'bg-orange-500' },
-                  { id: 'Lesão Cervical', label: 'Lesão Cervical', color: 'bg-amber-800' },
-                  { id: 'Outros / Obs.', label: 'Outros / Obs.', color: 'bg-teal-500' },
-                  { id: 'Saudável', label: 'Saudável', color: 'bg-emerald-400' }
-                ];
+              {activeSubTab === 'odontograma' && (
+                <OdontogramView 
+                  patient={selectedPatient} 
+                  onSavePatientData={updatePatient} 
+                />
+              )}
 
-                const renderToothBlock = (t) => {
-                  const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                  const isSelected = selectedTooth === t;
-                  
-                  return (
-                    <div 
-                      key={t}
-                      onClick={() => handleToothOutlineClick(t)}
-                      className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${
-                        isSelected 
-                          ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10 shadow-sm ring-1 ring-blue-500/20' 
-                          : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/30'
-                      }`}
-                    >
-                      <ToothOutline number={t} conditions={data.conditions || []} />
-                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                      <FaceGrid 
-                        toothNumber={t} 
-                        facesState={data.faces || {}} 
-                        onFaceClick={(faceName) => handleFaceClick(t, faceName)} 
-                      />
-                    </div>
-                  );
-                };
-
-                return (
-                  <div className="space-y-6 text-left animate-in fade-in">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      
-                      {/* COLUNA 1: FERRAMENTAS CLÍNICAS */}
-                      <div className="w-full lg:w-52 bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800 rounded-[28px] p-5 flex flex-col justify-between shadow-sm shrink-0">
-                        <div className="space-y-4">
-                          <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Marcações</h4>
-                          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5">
-                            {tools.map(tool => {
-                              const isActive = activeTool === tool.id;
-                              return (
-                                <button
-                                  key={tool.id}
-                                  type="button"
-                                  onClick={() => setActiveTool(tool.id)}
-                                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all active:scale-[0.98] border text-left ${
-                                    isActive 
-                                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-700 shadow-sm ring-1 ring-slate-400/10' 
-                                      : 'bg-transparent text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/45'
-                                  }`}
-                                >
-                                  <span className={`w-3.5 h-3.5 rounded-full shrink-0 ${tool.color}`} />
-                                  <span className="truncate">{tool.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60">
-                          <button
-                            type="button"
-                            onClick={handleUndo}
-                            disabled={historyUndoStack.length === 0}
-                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 transition-all disabled:opacity-50 disabled:pointer-events-none active:scale-95"
-                          >
-                            <Undo className="w-3.5 h-3.5" /> Desfazer
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleClearAll}
-                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 hover:bg-red-500/10 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-500/20 text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 transition-all active:scale-95"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Limpar
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* COLUNA 2: ARCADA DENTÁRIA CENTRAL */}
-                      <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800 rounded-[28px] p-6 flex flex-col justify-start gap-4 shadow-sm relative overflow-hidden min-w-0">
-                        {/* Seletor de Arcada */}
-                        <div className="flex justify-between items-center mb-6">
-                          <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">Arcada FDI</h4>
-                          <div className="flex gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/40 dark:border-slate-800">
-                            {['permanentes', 'deciduos'].map(type => (
-                              <button
-                                key={type}
-                                type="button"
-                                onClick={() => setArcadaType(type)}
-                                className={`px-4 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all ${
-                                  arcadaType === type 
-                                    ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
-                                    : 'text-slate-450 hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
-                              >
-                                {type}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Rendering do Odontograma */}
-                        <div className="flex flex-col gap-6 py-4 overflow-x-auto w-full items-center">
-                          {arcadaType === 'permanentes' ? (
-                            <div className="space-y-8 flex flex-col items-center min-w-[650px] w-full">
-                              
-                              {/* Arcada Superior */}
-                              <div className="flex flex-col items-center w-full">
-                                <span className="text-[9px] font-black text-slate-350 dark:text-slate-600 uppercase tracking-widest mb-3">Arcada Superior</span>
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {upperTeethRight.map(t => renderToothBlock(t))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-28 mx-2 shrink-0 self-center" />
-                                  {upperTeethLeft.map(t => renderToothBlock(t))}
-                                </div>
-                              </div>
-                              
-                              {/* Divider horizontal suave */}
-                              <div className="w-full h-px bg-slate-100 dark:bg-slate-800/40" />
-                              
-                              {/* Arcada Inferior */}
-                              <div className="flex flex-col items-center w-full">
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {lowerTeethRight.map(t => {
-                                    const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                                    const isSelected = selectedTooth === t;
-                                    return (
-                                      <div 
-                                        key={t}
-                                        onClick={() => handleToothOutlineClick(t)}
-                                        className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${
-                                          isSelected 
-                                            ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10 shadow-sm ring-1 ring-blue-500/20' 
-                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/30'
-                                        }`}
-                                      >
-                                        <FaceGrid 
-                                          toothNumber={t} 
-                                          facesState={data.faces || {}} 
-                                          onFaceClick={(faceName) => handleFaceClick(t, faceName)} 
-                                        />
-                                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                                        <ToothOutline number={t} conditions={data.conditions || []} />
-                                      </div>
-                                    );
-                                  })}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-28 mx-2 shrink-0 self-center" />
-                                  {lowerTeethLeft.map(t => {
-                                    const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                                    const isSelected = selectedTooth === t;
-                                    return (
-                                      <div 
-                                        key={t}
-                                        onClick={() => handleToothOutlineClick(t)}
-                                        className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${
-                                          isSelected 
-                                            ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10 shadow-sm ring-1 ring-blue-500/20' 
-                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/30'
-                                        }`}
-                                      >
-                                        <FaceGrid 
-                                          toothNumber={t} 
-                                          facesState={data.faces || {}} 
-                                          onFaceClick={(faceName) => handleFaceClick(t, faceName)} 
-                                        />
-                                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                                        <ToothOutline number={t} conditions={data.conditions || []} />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <span className="text-[9px] font-black text-slate-350 dark:text-slate-600 uppercase tracking-widest mt-4">Arcada Inferior</span>
-                              </div>
-
-                            </div>
-                          ) : (
-                            <div className="space-y-8 flex flex-col items-center min-w-[500px] w-full">
-                              {/* Decíduos Superior */}
-                              <div className="flex flex-col items-center w-full">
-                                <span className="text-[9px] font-black text-slate-350 dark:text-slate-600 uppercase tracking-widest mb-3">Arcada Decídua Superior</span>
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {upperTeethDecRight.map(t => renderToothBlock(t))}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-28 mx-2 shrink-0 self-center" />
-                                  {upperTeethDecLeft.map(t => renderToothBlock(t))}
-                                </div>
-                              </div>
-                              
-                              <div className="w-full h-px bg-slate-100 dark:bg-slate-800/40" />
-
-                              {/* Decíduos Inferior */}
-                              <div className="flex flex-col items-center w-full">
-                                <div className="flex gap-1 items-start justify-center w-full">
-                                  {lowerTeethDecRight.map(t => {
-                                    const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                                    const isSelected = selectedTooth === t;
-                                    return (
-                                      <div 
-                                        key={t}
-                                        onClick={() => handleToothOutlineClick(t)}
-                                        className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${
-                                          isSelected 
-                                            ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10 shadow-sm ring-1 ring-blue-500/20' 
-                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/30'
-                                        }`}
-                                      >
-                                        <FaceGrid 
-                                          toothNumber={t} 
-                                          facesState={data.faces || {}} 
-                                          onFaceClick={(faceName) => handleFaceClick(t, faceName)} 
-                                        />
-                                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                                        <ToothOutline number={t} conditions={data.conditions || []} />
-                                      </div>
-                                    );
-                                  })}
-                                  <div className="w-[2px] bg-slate-200/80 dark:bg-slate-800/80 h-28 mx-2 shrink-0 self-center" />
-                                  {lowerTeethDecLeft.map(t => {
-                                    const data = odontogram[t] || { faces: {}, conditions: [], observations: '', history: [] };
-                                    const isSelected = selectedTooth === t;
-                                    return (
-                                      <div 
-                                        key={t}
-                                        onClick={() => handleToothOutlineClick(t)}
-                                        className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${
-                                          isSelected 
-                                            ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/10 shadow-sm ring-1 ring-blue-500/20' 
-                                            : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/30'
-                                        }`}
-                                      >
-                                        <FaceGrid 
-                                          toothNumber={t} 
-                                          facesState={data.faces || {}} 
-                                          onFaceClick={(faceName) => handleFaceClick(t, faceName)} 
-                                        />
-                                        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 my-1">{t}</span>
-                                        <ToothOutline number={t} conditions={data.conditions || []} />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <span className="text-[9px] font-black text-slate-355 dark:text-slate-600 uppercase tracking-widest mt-4">Arcada Decídua Inferior</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Legenda de Cores do Odontograma */}
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 w-full">
-                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-2 text-center lg:text-left">
-                            Legenda de Marcações (Status e Tratamentos)
-                          </span>
-                          <div className="flex flex-wrap justify-center lg:justify-start gap-x-4 gap-y-2 text-[10px] font-bold text-slate-600 dark:text-slate-350">
-                            {tools.map(tool => (
-                              <div key={tool.id} className="flex items-center gap-1.5 shrink-0 select-none">
-                                <span className={`w-2.5 h-2.5 rounded-full ${tool.color} shrink-0`} />
-                                <span>{tool.label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* COLUNA 3: DETALHES DO DENTE SELECIONADO */}
-                      <div className="w-full lg:w-80 bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800 rounded-[28px] p-5 flex flex-col space-y-4 shadow-sm shrink-0">
-                        {selectedTooth ? (
-                          <>
-                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/60 pb-3">
-                              <h3 className="text-sm font-black text-slate-800 dark:text-white font-title">Dente {selectedTooth}</h3>
-                              <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-lg uppercase">FDI</span>
-                            </div>
-
-                            {/* Circular face diagram zoomed-in */}
-                            <div className="flex flex-col items-center justify-center p-6 border border-slate-200/30 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-950/20 rounded-2xl relative">
-                              <div className="scale-125 py-2">
-                                <FaceGrid 
-                                  toothNumber={selectedTooth} 
-                                  facesState={selectedToothData.faces || {}} 
-                                  onFaceClick={(faceName) => handleFaceClick(selectedTooth, faceName)} 
-                                />
-                              </div>
-                              <span className="text-[9px] text-slate-400 font-extrabold mt-3 uppercase tracking-wider">Clique para pintar faces</span>
-                            </div>
-
-                            {/* Condições Ativas do Dente */}
-                            <div className="space-y-2 text-left">
-                              <label className="block text-[10px] font-black text-slate-450 uppercase tracking-wider">Condições Ativas</label>
-                              <div className="flex flex-wrap gap-1.5 min-h-[40px] p-2 bg-slate-50/50 dark:bg-slate-955/20 border border-slate-200/30 dark:border-slate-800/60 rounded-xl">
-                                {(selectedToothData.conditions || []).filter(c => c !== 'Saudável').length > 0 ? (
-                                  (selectedToothData.conditions || []).filter(c => c !== 'Saudável').map(cond => (
-                                    <span 
-                                      key={cond}
-                                      className="flex items-center gap-1 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-750"
-                                    >
-                                      {cond}
-                                      <button 
-                                        type="button" 
-                                        onClick={() => handleRemoveCondition(cond)} 
-                                        className="text-slate-400 hover:text-red-500 font-black text-xs ml-0.5 focus:outline-none"
-                                      >
-                                        ×
-                                      </button>
-                                    </span>
-                                  ))
-                                ) : (
-                                  <span className="text-[10px] font-bold text-slate-400 py-1 px-1 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" /> Saudável / Sem alterações
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Campo de Observações do Dente */}
-                            <div className="space-y-1.5 text-left flex-1 flex flex-col">
-                              <label className="block text-[10px] font-black text-slate-450 uppercase tracking-wider">Observações</label>
-                              <textarea
-                                key={selectedTooth} 
-                                defaultValue={selectedToothData.observations || ''}
-                                onBlur={(e) => handleSaveObservation(e.target.value)}
-                                placeholder="Notas clínicas, sintomas, histórico de dor, etc."
-                                className="w-full flex-1 min-h-[80px] bg-slate-50/50 dark:bg-slate-955/20 border border-slate-200/40 dark:border-slate-800/80 rounded-xl p-2.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500 resize-none leading-relaxed"
-                              />
-                              <span className="text-[9px] text-slate-400 font-medium self-end mt-1">Salva automaticamente ao sair do campo.</span>
-                            </div>
-
-                            {/* Histórico local do dente */}
-                            <div className="space-y-1.5 text-left border-t border-slate-100 dark:border-slate-800/60 pt-3">
-                              <label className="block text-[10px] font-black text-slate-450 uppercase tracking-wider">Histórico do Dente</label>
-                              <div className="space-y-1.5 max-h-[100px] overflow-y-auto pr-1">
-                                {(selectedToothData.history || []).length > 0 ? (
-                                  (selectedToothData.history || []).slice().reverse().map((item, idx) => (
-                                    <div key={idx} className="text-[9px] leading-relaxed border-l-2 border-slate-200 dark:border-slate-700 pl-2 py-0.5">
-                                      <span className="font-extrabold text-slate-800 dark:text-slate-300 block">{item.text}</span>
-                                      <span className="text-slate-400 font-semibold">{new Date(item.date).toLocaleDateString('pt-BR')} • {item.user}</span>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <span className="text-[9px] font-semibold text-slate-400 block py-1">Sem registro de eventos anteriores.</span>
-                                )}
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
-                            <HelpCircle className="w-10 h-10 animate-pulse mb-2 text-slate-350 dark:text-slate-700" />
-                            <h5 className="text-xs font-bold text-slate-650 dark:text-slate-300">Nenhum dente selecionado</h5>
-                            <p className="text-[10px] mt-1">Selecione um dente na arcada central para ver detalhes ou registrar observações específicas.</p>
-                          </div>
-                        )}
-                      </div>
-
-                    </div>
-
-                    {/* BARRA INFERIOR: LEGENDA RÁPIDA E TOTAIS */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800 rounded-[28px] p-5 shadow-sm">
-                      <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3.5 text-left">Resumo do Odontograma (Legenda Rápida)</h4>
-                      <div className="flex flex-wrap gap-4">
-                        {[
-                          { label: 'Saudável', count: conditionCounts['Saudável'], color: 'bg-emerald-400' },
-                          { label: 'Cárie', count: conditionCounts['Cárie'], color: 'bg-red-500' },
-                          { label: 'Restauração Resina', count: conditionCounts['Restauração Resina'], color: 'bg-blue-500' },
-                          { label: 'Restauração Amálgama', count: conditionCounts['Restauração Amálgama'], color: 'bg-slate-500' },
-                          { label: 'Coroa', count: conditionCounts['Coroa'], color: 'bg-yellow-500' },
-                          { label: 'Faceta', count: conditionCounts['Faceta'], color: 'bg-purple-500' },
-                          { label: 'Implante', count: conditionCounts['Implante'], color: 'bg-indigo-500' },
-                          { label: 'Endodontia', count: conditionCounts['Endodontia'], color: 'bg-emerald-500' },
-                          { label: 'Selante', count: conditionCounts['Selante'], color: 'bg-cyan-500' },
-                          { label: 'Extraído', count: conditionCounts['Extraído'], color: 'bg-black dark:bg-white' },
-                          { label: 'Ausente', count: conditionCounts['Ausente'], color: 'border border-dashed border-slate-400 dark:border-slate-500' },
-                          { label: 'Fratura', count: conditionCounts['Fratura'], color: 'bg-orange-500' },
-                          { label: 'Lesão Cervical', count: conditionCounts['Lesão Cervical'], color: 'bg-amber-800' },
-                          { label: 'Outros / Obs.', count: conditionCounts['Outros / Obs.'], color: 'bg-teal-500' }
-                        ].map(item => (
-                          <div 
-                            key={item.label}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800/60 text-xs font-bold text-slate-700 dark:text-slate-300"
-                          >
-                            <span className={`w-3.5 h-3.5 rounded-full shrink-0 ${item.color}`} />
-                            <span>{item.label}:</span>
-                            <span className="font-extrabold text-slate-850 dark:text-white bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 min-w-[20px] text-center">{item.count}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
-                );
-              })()}
 
               {/* ========================================== */}
               {/* ABA: PAGAMENTOS (CARDS DE TOTAIS E FILTROS) */}

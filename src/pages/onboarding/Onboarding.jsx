@@ -6,6 +6,7 @@ import {
   Gift, HeartHandshake, MapPin, Building2, HelpCircle, 
   ShieldCheck, AlertCircle, ArrowRight 
 } from 'lucide-react';
+import Logo from '../../components/Logo';
 
 export default function Onboarding({ onComplete }) {
   const { user, clinic, updateClinic } = useAuth();
@@ -170,7 +171,7 @@ export default function Onboarding({ onComplete }) {
             }
           });
         } catch (err) {
-          console.error('Erro ao atualizar dados da clínica no onboarding:', err);
+          console.warn('[Onboarding] Supabase offline/inacessível. Operando no modo local:', err.message || err);
         }
       }
     }
@@ -359,8 +360,8 @@ export default function Onboarding({ onComplete }) {
 
               <button
                 onClick={nextStep}
-                disabled={!endereco.logradouro.trim() || !endereco.cidade.trim()}
-                className="px-8 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 disabled:opacity-40 transition-all hover:bg-blue-700 active:scale-95 shadow-[0_4px_12px_rgba(59,130,246,0.3)] mt-2"
+                disabled={!(endereco.logradouro || '').trim() || !(endereco.cidade || '').trim()}
+                className="px-8 py-3 rounded-2xl font-bold text-sm text-white bg-blue-600 disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none transition-all hover:bg-blue-700 active:scale-95 shadow-[0_4px_12px_rgba(59,130,246,0.3)] mt-2"
               >
                 Continuar
               </button>
@@ -924,26 +925,10 @@ function AiBlob() {
       {/* Glow de fundo */}
       <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-xl animate-pulse" />
       
-      {/* Blob em movimento */}
-      <motion.div
-        animate={{
-          borderRadius: [
-            "42% 58% 70% 30% / 45% 45% 55% 55%",
-            "70% 30% 52% 48% / 60% 40% 60% 40%",
-            "50% 50% 35% 65% / 40% 60% 40% 60%",
-            "42% 58% 70% 30% / 45% 45% 55% 55%"
-          ],
-          rotate: [0, 120, 240, 360],
-        }}
-        transition={{
-          duration: 8,
-          ease: "easeInOut",
-          repeat: Infinity,
-        }}
-        className="w-20 h-20 bg-gradient-to-tr from-sky-400 via-indigo-500 to-purple-600 shadow-[0_8px_30px_rgba(99,102,241,0.25)] border border-white/20"
-      />
-      {/* Reflexo sutil de vidro para efeito 3D / Depth */}
-      <div className="absolute w-20 h-20 rounded-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+      {/* Símbolo do DentalFlow com Efeito Fluido */}
+      <div className="relative z-10 w-20 h-20 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center shadow-[0_8px_30px_rgba(25,107,251,0.3)]">
+        <Logo collapsed={true} className="w-14 h-14" />
+      </div>
     </div>
   );
 }
@@ -958,8 +943,8 @@ function SmartphoneMockup({ whatsappChat, chatStage, handleSimulateResponse }) {
       
       {/* Cabeçalho do Chat */}
       <div className="bg-[#0b141a] text-white pt-5 pb-2.5 px-3 flex items-center gap-2 border-b border-white/5 relative z-10">
-        <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
-          DF
+        <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center p-1 border border-white/10 shadow-inner">
+          <Logo collapsed={true} className="w-5 h-5" />
         </div>
         <div>
           <div className="font-bold text-[10px] flex items-center gap-1">

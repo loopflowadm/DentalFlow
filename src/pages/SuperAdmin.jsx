@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { mockDb } from '../lib/mockDatabase';
 import { supabase } from '../lib/supabase';
 import { Plus, Users, Shield, LogOut, CheckCircle, Palette, MonitorPlay, Key, Check, Activity, Sparkles, Gem, Building } from 'lucide-react';
+import Logo from '../components/Logo';
 
 // Helpers puros externos para evitar erro react-hooks/purity
 function generateClinicId() {
@@ -385,18 +386,21 @@ export default function SuperAdmin() {
                     <tr key={c.id || c.subdomain} className="hover:bg-slate-800/10 transition-colors">
                       <td className="py-3 font-bold text-white flex items-center gap-2">
                         <span className="text-lg flex items-center justify-center">
-                          {(() => {
-                            const logoMap = {
-                              '🦷': Activity,
-                              '✨': Sparkles,
-                              '💎': Gem,
-                              '🏥': Building,
-                              '🛡️': Shield,
-                              '⚕️': Activity
-                            };
-                            const IconComponent = logoMap[c.logo_url] || Activity;
-                            return <IconComponent className="w-5 h-5 text-slate-400" />;
-                          })()}
+                          {c.logo_url === '🦷' ? (
+                            <Logo collapsed={true} className="w-5 h-5" />
+                          ) : (
+                            (() => {
+                              const logoMap = {
+                                '✨': Sparkles,
+                                '💎': Gem,
+                                '🏥': Building,
+                                '🛡️': Shield,
+                                '⚕️': Activity
+                              };
+                              const IconComponent = logoMap[c.logo_url] || Activity;
+                              return <IconComponent className="w-5 h-5 text-slate-400" />;
+                            })()
+                          )}
                         </span>
                         {c.name}
                       </td>

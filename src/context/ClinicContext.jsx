@@ -4,6 +4,71 @@ import { supabase } from '../lib/supabase';
 
 const ClinicContext = createContext();
 
+const isValidUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+export const DEFAULT_DENTAL_AI_PROMPT = `Você é a Sofia, da equipe de atendimento da clínica odontológica {NOME_CLINICA}.
+
+Seu papel é conversar no WhatsApp com os pacientes da clínica de forma simpática, clara e natural — exatamente como uma recepcionista atenciosa e humana.
+
+Informações da clínica:
+- Nome: {NOME_CLINICA}
+- Endereço: {ENDERECO_COMPLETO}
+- Telefone / WhatsApp: {TELEFONE_CONTATO}
+- Expediente: {HORARIO_FUNCIONAMENTO}
+
+Corpo Clínico:
+{LISTA_DENTISTAS}
+
+Tratamentos e Valores:
+{LISTA_PROCEDIMENTOS}
+
+Convênios Aceitos:
+{CONVENIOS_ACEITOS}
+
+Diretrizes de Atendimento:
+1. Responda com clareza, simpatia e tom direto. Evite textos longos, robotizados ou respostas genéricas.
+2. Para agendamentos, ofereça 2 opções de horários e confirme os dados do paciente.
+3. Informe apenas os procedimentos e valores listados acima. Se o paciente perguntar sobre algo não cadastrado, diga que vai confirmar com a recepção.
+4. Em caso de dor forte, urgência ou solicitação de atendimento humano, passe o contato para a recepção imediatamente.`;
+
+export const expandAiPrompt = (promptTemplate, { clinic, dentists, procedures, insurancePlans }) => {
+  if (!promptTemplate) return '';
+
+  const clinicName = clinic?.name || clinic?.clinic_name || 'Nossa Clínica Odontológica';
+  const address = clinic?.address || (clinic?.cidade ? `${clinic?.logradouro || 'Rua Principal'}, ${clinic?.bairro || ''} - ${clinic?.cidade || ''}/${clinic?.uf || ''}` : 'Endereço da clínica');
+  const phone = clinic?.phone || '(83) 99999-8888';
+  const hours = clinic?.operating_hours || 'Segunda a Sexta-feira, das 08h00 às 18h00';
+
+  const dentistsList = typeof dentists === 'string'
+    ? dentists
+    : (dentists && dentists.length > 0
+      ? dentists.map(d => `• ${d.full_name || d.name} (${d.specialty || 'Dentista Clínico'})`).join('\n')
+      : '• Corpo clínico altamente qualificado');
+
+  const proceduresList = typeof procedures === 'string'
+    ? procedures
+    : (procedures && procedures.length > 0
+      ? procedures.map(p => `• ${p.name}: R$ ${Number(p.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${p.category || 'Odontologia Generalista'})`).join('\n')
+      : '• Consultas, Clareamento, Ortodontia, Implantes, Próteses e Limpeza');
+
+  const plansList = typeof insurancePlans === 'string'
+    ? insurancePlans
+    : (insurancePlans && insurancePlans.length > 0
+      ? insurancePlans.map(p => `• ${p.name || p}`).join('\n')
+      : '• Particular, Amil Dental, Unimed Odonto, Bradesco Dental e SulAmérica');
+
+  let result = promptTemplate
+    .replace(/\{NOME_CLINICA\}/g, clinicName)
+    .replace(/\{ENDERECO_COMPLETO\}/g, address)
+    .replace(/\{TELEFONE_CONTATO\}/g, phone)
+    .replace(/\{HORARIO_FUNCIONAMENTO\}/g, hours)
+    .replace(/\{LISTA_DENTISTAS\}/g, dentistsList)
+    .replace(/\{LISTA_PROCEDIMENTOS\}/g, proceduresList)
+    .replace(/\{CONVENIOS_ACEITOS\}/g, plansList);
+
+  return result.replace(/\{([^}\n]+)\}/g, '$1');
+};
+
 export function ClinicProvider({ children }) {
   const { clinic, user } = useAuth();
 
@@ -16,11 +81,15 @@ export function ClinicProvider({ children }) {
   const [automations, setAutomations] = useState([]);
   const [marketingCampaigns, setMarketingCampaigns] = useState([]);
   const [aiConfig, setAiConfig] = useState({
-    prompt: '',
-    personality: 'prestativo',
-    operatingHours: '08:00 - 18:00',
-    isActive: false,
-    knowledgeBase: []
+    prompt: DEFAULT_DENTAL_AI_PROMPT,
+    personality: 'sofia_assistente',
+    operatingHours: '24h',
+    isActive: true,
+    autoSilence: true,
+    knowledgeBase: [
+      { id: 'kb-1', question: 'O clareamento dental dói?', answer: 'O clareamento dental moderno utiliza géis dessensibilizantes de última geração que minimizam o desconforto.' },
+      { id: 'kb-2', question: 'Quais as formas de pagamento aceitas?', answer: 'Aceitamos PIX com desconto, cartões de crédito em até 12x e convênios parceiros.' }
+    ]
   });
 
   const [whatsappChats, setWhatsappChats] = useState([]);
@@ -37,27 +106,45 @@ export function ClinicProvider({ children }) {
 
   const loadChatsState = useCallback(async (patList, leadList = []) => {
     const clinicId = clinic.id;
-    const patientChats = patList.map(p => ({
-      patientId: p.id,
-      name: p.name,
-      unreadCount: 0,
-      status: 'offline',
-      tags: ['Paciente'],
-      notes: '',
-      isBotPaused: false,
-      messages: []
-    }));
+    const patientChats = patList.map(p => {
+      let savedTags = null;
+      let savedNotes = null;
+      try {
+        const storedTags = localStorage.getItem(`chat_tags_${p.id}`);
+        if (storedTags) savedTags = JSON.parse(storedTags);
+        savedNotes = localStorage.getItem(`patient_notes_${p.id}`);
+      } catch (e) {}
+      return {
+        patientId: p.id,
+        name: p.name,
+        unreadCount: 0,
+        status: 'offline',
+        tags: savedTags || ['Paciente'],
+        notes: savedNotes !== null ? savedNotes : (p.notes || ''),
+        isBotPaused: false,
+        messages: []
+      };
+    });
 
-    const leadChats = leadList.map(l => ({
-      patientId: l.id,
-      name: l.name,
-      unreadCount: 0,
-      status: 'offline',
-      tags: ['Lead'],
-      notes: '',
-      isBotPaused: false,
-      messages: []
-    }));
+    const leadChats = leadList.map(l => {
+      let savedTags = null;
+      let savedNotes = null;
+      try {
+        const storedTags = localStorage.getItem(`chat_tags_${l.id}`);
+        if (storedTags) savedTags = JSON.parse(storedTags);
+        savedNotes = localStorage.getItem(`patient_notes_${l.id}`);
+      } catch (e) {}
+      return {
+        patientId: l.id,
+        name: l.name,
+        unreadCount: 0,
+        status: 'offline',
+        tags: savedTags || ['Lead'],
+        notes: savedNotes !== null ? savedNotes : (l.notes || ''),
+        isBotPaused: false,
+        messages: []
+      };
+    });
 
     const defaultChats = [...patientChats, ...leadChats];
 
@@ -97,13 +184,9 @@ export function ClinicProvider({ children }) {
 
         defaultChats.forEach(chat => {
           chat.isBotPaused = pausedSessions[chat.patientId] || false;
-          if (messagesByPatient[chat.patientId]) {
-            chat.messages = messagesByPatient[chat.patientId];
+          chat.messages = messagesByPatient[chat.patientId] || [];
+          if (chat.messages.length > 0) {
             chat.status = 'online';
-          } else {
-            chat.messages = [
-              { id: 'm-default', sender: 'PATIENT', text: `Olá! Eu sou o ${chat.name}.`, time: '14:20', type: 'text' }
-            ];
           }
         });
       }
@@ -113,6 +196,51 @@ export function ClinicProvider({ children }) {
 
     setWhatsappChats(defaultChats);
   }, [clinic]);
+
+  // Escuta em Tempo Real (Supabase Realtime) para mensagens do WhatsApp
+  useEffect(() => {
+    if (!clinic?.id) return;
+    const channel = supabase
+      .channel('realtime_chat_messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `clinic_id=eq.${clinic.id}`
+        },
+        (payload) => {
+          const newMsg = payload.new;
+          if (!newMsg) return;
+
+          const formattedMsg = {
+            id: newMsg.id,
+            sender: newMsg.sender,
+            text: newMsg.message_text,
+            time: new Date(newMsg.created_at || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            type: 'text'
+          };
+
+          setWhatsappChats(prev => prev.map(chat => {
+            if (chat.patientId === newMsg.patient_id) {
+              if (chat.messages.some(m => m.id === newMsg.id)) return chat;
+              return {
+                ...chat,
+                unreadCount: newMsg.sender === 'PATIENT' ? (chat.unreadCount || 0) + 1 : chat.unreadCount,
+                messages: [...chat.messages, formattedMsg]
+              };
+            }
+            return chat;
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [clinic?.id]);
 
   // Carregar dados de acordo com o Supabase de forma paralela e resiliente
   const loadData = useCallback(async () => {
@@ -146,12 +274,14 @@ export function ClinicProvider({ children }) {
       const getValue = (res, defaultValue = []) => {
         if (res.status === 'fulfilled') {
           if (res.value.error) {
-            console.error('Erro de tabela no carregamento do Supabase:', res.value.error);
+            const isFetchErr = res.value.error.message?.includes('fetch') || res.value.error.details?.includes('fetch');
+            if (!isFetchErr) {
+              console.warn('[ClinicContext] Aviso ao carregar tabela Supabase:', res.value.error.message || res.value.error);
+            }
             return defaultValue;
           }
           return res.value.data || defaultValue;
         } else {
-          console.error('Falha de conexão / Promessa rejeitada:', res.reason);
           return defaultValue;
         }
       };
@@ -178,7 +308,8 @@ export function ClinicProvider({ children }) {
         waData = results[14].value.data;
       }
 
-      setPatients(pData);
+      let finalPatients = pData || [];
+      setPatients(finalPatients);
 
       // Fallback/auto-seeding robusto para Cadeiras
       if (chairData.length === 0) {
@@ -203,17 +334,14 @@ export function ClinicProvider({ children }) {
         setChairs(chairData);
       }
 
-      // Fallback robusto/real para Dentistas
+      // Fallback para Dentistas
       if (dentistData.length === 0) {
         if (user && user.id) {
           setDentists([
             { id: user.id, full_name: user.full_name || 'Profissional Principal', role: 'DOCTOR', clinic_id: clinicId }
           ]);
         } else {
-          setDentists([
-            { id: 'doc-1', full_name: 'Dr. Pedro Ramos', role: 'DOCTOR', clinic_id: clinicId },
-            { id: 'doc-2', full_name: 'Dra. Ana Paula', role: 'DOCTOR', clinic_id: clinicId }
-          ]);
+          setDentists([]);
         }
       } else {
         setDentists(dentistData);
@@ -268,7 +396,8 @@ export function ClinicProvider({ children }) {
       setToothRecords(toothData);
       setMedicalRecords(recData);
       setPrescriptions(presData);
-      setCrmLeads(leadData);
+      let finalLeadData = leadData || [];
+      setCrmLeads(finalLeadData);
 
       const formattedInstallments = instData.map(inst => {
         const budget = inst.treatment_budgets;
@@ -293,7 +422,7 @@ export function ClinicProvider({ children }) {
       }
 
       // Inicializar chats do WhatsApp
-      loadChatsState(pData, leadData);
+      loadChatsState(finalPatients, leadData);
     } catch (err) {
       console.error('Falha crítica geral ao carregar dados do Supabase:', err);
     }
@@ -321,27 +450,46 @@ export function ClinicProvider({ children }) {
   const addPatient = async (newPat) => {
     const clinicId = newPat.clinic_id || clinic.id;
     const fresh = {
-      ...newPat,
-      clinic_id: clinicId,
+      name: newPat.name,
+      phone: newPat.phone || '',
+      clinic_id: isValidUUID(clinicId) ? clinicId : null,
       created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from('patients')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setPatients(prev => [...prev, data]);
-    return data;
+    if (fresh.clinic_id) {
+      try {
+        const { data, error } = await supabase
+          .from('patients')
+          .insert([fresh])
+          .select()
+          .single();
+        if (!error && data) {
+          const finalPat = { ...data, cpf: newPat.cpf, notes: newPat.notes || '' };
+          setPatients(prev => [...prev, finalPat]);
+          return finalPat;
+        }
+      } catch (err) {
+        console.warn('[Supabase] Aviso ao cadastrar paciente:', err);
+      }
+    }
+    const localPat = { id: `p-${Date.now()}`, ...newPat, clinic_id: clinicId };
+    setPatients(prev => [...prev, localPat]);
+    return localPat;
   };
 
   const updatePatient = async (updatedPat) => {
-    const { error } = await supabase
-      .from('patients')
-      .update(updatedPat)
-      .eq('id', updatedPat.id);
-    if (error) throw error;
+    const { notes, cpf, ...cleanPat } = updatedPat;
+    if (isValidUUID(updatedPat.id)) {
+      try {
+        const { error } = await supabase
+          .from('patients')
+          .update(cleanPat)
+          .eq('id', updatedPat.id);
+        if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error);
+      } catch (err) {
+        console.warn('[Supabase] Erro ao atualizar paciente:', err);
+      }
+    }
 
     setPatients(prev => prev.map(p => p.id === updatedPat.id ? updatedPat : p));
   };
@@ -376,16 +524,21 @@ export function ClinicProvider({ children }) {
   };
 
   const updateCrmLead = async (updatedLead) => {
-    const { error } = await supabase
-      .from('crm_leads')
-      .update(updatedLead)
-      .eq('id', updatedLead.id);
-    if (error) throw error;
+    // Sanitização de colunas sintéticas que não existem na tabela crm_leads do banco
+    const { status, ...dbPayload } = updatedLead;
+
+    if (isValidUUID(updatedLead.id)) {
+      const { error } = await supabase
+        .from('crm_leads')
+        .update(dbPayload)
+        .eq('id', updatedLead.id);
+      if (error) console.warn('[Supabase] Aviso ao atualizar crm_lead:', error);
+    }
 
     setCrmLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
   };
 
-  // Converter Lead para Paciente Clínico
+  // Converter Lead para Paciente Clínico (Mantendo o lead na jornada comercial do CRM)
   const convertLeadToPatient = async (leadId) => {
     const lead = crmLeads.find(l => l.id === leadId);
     if (!lead) return;
@@ -395,7 +548,7 @@ export function ClinicProvider({ children }) {
       notes: `Paciente convertido a partir de Lead comercial. Interesse inicial: ${lead.procedure_name || 'Geral'}.`
     };
 
-    // 2. Adicionar o paciente
+    // 2. Adicionar o paciente no cadastro de pacientes clínicos
     const newPat = {
       name: lead.name,
       phone: lead.phone,
@@ -404,95 +557,123 @@ export function ClinicProvider({ children }) {
 
     const patientData = await addPatient(newPat);
 
-    // 3. Remover do CRM (tabela crm_leads)
-    const { error } = await supabase
-      .from('crm_leads')
-      .delete()
-      .eq('id', leadId);
-    if (error) throw error;
+    // 3. Atualizar o Lead no CRM para Estágio "Fechado" (stage = 7) ou "Tratamento" (stage = 8) com badge de Paciente
+    const updatedLead = {
+      ...lead,
+      stage: lead.stage < 7 ? 7 : lead.stage, // Mover para 'Fechado' se estiver em etapas anteriores
+      is_patient: true,
+      patient_id: patientData.id,
+      history: [
+        ...(lead.history || []),
+        {
+          date: new Date().toISOString(),
+          type: 'CONVERSION',
+          description: `Convertido em Paciente Ativo no Prontuário Clínico (ID: ${patientData.id})`,
+          user: user?.full_name || 'Profissional'
+        }
+      ]
+    };
 
-    // 4. Atualizar estados locais
-    setCrmLeads(prev => prev.filter(l => l.id !== leadId));
+    await updateCrmLead(updatedLead);
+
+    // 4. Garantir que o chat no WhatsApp esteja tagueado como Paciente
+    if (whatsappChats.some(c => c.phone === lead.phone || c.patientId === patientData.id)) {
+      updateChatTags(patientData.id || lead.phone, ['Paciente', 'Convertido']);
+    }
 
     return patientData;
   };
 
-  // Auxiliar para validar se uma string é um UUID válido
-  const isValidUUID = (str) => {
-    if (typeof str !== 'string') return false;
-    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-  };
+
 
   // CONSULTAS
   const addAppointment = async (app) => {
     const clinicId = clinic.id;
+
+    // Calcular start_time e end_time se apenas date e time forem fornecidos
+    let calculatedStartTime = app.start_time || app.startTime;
+    if (!calculatedStartTime && app.date) {
+      const timeStr = app.time || '09:00';
+      calculatedStartTime = new Date(`${app.date}T${timeStr}:00`).toISOString();
+    }
+    if (!calculatedStartTime) {
+      calculatedStartTime = new Date().toISOString();
+    }
+
+    let calculatedEndTime = app.end_time || app.endTime;
+    if (!calculatedEndTime && calculatedStartTime) {
+      const durationMin = app.duration || 30;
+      const endDate = new Date(new Date(calculatedStartTime).getTime() + durationMin * 60000);
+      calculatedEndTime = endDate.toISOString();
+    }
+
     const cleanApp = {
-      clinic_id: clinicId,
+      clinic_id: isValidUUID(clinicId) ? clinicId : null,
       patient_id: (app.patient_id && isValidUUID(app.patient_id)) ? app.patient_id : ((app.patientId && isValidUUID(app.patientId)) ? app.patientId : null),
       doctor_id: (app.doctor_id && isValidUUID(app.doctor_id)) ? app.doctor_id : ((app.doctorId && isValidUUID(app.doctorId)) ? app.doctorId : null),
-      start_time: app.start_time || app.startTime,
-      end_time: app.end_time || app.endTime,
+      start_time: calculatedStartTime,
+      end_time: calculatedEndTime,
       status: app.status || 'PENDING',
       chair_id: (app.chair_id && isValidUUID(app.chair_id)) ? app.chair_id : ((app.chairId && isValidUUID(app.chairId)) ? app.chairId : null),
       room: app.room || null,
       procedure_id: (app.procedure_id && isValidUUID(app.procedure_id)) ? app.procedure_id : ((app.procedureId && isValidUUID(app.procedureId)) ? app.procedureId : null),
-      title: app.title || null,
-      duration: app.duration || 30,
       observations: app.observations || null,
-      send_confirmation: app.send_confirmation !== undefined ? app.send_confirmation : (app.sendConfirmation !== undefined ? app.sendConfirmation : false),
-      return_days: app.return_days !== undefined ? app.return_days : (app.returnDays !== undefined ? app.returnDays : null),
-      label: app.label || null,
-      type: app.type || 'CONSULTA',
-      is_recurring: app.is_recurring !== undefined ? app.is_recurring : (app.isRecurring !== undefined ? app.isRecurring : false),
+      title: app.title || null
     };
 
     let savedData;
-    try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert([{ ...cleanApp, created_at: new Date().toISOString() }])
-        .select()
-        .single();
-      
-      if (error) {
-        if (error.code === 'PGRST204' || error.message.includes('column')) {
-          console.warn('[Supabase] Migration columns missing, falling back to local simulation:', error.message);
+    if (cleanApp.clinic_id && cleanApp.patient_id) {
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert([{ ...cleanApp, created_at: new Date().toISOString() }])
+          .select()
+          .single();
+        
+        if (!error && data) {
+          savedData = data;
+        } else {
           savedData = {
             id: 'app-' + Math.random().toString(36).substr(2, 9),
             ...cleanApp,
+            patient_id: app.patient_id || app.patientId,
             created_at: new Date().toISOString()
           };
-        } else {
-          throw error;
         }
-      } else {
-        savedData = data;
+      } catch (err) {
+        console.warn('[Supabase] Erro ao inserir consulta no Supabase, usando estado local:', err.message || err);
+        savedData = {
+          id: 'app-' + Math.random().toString(36).substr(2, 9),
+          ...cleanApp,
+          patient_id: app.patient_id || app.patientId,
+          created_at: new Date().toISOString()
+        };
       }
-    } catch (err) {
-      console.warn('[Supabase] Error inserting appointment, falling back to local simulation:', err.message || err);
+    } else {
       savedData = {
         id: 'app-' + Math.random().toString(36).substr(2, 9),
         ...cleanApp,
+        patient_id: app.patient_id || app.patientId,
         created_at: new Date().toISOString()
       };
     }
 
-    const p = patients.find(pat => pat.id === savedData.patient_id);
+    const p = patients.find(pat => pat.id === (savedData.patient_id || app.patient_id || app.patientId));
     const proc = procedures.find(pr => pr.id === savedData.procedure_id);
-
-    setAppointments(prev => [...prev, {
+    const fullApp = {
       ...savedData,
-      patientName: p ? p.name : (savedData.type === 'COMPROMISSO' ? '' : 'Paciente Desconhecido'),
-      patientPhone: p ? p.phone : '',
-      procedureName: proc ? proc.name : 'Consulta Geral',
+      patientName: p ? p.name : (app.patientName || 'Paciente'),
+      patientPhone: p ? p.phone : (app.patientPhone || ''),
+      procedureName: proc ? proc.name : (app.procedureName || 'Consulta Geral'),
       color: proc ? proc.color : '#3b82f6',
-      chairId: savedData.chair_id,
-      procedureId: savedData.procedure_id,
-      sendConfirmation: savedData.send_confirmation,
-      returnDays: savedData.return_days,
-      isRecurring: savedData.is_recurring
-    }]);
+      date: app.date || calculatedStartTime.split('T')[0],
+      time: app.time || calculatedStartTime.split('T')[1].substring(0, 5)
+    };
+
+    setAppointments(prev => [...prev, fullApp]);
+    return fullApp;
   };
+
 
   const updateAppointment = async (updatedApp) => {
     const cleanApp = {
@@ -622,7 +803,7 @@ export function ClinicProvider({ children }) {
     };
 
     setWhatsappChats(prev => prev.map(chat => {
-      if (chat.patientId === patientId) {
+      if (chat.patientId === patientId || chat.phone === patientId) {
         return {
           ...chat,
           unreadCount: sender === 'PATIENT' ? chat.unreadCount + 1 : 0,
@@ -632,15 +813,36 @@ export function ClinicProvider({ children }) {
       return chat;
     }));
 
-    // Salvar no Supabase
-    supabase.from('chat_messages').insert({
-      clinic_id: clinicId,
-      patient_id: patientId,
-      sender: sender,
-      message_text: text
-    }).then(({ error }) => {
-      if (error) console.error('[Supabase] Erro ao persistir chat_message:', error);
-    });
+    // Sincronizar mensagens enviadas no WhatsApp diretamente na linha do tempo do CRM
+    setCrmLeads(prev => prev.map(lead => {
+      const matchId = lead.id === patientId || lead.patient_id === patientId;
+      const matchPhone = lead.phone && (lead.phone === patientId || patientId.includes(lead.phone.replace(/\D/g, '')));
+      if (matchId || matchPhone) {
+        const newCrmComment = {
+          date: new Date().toISOString(),
+          text,
+          user: sender === 'USER' ? 'Profissional' : sender === 'BOT' ? 'IA Bot' : lead.name,
+          mode: 'whatsapp'
+        };
+        return {
+          ...lead,
+          comments: [...(lead.comments || []), newCrmComment]
+        };
+      }
+      return lead;
+    }));
+
+    // Salvar no Supabase apenas se patientId for um UUID válido no banco
+    if (patientId && isValidUUID(patientId)) {
+      supabase.from('chat_messages').insert({
+        clinic_id: isValidUUID(clinicId) ? clinicId : null,
+        patient_id: patientId,
+        sender: sender,
+        message_text: text
+      }).then(({ error }) => {
+        if (error) console.warn('[Supabase] Aviso ao persistir chat_message:', error);
+      });
+    }
 
     // DISPARAR INTEGRAÇÃO REAL COM EVOLUTION API (SE CONFIGURADA)
     if (sender === 'USER' || sender === 'BOT') {
@@ -687,31 +889,56 @@ export function ClinicProvider({ children }) {
     }
   };
 
-  const updateChatNotes = (patientId, notes) => {
+  const updateChatNotes = async (patientId, notes) => {
     setWhatsappChats(prev => prev.map(c => c.patientId === patientId ? { ...c, notes } : c));
+    setPatients(prev => prev.map(p => p.id === patientId ? { ...p, notes } : p));
+    try {
+      if (patientId) {
+        localStorage.setItem(`patient_notes_${patientId}`, notes || '');
+      }
+      if (clinic?.id && patientId && isValidUUID(patientId)) {
+        await supabase
+          .from('patients')
+          .update({ notes })
+          .eq('id', patientId)
+          .eq('clinic_id', clinic.id);
+      }
+    } catch (err) {
+      console.warn('[Supabase] Erro ao atualizar notas do paciente:', err);
+    }
   };
 
-  const updateChatTags = (patientId, tags) => {
-    setWhatsappChats(prev => prev.map(c => c.patientId === patientId ? { ...c, tags } : c));
+  const updateChatTags = async (patientId, tags) => {
+    const uniqueTags = Array.isArray(tags) ? Array.from(new Set(tags)) : [];
+    setWhatsappChats(prev => prev.map(c => c.patientId === patientId ? { ...c, tags: uniqueTags } : c));
+    try {
+      if (patientId) {
+        localStorage.setItem(`chat_tags_${patientId}`, JSON.stringify(uniqueTags));
+      }
+    } catch (err) {
+      console.warn('[LocalStorage] Erro ao salvar tags:', err);
+    }
   };
 
   const toggleBotSilence = async (patientId, isPaused) => {
     const clinicId = clinic.id;
 
-    try {
-      const { error } = await supabase
-        .from('chat_sessions')
-        .upsert({
-          clinic_id: clinicId,
-          patient_id: patientId,
-          is_bot_paused: isPaused,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'patient_id'
-        });
-      if (error) throw error;
-    } catch (err) {
-      console.error('[Supabase] Erro ao alternar silenciamento do bot:', err);
+    if (patientId && isValidUUID(patientId)) {
+      try {
+        const { error } = await supabase
+          .from('chat_sessions')
+          .upsert({
+            clinic_id: clinicId,
+            patient_id: patientId,
+            is_bot_paused: isPaused,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'patient_id'
+          });
+        if (error) throw error;
+      } catch (err) {
+        console.warn('[Supabase] Erro ao alternar silenciamento do bot:', err);
+      }
     }
 
     setWhatsappChats(prev => prev.map(chat => 
@@ -1245,6 +1472,7 @@ export function ClinicProvider({ children }) {
       addTransaction,
       saveProcedures,
       saveInsurancePlans,
+      aiConfig,
       saveAiConfig,
       addAutomation,
       updateAutomationStatus,

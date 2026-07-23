@@ -1,25 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import CommandPalette from '../components/ui/CommandPalette';
 
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import Onboarding from './onboarding/Onboarding';
 
-// Imports dos Módulos Modulares
+// Imports dos Módulos da Aplicação
 import Dashboard from './dashboard/Dashboard';
 import CRM from './crm/CRM';
 import Pacientes from './pacientes/Pacientes';
 import Agenda from './agenda/Agenda';
-import WhatsApp from './whatsapp/WhatsApp';
-import AIModule from './ai/AIModule';
-import Automacoes from './automacoes/Automacoes';
 import Financeiro from './financeiro/Financeiro';
-import Relatorios from './relatorios/Relatorios';
 import Configuracoes from './configuracoes/Configuracoes';
+import WhatsApp from './whatsapp/WhatsApp';
 
 export default function ClinicApp() {
-  const { currentTheme } = useTheme();
+  const { currentTheme, themeMode } = useTheme();
   const { user, clinic } = useAuth();
 
   const onboardingKey = `df_onboarding_done_${clinic?.id}_${user?.id}`;
@@ -27,40 +25,62 @@ export default function ClinicApp() {
     return !localStorage.getItem(onboardingKey);
   });
 
-  // Abas do Panel: 'dashboard' | 'crm' | 'pacientes' | 'agenda' | 'whatsapp' | 'ai' | 'automacoes' | 'marketing' | 'financeiro' | 'relatorios' | 'configuracoes'
+  // Módulos: 'dashboard' | 'agenda' | 'pacientes' | 'crm' | 'financeiro' | 'configuracoes' | 'whatsapp'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [collapsed, setCollapsed] = useState(false);
-
-  // Estados compartilhados de seleção do layout duplo
+  
+  // Modais e seleções compartilhadas
   const [selectedLead, setSelectedLead] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
 
-  // Estados compartilhados da Agenda (elevados)
-  const [agendaDate, setAgendaDate] = useState(new Date());
+  // Estados compartilhados da Agenda
+  const [agendaDate, setAgendaDate] = useState(() => new Date());
   const [selectedChairs, setSelectedChairs] = useState([]);
   const [selectedDentists, setSelectedDentists] = useState([]);
-  const [agendaViewMode, setAgendaViewMode] = useState('week');
-
-  // Estado para preenchimento de agendamento vindo de leads do CRM
+  const [agendaViewMode, setAgendaViewMode] = useState('day');
   const [prefilledLeadData, setPrefilledLeadData] = useState(null);
 
-  // Renderizador condicional do módulo ativo
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCmdPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleQuickAction = (actionType) => {
+    switch (actionType) {
+      case 'agenda':
+        setActiveTab('agenda');
+        break;
+      case 'paciente':
+        setActiveTab('pacientes');
+        break;
+      case 'lead':
+        setActiveTab('crm');
+        break;
+      case 'financeiro':
+        setActiveTab('financeiro');
+        break;
+      case 'whatsapp':
+        setActiveTab('whatsapp');
+        break;
+      default:
+        setActiveTab('dashboard');
+    }
+  };
+
+  // Renderizador condicional do módulo ativo (Full Page Modules)
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />;
-      case 'crm':
-        return (
-          <CRM 
-            selectedLead={selectedLead} 
-            setSelectedLead={setSelectedLead} 
-            setActiveTab={setActiveTab} 
-            setPrefilledLeadData={setPrefilledLeadData} 
-          />
-        );
-      case 'pacientes':
-        return <Pacientes selectedPatient={selectedPatient} setSelectedPatient={setSelectedPatient} />;
+        return <Dashboard onNavigateTab={setActiveTab} />;
       case 'agenda':
         return (
           <Agenda 
@@ -78,28 +98,43 @@ export default function ClinicApp() {
             setSelectedPatient={setSelectedPatient}
             prefilledLeadData={prefilledLeadData}
             setPrefilledLeadData={setPrefilledLeadData}
+            onOpenWhatsApp={() => setActiveTab('whatsapp')}
+          />
+        );
+      case 'pacientes':
+        return (
+          <Pacientes 
+            selectedPatient={selectedPatient} 
+            setSelectedPatient={setSelectedPatient} 
+            onOpenWhatsApp={() => setActiveTab('whatsapp')}
+          />
+        );
+      case 'crm':
+        return (
+          <CRM 
+            selectedLead={selectedLead} 
+            setSelectedLead={setSelectedLead} 
+            setActiveTab={setActiveTab} 
+            setPrefilledLeadData={setPrefilledLeadData} 
+            onOpenWhatsApp={() => setActiveTab('whatsapp')}
           />
         );
       case 'whatsapp':
-        return <WhatsApp />;
-      case 'ai':
-        return <AIModule />;
-      case 'automacoes':
-        return <Automacoes />;
+        return (
+          <WhatsApp 
+            onNavigateTab={setActiveTab}
+            setSelectedPatient={setSelectedPatient}
+            setPrefilledLeadData={setPrefilledLeadData}
+          />
+        );
       case 'financeiro':
         return <Financeiro />;
-      case 'relatorios':
-        return <Relatorios />;
       case 'configuracoes':
         return <Configuracoes />;
       default:
-        return <Dashboard />;
+        return <Dashboard onNavigateTab={setActiveTab} />;
     }
   };
-
-  // Calcular padding esquerdo com base no estado e aba
-  const hasSubSidebar = ['crm', 'pacientes', 'agenda'].includes(activeTab);
-  const showSubSidebar = hasSubSidebar && !collapsed;
 
   if (showOnboarding) {
     return (
@@ -114,8 +149,8 @@ export default function ClinicApp() {
 
   return (
     <div 
-      className="h-screen w-screen p-2 sm:p-4 pb-20 md:pb-4 flex flex-col md:flex-row gap-2 sm:gap-4 overflow-hidden font-body transition-colors duration-300"
-      style={{ backgroundColor: currentTheme.body_bg }}
+      className="h-screen w-screen p-2 sm:p-4 pb-20 md:pb-4 flex flex-col md:flex-row gap-2 sm:gap-4 overflow-hidden font-body transition-colors duration-300 relative bg-[#f8fafc] dark:bg-[#0B1220]"
+      style={themeMode === 'clinic' ? { backgroundColor: currentTheme.body_bg } : undefined}
     >
       {/* Barra Lateral Navegação */}
       <Sidebar 
@@ -137,17 +172,30 @@ export default function ClinicApp() {
         setSelectedDentists={setSelectedDentists}
         agendaViewMode={agendaViewMode}
         setAgendaViewMode={setAgendaViewMode}
+        onOpenWhatsApp={() => setActiveTab('whatsapp')}
       />
 
-      {/* Área de Conteúdo Principal */}
-      <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.015)] overflow-hidden">
-        {/* Cabeçalho */}
-        <Header activeTab={activeTab} />
-
-        {/* Módulo Ativo */}
-        <main className="flex-1 p-6 overflow-hidden flex flex-col h-full">
+      {/* Conteúdo Principal + Cabeçalho Superior */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden rounded-[24px] border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0B1220] shadow-xl transition-colors duration-300">
+        <Header 
+          activeTab={activeTab}
+          onSearchChange={(q) => console.log('Search query:', q)}
+          onOpenWhatsApp={() => setActiveTab('whatsapp')}
+          onQuickAction={handleQuickAction}
+          onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
+        />
+        
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-[#0B1220] transition-colors duration-300">
           {renderContent()}
         </main>
-      </div>    </div>
+      </div>
+
+      {/* Paleta de Comandos (⌘K) */}
+      <CommandPalette 
+        isOpen={isCmdPaletteOpen} 
+        onClose={() => setIsCmdPaletteOpen(false)} 
+        onNavigate={setActiveTab}
+      />
+    </div>
   );
 }

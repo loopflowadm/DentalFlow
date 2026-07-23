@@ -62,13 +62,13 @@ serve(async (req) => {
 
     const senderPhone = remoteJid.split("@")[0];
     
-    // Restringir a resposta para o número de teste apenas se LIMIT_TO_TEST_NUMBER for true (padrão)
+    // Restringir a resposta para o número de teste apenas se LIMIT_TO_TEST_NUMBER for true
     const limitToTest = Deno.env.get("LIMIT_TO_TEST_NUMBER") !== "false";
-    const allowedTestPhone = Deno.env.get("TEST_PHONE_NUMBER") || "558399274420";
+    const allowedTestPhone = Deno.env.get("TEST_PHONE_NUMBER");
     
-    if (limitToTest && senderPhone !== allowedTestPhone) {
+    if (limitToTest && allowedTestPhone && senderPhone !== allowedTestPhone) {
       console.log(`Mensagem recebida de ${senderPhone}. Ignorando pois a trava de número de teste (${allowedTestPhone}) está ativa.`);
-      return new Response(JSON.stringify({ message: `Ignorado. Apenas o número de testes está ativo no momento.` }), {
+      return new Response(JSON.stringify({ message: `Ignorado. Apenas o número de testes configurado está ativo no momento.` }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -110,11 +110,13 @@ serve(async (req) => {
       });
     }
 
-    // Validação de Segurança: Verificar se o token de validação (apikey) coincide
+    // Validação de Segurança Estrita: Exigir token de validação (apikey ou WHATSAPP_WEBHOOK_SECRET)
     const requestApiKey = req.headers.get("apikey") || req.headers.get("x-api-key") || req.headers.get("authorization");
-    if (waConfig.api_key && requestApiKey !== waConfig.api_key) {
+    const expectedSecret = waConfig.api_key || Deno.env.get("WHATSAPP_WEBHOOK_SECRET");
+    
+    if (!expectedSecret || requestApiKey !== expectedSecret) {
       console.warn(`[Segurança] Tentativa de chamada não autorizada ao webhook para a instância: ${instanceName}`);
-      return new Response(JSON.stringify({ error: "Não autorizado. Token de validação inválido." }), {
+      return new Response(JSON.stringify({ error: "Não autorizado. Token de validação ausente ou inválido." }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

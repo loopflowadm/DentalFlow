@@ -44,8 +44,15 @@ const unpackClinicData = (clinic) => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [clinic, setClinic] = useState(() => {
-    const saved = localStorage.getItem('df_session_clinic');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('df_session_clinic');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      return (parsed && typeof parsed === 'object' && parsed.id) ? parsed : null;
+    } catch (e) {
+      console.warn('Erro ao ler sessão armazenada da clínica:', e);
+      return null;
+    }
   });
   const [loading, setLoading] = useState(true);
   const supabaseActive = true;
@@ -269,7 +276,7 @@ export function AuthProvider({ children }) {
         .eq('id', clinic.id);
       if (error) throw error;
     } catch (err) {
-      console.error('Erro ao atualizar clínica no Supabase:', err);
+      console.warn('[AuthContext] Supabase offline/inacessível. Operando no modo local:', err.message || err);
     }
 
     applyTheme(updatedClinic);

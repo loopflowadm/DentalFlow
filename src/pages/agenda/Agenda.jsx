@@ -281,10 +281,26 @@ export default function Agenda({
     return dates;
   };
 
-  const weekDates = getWeekDates(currentDate || new Date());
+  // Parser seguro para garantir um objeto Date válido independente do tipo de entrada
+  const parseDate = (d) => {
+    if (!d) return new Date();
+    if (d instanceof Date) return isNaN(d.getTime()) ? new Date() : d;
+    if (typeof d === 'string') {
+      const parts = d.split('-');
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
+      const parsed = new Date(d);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+    return new Date();
+  };
+
+  const activeDate = parseDate(currentDate);
+  const weekDates = getWeekDates(activeDate);
 
   const navigateDate = (direction) => {
-    const temp = new Date(currentDate || new Date());
+    const temp = new Date(activeDate);
     if (view === 'day' || view === 'chair') {
       temp.setDate(temp.getDate() + direction);
     } else if (view === 'week') {
@@ -631,33 +647,33 @@ export default function Agenda({
       {/* ========================================================================= */}
       {/* CONTROLES SUPERIORES DA GRADE                                            */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/85 backdrop-blur border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#111827] backdrop-blur border border-slate-200/80 dark:border-white/5 p-4 rounded-2xl shadow-sm dark:shadow-2xl flex-shrink-0 transition-colors duration-300">
         
         {/* Date Navigator */}
         <div className="flex items-center gap-3">
-          <CalIcon className="w-5 h-5 text-violet-500 hidden sm:block" />
+          <CalIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 hidden sm:block" />
           <div className="flex items-center gap-1">
             <button 
               onClick={() => navigateDate(-1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <h3 className="text-xs font-bold text-slate-800 dark:text-white w-44 text-center font-title">
-              {(view === 'day' || view === 'chair') && currentDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              {(view === 'day' || view === 'chair') && activeDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
               {view === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}`}
-              {view === 'month' && currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              {view === 'month' && activeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
             </h3>
             <button 
               onClick={() => navigateDate(1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* View Toggle */}
-          <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex border border-slate-200/30 dark:border-slate-700/30">
+          <div className="bg-slate-100 dark:bg-[#0B1220] p-1 rounded-xl flex border border-slate-200/80 dark:border-white/5">
             {['day', 'week', 'month', 'chair'].map(v => {
               if (window.innerWidth < 640 && (v === 'week' || v === 'chair')) return null;
               return (
@@ -666,8 +682,8 @@ export default function Agenda({
                   onClick={() => setView(v)}
                   className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
                     view === v 
-                      ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
-                      : 'text-slate-555 hover:text-slate-700 dark:hover:text-slate-350'
+                      ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                   }`}
                 >
                   {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
@@ -705,19 +721,19 @@ export default function Agenda({
       {/* ========================================================================= */}
       {/* CONTEÚDO PRINCIPAL (GRADE DE HORÁRIOS)                                   */}
       {/* ========================================================================= */}
-      <div className="flex-1 bg-white/80 dark:bg-slate-900/85 backdrop-blur border border-slate-200/40 dark:border-slate-800/80 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white dark:bg-[#111827] backdrop-blur border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden flex flex-col transition-colors duration-300">
         
         {/* VIEW: SEMANA */}
         {view === 'week' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            <div className="grid grid-cols-8 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-550 font-semibold text-[10px] uppercase tracking-wider">
-              <div className="flex items-center justify-center border-r border-slate-200/50 dark:border-slate-800/50">Horário</div>
+            <div className="grid grid-cols-8 border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0B1220]/60 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase tracking-wider transition-colors duration-300">
+              <div className="flex items-center justify-center border-r border-slate-200/80 dark:border-white/5">Horário</div>
               {weekDates.map((date, idx) => {
                 const isToday = date.toDateString() === new Date().toDateString();
                 return (
-                  <div key={idx} className={`flex flex-col items-center justify-center ${isToday ? 'text-violet-500' : ''}`}>
+                  <div key={idx} className={`flex flex-col items-center justify-center ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`}>
                     <span>{weekdays[date.getDay()].substring(0, 3)}</span>
-                    <span className={`text-base font-extrabold font-title mt-0.5 ${isToday ? 'bg-violet-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm' : ''}`}>
+                    <span className={`text-base font-extrabold font-title mt-0.5 ${isToday ? 'bg-[#196BFB] text-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm' : ''}`}>
                       {date.getDate()}
                     </span>
                   </div>
@@ -796,7 +812,7 @@ export default function Agenda({
           <div className="flex-grow flex flex-col overflow-y-auto">
             <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-4 flex-shrink-0 text-slate-550 font-semibold text-xs">
               <h4 className="font-title font-extrabold text-sm text-slate-800 dark:text-white">
-                {weekdays[currentDate.getDay()]}
+                {weekdays[activeDate.getDay()]}
               </h4>
             </div>
 
@@ -805,9 +821,9 @@ export default function Agenda({
                 const hour = parseInt(time.split(':')[0]);
                 const dayApps = filteredApps.filter(app => {
                   const appStart = new Date(app.start_time);
-                  return appStart.getDate() === currentDate.getDate() && 
-                         appStart.getMonth() === currentDate.getMonth() && 
-                         appStart.getFullYear() === currentDate.getFullYear() && 
+                  return appStart.getDate() === activeDate.getDate() && 
+                         appStart.getMonth() === activeDate.getMonth() && 
+                         appStart.getFullYear() === activeDate.getFullYear() && 
                          appStart.getHours() === hour;
                 });
 
@@ -872,19 +888,19 @@ export default function Agenda({
             <div className="grid grid-cols-7 grid-rows-5 flex-grow divide-x divide-y divide-slate-100 dark:divide-slate-800/80 border-b border-r border-slate-100 dark:border-slate-800/80">
               {(() => {
                 const days = [];
-                const startMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const startMonth = new Date(activeDate.getFullYear(), activeDate.getMonth(), 1);
                 const startDay = startMonth.getDay();
                 
                 for (let i = 0; i < startDay; i++) {
                   days.push(<div key={`prev-${i}`} className="bg-slate-50/50 dark:bg-slate-900/10 min-h-[90px]" />);
                 }
 
-                const totalDays = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+                const totalDays = new Date(activeDate.getFullYear(), activeDate.getMonth() + 1, 0).getDate();
                 for (let d = 1; d <= totalDays; d++) {
-                  const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
+                  const cellDate = new Date(activeDate.getFullYear(), activeDate.getMonth(), d);
                   const matchedApps = filteredApps.filter(app => {
                     const appStart = new Date(app.start_time);
-                    return appStart.getDate() === d && appStart.getMonth() === currentDate.getMonth() && appStart.getFullYear() === currentDate.getFullYear();
+                    return appStart.getDate() === d && appStart.getMonth() === activeDate.getMonth() && appStart.getFullYear() === activeDate.getFullYear();
                   });
 
                   days.push(
@@ -965,9 +981,9 @@ export default function Agenda({
                       {activeChairs.map((chair, cIdx) => {
                         const chairApps = filteredApps.filter(app => {
                           const appStart = new Date(app.start_time);
-                          const matchesDate = appStart.getDate() === currentDate.getDate() &&
-                                              appStart.getMonth() === currentDate.getMonth() &&
-                                              appStart.getFullYear() === currentDate.getFullYear();
+                          const matchesDate = appStart.getDate() === activeDate.getDate() &&
+                                              appStart.getMonth() === activeDate.getMonth() &&
+                                              appStart.getFullYear() === activeDate.getFullYear();
                           const matchesHour = appStart.getHours() === hour;
                           const matchesChair = app.chair_id === chair.id || app.room === chair.name;
                           return matchesDate && matchesHour && matchesChair;
@@ -977,10 +993,10 @@ export default function Agenda({
                           <div
                             key={cIdx}
                             onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, time, currentDate, chair.id)}
+                            onDrop={(e) => handleDrop(e, time, activeDate, chair.id)}
                             className="p-1 border-r last:border-r-0 border-slate-100 dark:border-slate-800/40 relative transition-colors"
                           >
-                            {chairApps.length === 0 && renderCellSubSlots(currentDate, time, () => setAppChairId(chair.id))}
+                            {chairApps.length === 0 && renderCellSubSlots(activeDate, time, () => setAppChairId(chair.id))}
                             {chairApps.map(app => (
                               <div
                                 key={app.id}
@@ -1203,7 +1219,7 @@ export default function Agenda({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-855 dark:text-white"
+              className="bg-white dark:bg-[#111827] rounded-[28px] max-w-md w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 relative text-slate-800 dark:text-white transition-colors duration-300"
             >
               {/* Fechar */}
               <button 
@@ -1212,14 +1228,14 @@ export default function Agenda({
                   setShowQuickPatientForm(false);
                   setEditingApp(null);
                 }}
-                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-250 transition-colors"
+                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
 
               {/* TABS DE SELEÇÃO */}
               {!editingApp ? (
-                <div className="flex bg-slate-100 dark:bg-black/40 p-1.5 rounded-2xl border border-slate-200/30 dark:border-slate-800/80 mb-5 max-w-xs">
+                <div className="flex bg-slate-100 dark:bg-[#0B1220] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/5 mb-5 max-w-xs transition-colors duration-300">
                   {['consulta', 'compromisso', 'tarefa'].map(tab => (
                     <button
                       key={tab}
@@ -1227,8 +1243,8 @@ export default function Agenda({
                       onClick={() => setActiveModalTab(tab)}
                       className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
                         activeModalTab === tab 
-                          ? 'bg-white dark:bg-slate-750 text-slate-850 dark:text-white shadow-sm' 
-                          : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {tab}
@@ -1250,12 +1266,12 @@ export default function Agenda({
                     {/* Dentista & Cadeira */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Dentista</label>
+                        <label className="block text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1">Dentista</label>
                         <select
                           required
                           value={appDoctorId}
                           onChange={(e) => setAppDoctorId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                          className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
                         >
                           {dentists.map(d => (
                             <option key={d.id} value={d.id}>{d.full_name}</option>
@@ -1263,12 +1279,12 @@ export default function Agenda({
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Cadeira</label>
+                        <label className="block text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1">Cadeira</label>
                         <select
                           required
                           value={appChairId}
                           onChange={(e) => setAppChairId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                          className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
                         >
                           {chairs.map(c => (
                             <option key={c.id} value={c.id}>{c.name}</option>
@@ -1363,7 +1379,7 @@ export default function Agenda({
                                     setShowSuggestions(true);
                                   }}
                                   onFocus={() => setShowSuggestions(true)}
-                                  className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary transition-colors duration-300"
                                 />
                                 {showSuggestions && patientSearch && (
                                   <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">

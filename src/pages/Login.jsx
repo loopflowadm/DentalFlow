@@ -110,14 +110,7 @@ export default function Login({ initialView = 'login', onBack }) {
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]/g, '');
 
-      let active = true;
-      const run = async () => {
-        await Promise.resolve();
-        if (active) {
-          setSubdomain(slug);
-        }
-      };
-      run();
+      setSubdomain(prev => (prev === slug ? prev : slug));
 
       applyTheme({
         name: clinicName,
@@ -125,11 +118,8 @@ export default function Login({ initialView = 'login', onBack }) {
         secondary_color: regSecondaryColor,
         logo_url: regLogo
       });
-
-      return () => {
-        active = false;
-      };
     } else {
+      setSubdomain('');
       resetTheme();
     }
   }, [clinicName, regPrimaryColor, regSecondaryColor, regLogo, view, applyTheme, resetTheme]);
@@ -310,18 +300,21 @@ export default function Login({ initialView = 'login', onBack }) {
               ) ? (
                 <img src={currentTheme.logo_url} className="h-10 object-contain rounded-lg" alt={currentTheme.name} />
               ) : currentTheme?.logo_url && currentTheme.logo_url.trim().length <= 4 ? (
-                (() => {
-                  const logoMap = {
-                    '🦷': Activity,
-                    '✨': Sparkles,
-                    '💎': Gem,
-                    '🏥': Building,
-                    '🛡️': Shield,
-                    '⚕️': Activity
-                  };
-                  const IconComponent = logoMap[currentTheme.logo_url] || Activity;
-                  return <IconComponent className="h-10 w-10 text-white" style={{ color: currentTheme.secondary_color }} />;
-                })()
+                currentTheme.logo_url === '🦷' ? (
+                  <Logo collapsed={true} className="h-10 w-10 text-white" />
+                ) : (
+                  (() => {
+                    const logoMap = {
+                      '✨': Sparkles,
+                      '💎': Gem,
+                      '🏥': Building,
+                      '🛡️': Shield,
+                      '⚕️': Activity
+                    };
+                    const IconComponent = logoMap[currentTheme.logo_url] || Activity;
+                    return <IconComponent className="h-10 w-10 text-white" style={{ color: currentTheme.secondary_color }} />;
+                  })()
+                )
               ) : (
                 <Logo collapsed={false} className="h-10 w-auto text-white" />
               )}
@@ -476,7 +469,7 @@ export default function Login({ initialView = 'login', onBack }) {
                 <input
                   type="text"
                   required
-                  placeholder="Dr. Thácio Maikon"
+                  placeholder="Ex: Dra. Ana Paula Silva"
                   value={regFullName}
                   onChange={(e) => setRegFullName(e.target.value)}
                   className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary"

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const ThemeContext = createContext();
 
@@ -64,14 +64,35 @@ export function ThemeProvider({ children }) {
     return localStorage.getItem('theme-mode-three') || 'clinic';
   });
 
-  const applyTheme = (theme) => {
-    const updatedTheme = { ...defaultTheme, ...theme };
-    setClinicTheme(updatedTheme);
-  };
+  const applyTheme = useCallback((theme) => {
+    if (!theme) return;
+    setClinicTheme(prev => {
+      if (
+        prev.name === theme.name &&
+        prev.primary_color === theme.primary_color &&
+        prev.secondary_color === theme.secondary_color &&
+        prev.logo_url === theme.logo_url &&
+        prev.accent_color === theme.accent_color
+      ) {
+        return prev;
+      }
+      return { ...defaultTheme, ...theme };
+    });
+  }, []);
 
-  const resetTheme = () => {
-    applyTheme(defaultTheme);
-  };
+  const resetTheme = useCallback(() => {
+    setClinicTheme(prev => {
+      if (
+        prev.name === defaultTheme.name &&
+        prev.primary_color === defaultTheme.primary_color &&
+        prev.secondary_color === defaultTheme.secondary_color &&
+        prev.logo_url === defaultTheme.logo_url
+      ) {
+        return prev;
+      }
+      return defaultTheme;
+    });
+  }, []);
 
   // Recalcular o tema atual quando mudar o modo do tema ou o tema da clínica
   const currentTheme = useMemo(() => {
@@ -83,8 +104,8 @@ export function ThemeProvider({ children }) {
         primary_color: '#03269A',
         secondary_color: '#196BFB',
         accent_color: '#D9E2FF',
-        sidebar_bg_1: '#07112E',
-        sidebar_bg_2: '#0A173B',
+        sidebar_bg_1: '#ffffff',
+        sidebar_bg_2: '#f8fafc',
         body_bg: '#f8fafc'
       };
     } else if (themeMode === 'dark') {
@@ -100,19 +121,19 @@ export function ThemeProvider({ children }) {
     } else {
       // 'clinic'
       const isClinicDark = clinicTheme.theme_base === 'dark';
-      const darkerPrimary = adjustColorBrightness(clinicTheme.primary_color, -25);
-      const accentBg = clinicTheme.accent_color || '#D9E2FF';
       
       let finalBodyBg;
-      let finalSidebar1 = clinicTheme.primary_color;
-      let finalSidebar2 = darkerPrimary;
+      let finalSidebar1;
+      let finalSidebar2;
       
       if (isClinicDark) {
         finalBodyBg = '#020617';
         finalSidebar1 = adjustColorBrightness(clinicTheme.primary_color, -40);
         finalSidebar2 = adjustColorBrightness(clinicTheme.primary_color, -55);
       } else {
-        finalBodyBg = adjustColorBrightness(accentBg, 80);
+        finalBodyBg = '#f8fafc';
+        finalSidebar1 = '#ffffff';
+        finalSidebar2 = '#f8fafc';
       }
 
       activeTheme = {

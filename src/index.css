@@ -169,3 +169,49 @@
 .widget-coral-solid {
   background-color: rgb(var(--widget-coral));
 }
+
+/* Animação de Onda Fluida (Flow Effect) para as 3 faixas da logo DentalFlow */
+@keyframes logoFlowPulse1 {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 2px rgba(25, 107, 251, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(0, 242, 254, 0.8));
+  }
+}
+
+@keyframes logoFlowPulse2 {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8));
+  }
+}
+
+@keyframes logoFlowPulse3 {
+  0%, 100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 2px rgba(6, 182, 212, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(129, 140, 248, 0.8));
+  }
+}
+
+.logo-flow-wave-1 {
+  animation: logoFlowPulse1 3.5s ease-in-out infinite;
+}
+
+.logo-flow-wave-2 {
+  animation: logoFlowPulse2 3.5s ease-in-out infinite 0.7s;
+}
+
+.logo-flow-wave-3 {
+  animation: logoFlowPulse3 3.5s ease-in-out infinite 1.4s;
+}

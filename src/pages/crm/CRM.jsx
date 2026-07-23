@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -6,13 +6,13 @@ import {
   Plus, Search, CheckSquare, MessageSquare, Paperclip, 
   Clock, X, Phone, Calendar, Send, Sparkles, Download, 
   Check, FileText, ArrowRight, UserCheck, AlertCircle, HelpCircle,
-  User
+  User, LayoutGrid, Eye, EyeOff, DollarSign, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
-export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPrefilledLeadData }) {
-  const { crmLeads, updateCrmLead, convertLeadToPatient, patients } = useClinic();
+export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPrefilledLeadData, onOpenWhatsApp }) {
+  const { crmLeads, updateCrmLead, convertLeadToPatient, patients, sendWhatsAppMessage } = useClinic();
   const { user } = useAuth();
-  const { currentTheme } = useTheme();
+  const { currentTheme, themeMode } = useTheme();
   
   // Lista de Colunas (Etapas)
   const columns = [
@@ -21,12 +21,13 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
     'Tratamento', 'Retorno', 'Concluído', 'Perdido'
   ];
 
-  // Abas do painel central
+  // Modo de visualização do CRM: 'details' (Ficha do Lead) | 'kanban' (Quadro Kanban)
+  const [crmViewMode, setCrmViewMode] = useState('details');
   const [activeCenterTab, setActiveCenterTab] = useState('chat'); // 'chat' | 'details' | 'files'
+  const [showFinancialValues, setShowFinancialValues] = useState(false); // Oculto por padrão para proteção de dados sensíveis (LGPD)
 
-  // Input de Mensagem/Nota
+  // Input de Anotação Interna
   const [inputText, setInputText] = useState('');
-  const [inputMode, setInputMode] = useState('whatsapp'); // 'whatsapp' | 'note'
 
   // Campos para Edição do Lead
   const [editName, setEditName] = useState('');
@@ -34,6 +35,75 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   const [editProcedure, setEditProcedure] = useState('');
   const [editBudget, setEditBudget] = useState('');
   const [editPriority, setEditPriority] = useState('medium');
+
+  // Drag and drop states no Kanban
+  const [draggedLeadId, setDraggedLeadId] = useState(null);
+  const [dragOverColIdx, setDragOverColIdx] = useState(null);
+
+  // Ref e Handlers para Arrastar Tela no Quadro Kanban (Drag-to-Scroll)
+  const kanbanContainerRef = useRef(null);
+  const isMouseDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const [isDraggingBoard, setIsDraggingBoard] = useState(false);
+
+  const handleKanbanScroll = (direction) => {
+    if (kanbanContainerRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320;
+      kanbanContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  const handleMouseDownBoard = (e) => {
+    // Não iniciar se o clique for em botões, campos ou cartões de leads arrastáveis
+    if (e.target.closest('button, input, select, a, [draggable="true"]')) return;
+    isMouseDownRef.current = true;
+    startXRef.current = e.pageX - (kanbanContainerRef.current?.offsetLeft || 0);
+    scrollLeftRef.current = kanbanContainerRef.current?.scrollLeft || 0;
+    setIsDraggingBoard(true);
+  };
+
+  const handleMouseLeaveBoard = () => {
+    isMouseDownRef.current = false;
+    setIsDraggingBoard(false);
+  };
+
+  const handleMouseUpBoard = () => {
+    isMouseDownRef.current = false;
+    setIsDraggingBoard(false);
+  };
+
+  const handleMouseMoveBoard = (e) => {
+    if (!isMouseDownRef.current || !kanbanContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - (kanbanContainerRef.current.offsetLeft || 0);
+    const walk = (x - startXRef.current) * 1.8;
+    kanbanContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleDropLeadToStage = (leadId, targetColIdx) => {
+    const lead = crmLeads.find(l => l.id === leadId);
+    if (!lead || (lead.stage || 0) === targetColIdx) return;
+
+    const updated = {
+      ...lead,
+      stage: targetColIdx,
+      history: [
+        ...(lead.history || []),
+        {
+          date: new Date().toISOString(),
+          type: 'STAGE_CHANGE',
+          description: `Arrastado no Kanban para "${columns[targetColIdx]}"`,
+          user: user?.full_name || 'Profissional'
+        }
+      ]
+    };
+
+    updateCrmLead(updated);
+    if (selectedLead?.id === lead.id) {
+      setSelectedLead(updated);
+    }
+  };
 
   // Input de checklist rápido no Widget Direito
   const [newChecklistText, setNewChecklistText] = useState('');
@@ -58,65 +128,41 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   // Sincronizar dados de edição quando o lead ativo muda
   useEffect(() => {
     if (selectedLead) {
-      let active = true;
-      const run = async () => {
-        await Promise.resolve();
-        if (active) {
-          setEditName(selectedLead.name || '');
-          setEditPhone(selectedLead.phone || '');
-          setEditProcedure(selectedLead.procedure_name || '');
-          setEditBudget(selectedLead.budget_amount || '');
-          setEditPriority(selectedLead.priority || 'medium');
-        }
-      };
-      run();
-      return () => {
-        active = false;
-      };
+      setEditName(selectedLead.name || '');
+      setEditPhone(selectedLead.phone || '');
+      setEditProcedure(selectedLead.procedure_name || '');
+      setEditBudget(selectedLead.budget_amount || '');
+      setEditPriority(selectedLead.priority || 'medium');
     }
   }, [selectedLead]);
 
   if (!selectedLead) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-slate-50 dark:bg-slate-900 rounded-[28px] border border-slate-200/40 dark:border-slate-800/40">
-        <HelpCircle className="w-16 h-16 text-slate-350 dark:text-slate-600 animate-bounce mb-4" />
-        <h3 className="text-lg font-bold font-title text-slate-850 dark:text-white">Nenhum Paciente Selecionado</h3>
-        <p className="text-xs text-slate-400 mt-1 max-w-sm">
-          Selecione um paciente na lista lateral para ver os detalhes, conversas e widgets.
-        </p>
+      <div className="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm bg-white dark:bg-[#111827] rounded-[28px] border border-slate-200/80 dark:border-white/5 p-8 transition-colors duration-300 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center">
+          <User className="w-8 h-8" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-slate-800 dark:text-white font-title">
+            Nenhum Lead Selecionado na Jornada
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+            Selecione uma oportunidade no painel lateral para gerenciar histórico, negociação e odontograma comercial.
+          </p>
+        </div>
       </div>
     );
   }
 
-  // Ações de Atualização do Lead
-  const handleSaveDetails = (e) => {
-    e.preventDefault();
-    const updated = {
-      ...selectedLead,
-      name: editName,
-      phone: editPhone,
-      procedure_name: editProcedure,
-      budget_amount: parseFloat(editBudget) || 0,
-      priority: editPriority,
-      history: [
-        ...(selectedLead.history || []),
-        {
-          date: new Date().toISOString(),
-          type: 'EDIT',
-          description: `Atualizou os dados cadastrais comerciais`,
-          user: user?.full_name || 'Profissional'
-        }
-      ]
-    };
-    updateCrmLead(updated);
-    setSelectedLead(updated);
-    alert('Dados atualizados com sucesso!');
-  };
-
-  const handleUpdateStage = (newStageIdx) => {
+  // Avançar ou Recuar Estágio
+  const handleStageChange = (direction) => {
+    const currentIdx = selectedLead.stage || 0;
+    const newStageIdx = Math.max(0, Math.min(columns.length - 1, currentIdx + direction));
+    
     const updated = {
       ...selectedLead,
       stage: newStageIdx,
+      status: columns[newStageIdx],
       history: [
         ...(selectedLead.history || []),
         {
@@ -132,11 +178,19 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   };
 
   const handleConvertToPatient = async () => {
-    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? Ele será promovido para o prontuário.`)) {
+    if (window.confirm(`Deseja converter "${selectedLead.name}" em paciente clínico ativo? O registro continuará salvo na Jornada Comercial.`)) {
       try {
-        await convertLeadToPatient(selectedLead.id);
-        setSelectedLead(null);
-        alert('Paciente cadastrado com sucesso!');
+        const patData = await convertLeadToPatient(selectedLead.id);
+        if (selectedLead) {
+          const updated = {
+            ...selectedLead,
+            stage: selectedLead.stage < 7 ? 7 : selectedLead.stage,
+            is_patient: true,
+            patient_id: patData?.id
+          };
+          setSelectedLead(updated);
+        }
+        alert(`"${selectedLead.name}" foi convertido em Paciente Clínico com sucesso! O registro permanece salvo no CRM.`);
       } catch (err) {
         console.error('Erro ao converter lead em paciente:', err);
         alert('Falha ao converter lead em paciente.');
@@ -144,19 +198,25 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
     }
   };
 
-  // Enviar Mensagem (WhatsApp) ou Nota Interna
+  const handleOpenWhatsApp = () => {
+    if (onOpenWhatsApp) {
+      onOpenWhatsApp();
+    } else if (setActiveTab) {
+      setActiveTab('whatsapp');
+    }
+  };
+
+  // Adicionar Nota Interna
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
 
-    const isWa = inputMode === 'whatsapp';
-    
-    // Novo item de histórico / comentário
+    // Novo item de histórico / nota interna
     const newComment = {
       date: new Date().toISOString(),
       text: inputText,
       user: user?.full_name || 'Profissional',
-      mode: inputMode // 'whatsapp' ou 'note'
+      mode: 'note'
     };
 
     const updated = {
@@ -166,8 +226,8 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
         ...(selectedLead.history || []),
         {
           date: new Date().toISOString(),
-          type: isWa ? 'WHATSAPP_SEND' : 'NOTE_ADD',
-          description: isWa ? `Mensagem simulada enviada: "${inputText}"` : `Adicionou nota interna: "${inputText}"`,
+          type: 'NOTE_ADD',
+          description: `Adicionou nota interna: "${inputText}"`,
           user: user?.full_name || 'Profissional'
         }
       ]
@@ -204,9 +264,26 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
       ...selectedLead,
       checklist: [...(selectedLead.checklist || []), newItem]
     };
+
     updateCrmLead(updated);
     setSelectedLead(updated);
     setNewChecklistText('');
+  };
+
+  // Salvar edições do lead
+  const handleSaveLeadEdits = (e) => {
+    e.preventDefault();
+    const updated = {
+      ...selectedLead,
+      name: editName,
+      phone: editPhone,
+      procedure_name: editProcedure,
+      budget_amount: editBudget ? parseFloat(editBudget) : null,
+      priority: editPriority
+    };
+    updateCrmLead(updated);
+    setSelectedLead(updated);
+    alert('Dados do paciente atualizados com sucesso!');
   };
 
   // Mock de Anexo de Exame / Proposta
@@ -237,38 +314,278 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
     <div className="h-full flex gap-6 overflow-hidden select-none">
       
       {/* ========================================================================= */}
-      {/* COLUNA 2: DETALHES DO LEAD (CENTRO - 60% / FLEX-1)                         */}
+      {/* COLUNA 2: DETALHES DO LEAD (CENTRO - FLEX-1)                               */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-slate-850 rounded-[28px] border border-slate-200/40 dark:border-slate-800/80 shadow-[0_8px_30px_rgba(0,0,0,0.01)] overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white dark:bg-[#111827] rounded-[28px] border border-slate-200/80 dark:border-white/5 shadow-sm dark:shadow-2xl overflow-hidden transition-colors duration-300 text-left">
         
-        {/* HEADER DO LEAD */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* BARRA SUPERIOR DE MODO DE VISÃO & CONTROLE DA JORNADA */}
+        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#0B1220]/60 flex items-center justify-between transition-colors duration-300">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCrmViewMode('kanban')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                crmViewMode === 'kanban'
+                  ? 'bg-[#196BFB] text-white shadow-sm'
+                  : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/5'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Quadro Kanban</span>
+            </button>
+
+            <button
+              onClick={() => setCrmViewMode('details')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                crmViewMode === 'details'
+                  ? 'bg-[#196BFB] text-white shadow-sm'
+                  : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/5'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Ficha do Paciente</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {crmViewMode === 'kanban' && (
+              <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200/80 dark:border-white/10 p-0.5 rounded-xl">
+                <button
+                  onClick={() => handleKanbanScroll('left')}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  title="Rolar colunas para a esquerda"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-[9px] font-bold text-slate-400 px-1">Ver Colunas</span>
+                <button
+                  onClick={() => handleKanbanScroll('right')}
+                  className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                  title="Rolar colunas para a direita"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Ícone discreto apenas (sem texto) para alternar visibilidade de orçamentos */}
+            <button
+              onClick={() => setShowFinancialValues(prev => !prev)}
+              className={`p-2 rounded-xl transition-all border cursor-pointer ${
+                showFinancialValues
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-sm'
+                  : 'bg-slate-100 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+              title={showFinancialValues ? "Orçamentos exibidos (Clique para ocultar)" : "Orçamentos ocultos (Clique para exibir)"}
+            >
+              {showFinancialValues ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </button>
+
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider hidden sm:inline-block">
+              {crmLeads.length} Oportunidades
+            </span>
+          </div>
+        </div>
+
+        {crmViewMode === 'kanban' ? (
+          /* ========================================================================= */
+          /* MODO KANBAN: BOARD PIPELINE DE ESTÁGIOS (MINIMALISTA)                    */
+          /* ========================================================================= */
+          <div 
+            ref={kanbanContainerRef}
+            onMouseDown={handleMouseDownBoard}
+            onMouseLeave={handleMouseLeaveBoard}
+            onMouseUp={handleMouseUpBoard}
+            onMouseMove={handleMouseMoveBoard}
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+            className={`flex-1 p-4 overflow-x-auto scrollbar-thin flex gap-4 bg-slate-100/60 dark:bg-[#0B1220]/40 min-w-0 transition-colors ${
+              isDraggingBoard ? 'cursor-grabbing select-none' : 'cursor-grab'
+            }`}
+          >
+            {columns.map((colName, colIdx) => {
+              const columnLeads = crmLeads.filter(l => (l.stage || 0) === colIdx);
+              const columnTotal = columnLeads.reduce((acc, l) => acc + (l.budget_amount || 0), 0);
+              const isDragOver = dragOverColIdx === colIdx;
+
+              return (
+                <div 
+                  key={colName}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (dragOverColIdx !== colIdx) setDragOverColIdx(colIdx);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                      setDragOverColIdx(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const leadId = e.dataTransfer.getData('text/plain') || draggedLeadId;
+                    if (leadId) {
+                      handleDropLeadToStage(leadId, colIdx);
+                    }
+                    setDragOverColIdx(null);
+                    setDraggedLeadId(null);
+                  }}
+                  className={`w-72 flex-shrink-0 bg-white dark:bg-[#111827] border rounded-2xl flex flex-col h-full shadow-sm overflow-hidden transition-all duration-200 ${
+                    isDragOver 
+                      ? 'border-[#196BFB] ring-2 ring-[#196BFB]/30 bg-blue-50/50 dark:bg-blue-900/20 scale-[1.01]' 
+                      : 'border-slate-200/80 dark:border-white/5'
+                  }`}
+                >
+                  {/* Cabeçalho da Coluna do Kanban */}
+                  <div className="p-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0B1220]/60 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#196BFB]" />
+                      <h3 className="text-xs font-bold text-slate-800 dark:text-white font-title truncate max-w-[130px]">
+                        {colName}
+                      </h3>
+                      <span className="px-1.5 py-0.5 rounded-md bg-slate-200/60 dark:bg-white/10 text-[10px] font-extrabold text-slate-700 dark:text-slate-300">
+                        {columnLeads.length}
+                      </span>
+                    </div>
+
+                    {showFinancialValues && columnTotal > 0 && (
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                        R$ {columnTotal.toLocaleString('pt-BR')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Cards de Leads da Coluna (Design Minimalista) */}
+                  <div className="flex-1 p-3 overflow-y-auto space-y-3 scrollbar-thin">
+                    {columnLeads.map(lead => {
+                      const isSelected = selectedLead?.id === lead.id;
+                      const isBeingDragged = draggedLeadId === lead.id;
+
+                      return (
+                        <div
+                          key={lead.id}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('text/plain', lead.id);
+                            e.dataTransfer.effectAllowed = 'move';
+                            setDraggedLeadId(lead.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggedLeadId(null);
+                            setDragOverColIdx(null);
+                          }}
+                          onClick={() => {
+                            setSelectedLead(lead);
+                            setCrmViewMode('details');
+                          }}
+                          className={`p-3.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing relative group ${
+                            isBeingDragged
+                              ? 'opacity-40 scale-95 border-dashed border-[#196BFB] bg-blue-500/10'
+                              : isSelected
+                                ? 'border-[#196BFB] bg-blue-50/40 dark:bg-blue-900/20 shadow-md'
+                                : 'border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0B1220]/60 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 font-bold text-xs border border-slate-200/60 dark:border-white/5">
+                                {lead.avatar && lead.avatar !== '👤' ? lead.avatar : <User className="w-4 h-4" />}
+                              </span>
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-[#196BFB] transition-colors">
+                                  {lead.name}
+                                </h4>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[140px]">
+                                  {lead.procedure_name || 'Consulta Geral'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                              lead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                            }`}>
+                              {lead.priority === 'high' ? 'Alta' : lead.priority === 'medium' ? 'Média' : 'Baixa'}
+                            </span>
+                          </div>
+
+                          {/* Rodapé Minimalista: Exibe valor apenas quando ativado, e botões de navegação rápida */}
+                          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                              {showFinancialValues && lead.budget_amount ? `R$ ${lead.budget_amount.toLocaleString('pt-BR')}` : ''}
+                            </span>
+
+                            {/* Botões para mover estágio rapidamente */}
+                            <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                              {colIdx > 0 && (
+                                <button
+                                  onClick={() => handleDropLeadToStage(lead.id, colIdx - 1)}
+                                  className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-bold"
+                                  title="Recuar estágio"
+                                >
+                                  ←
+                                </button>
+                              )}
+
+                              {colIdx < columns.length - 1 && (
+                                <button
+                                  onClick={() => handleDropLeadToStage(lead.id, colIdx + 1)}
+                                  className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-600 dark:text-slate-300 flex items-center justify-center text-xs font-bold"
+                                  title="Avançar estágio"
+                                >
+                                  →
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {columnLeads.length === 0 && (
+                      <div className="py-8 text-center text-slate-400 text-xs font-bold italic border border-dashed border-slate-200 dark:border-white/5 rounded-xl">
+                        Nenhum lead nesta etapa
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* ========================================================================= */
+          /* MODO DETALHES DO LEAD                                                     */
+          /* ========================================================================= */
+          <>
+            {/* HEADER DO LEAD */}
+        <div className="p-6 border-b border-slate-200/80 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors duration-300">
           <div className="flex items-center gap-4">
-            <span className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 w-14 h-14">
+            <span className="p-2.5 bg-slate-100 dark:bg-[#0B1220]/60 rounded-2xl flex items-center justify-center text-slate-500 dark:text-slate-400 w-14 h-14 border border-slate-200/60 dark:border-white/5">
               {selectedLead.avatar && selectedLead.avatar !== '👤' ? selectedLead.avatar : <User className="w-8 h-8" />}
             </span>
             <div>
-              <h2 className="text-lg font-black font-title text-slate-850 dark:text-white flex items-center gap-2">
+              <h2 className="text-lg font-black font-title text-slate-800 dark:text-white flex items-center gap-2">
                 {selectedLead.name}
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">
                   {selectedLead.procedure_name || 'Consulta Geral'}
                 </span>
-                <span className="text-[10px] text-slate-450">•</span>
-                <span className="text-[10px] text-slate-400 font-bold">
+                <span className="text-[10px] text-slate-400">•</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
                   {selectedLead.phone}
                 </span>
                 
                 {/* Badges de Status */}
                 <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold ${
-                  selectedLead.priority === 'high' ? 'bg-[#FF5B60]/10 text-[#FF5B60]' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                  selectedLead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                 }`}>
                   Prioridade: {selectedLead.priority === 'high' ? 'Alta' : selectedLead.priority === 'medium' ? 'Média' : 'Baixa'}
                 </span>
 
-                <span className="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-sky-500/10 text-sky-400">
-                  {columns[selectedLead.stage]}
+                <span className="px-2 py-0.5 rounded-lg text-[9px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                  {columns[selectedLead.stage || 0]}
                 </span>
               </div>
             </div>
@@ -280,18 +597,16 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
             <div className="flex gap-1.5">
               <button 
                 onClick={() => alert(`Ligando simulado para ${selectedLead.phone}...`)}
-                className="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-600 dark:text-slate-300 rounded-full flex items-center justify-center"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Ligar para o lead"
               >
                 <Phone className="w-4 h-4" />
               </button>
               
               <button 
-                onClick={() => setInputMode('whatsapp')}
-                className={`w-9 h-9 active:scale-95 transition-all rounded-full flex items-center justify-center ${
-                  inputMode === 'whatsapp' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-350'
-                }`}
-                title="Simular conversa de WhatsApp"
+                onClick={handleOpenWhatsApp}
+                className="w-9 h-9 bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 transition-all text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center border border-emerald-500/20 shadow-sm"
+                title="Abrir conversa no menu WhatsApp"
               >
                 <MessageSquare className="w-4 h-4" />
               </button>
@@ -311,7 +626,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     alert('Direcionando para a aba Agenda para marcar consulta...');
                   }
                 }}
-                className="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-600 dark:text-slate-350 rounded-full flex items-center justify-center"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Agendar Consulta"
               >
                 <Calendar className="w-4 h-4" />
@@ -319,7 +634,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
               <button 
                 onClick={() => handleAttachMockFile(`Proposta_Tratamento_${selectedLead.name.replace(' ', '_')}.pdf`, '1.5 MB')}
-                className="w-9 h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all text-slate-600 dark:text-slate-350 rounded-full flex items-center justify-center"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Anexar Proposta Comercial (MOCK)"
               >
                 <Paperclip className="w-4 h-4" />
@@ -329,7 +644,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
             {/* Converter em Paciente */}
             <button
               onClick={handleConvertToPatient}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-1.5"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white font-extrabold text-xs rounded-xl shadow-md flex items-center gap-1.5"
             >
               <UserCheck className="w-4 h-4" />
               <span>Tornar Paciente Ativo</span>
@@ -337,34 +652,133 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
           </div>
         </div>
 
+        {/* BARRA VISUAL DE ESTÁGIOS DA JORNADA (FUNNEL STEPPER DIVIDIDO IGUALMENTE 6x2) */}
+        <div className="px-6 py-3.5 bg-slate-50/90 dark:bg-[#0B1220]/70 border-b border-slate-200/80 dark:border-white/5 space-y-3 transition-colors duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#196BFB] animate-pulse" />
+              Estágio do Funil (12 Etapas Comerciais):
+            </span>
+
+            {/* Select Dropdown de Acesso Rápido */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">Seleção Direta:</span>
+              <select
+                value={selectedLead.stage || 0}
+                onChange={(e) => {
+                  const idx = parseInt(e.target.value, 10);
+                  const updated = {
+                    ...selectedLead,
+                    stage: idx,
+                    history: [
+                      ...(selectedLead.history || []),
+                      {
+                        date: new Date().toISOString(),
+                        type: 'STAGE_CHANGE',
+                        description: `Estágio alterado para "${columns[idx]}"`,
+                        user: user?.full_name || 'Profissional'
+                      }
+                    ]
+                  };
+                  updateCrmLead(updated);
+                  setSelectedLead(updated);
+                }}
+                className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-1 text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer shadow-sm"
+              >
+                {columns.map((colName, idx) => (
+                  <option key={colName} value={idx}>
+                    {idx + 1}. {colName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Grid Dividido Igualmente em 6 colunas (6 x 2 no desktop, 4 x 3 no tablet, 2 x 6 no mobile) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 w-full">
+            {columns.map((colName, idx) => {
+              const isCurrent = (selectedLead.stage || 0) === idx;
+              const isPassed = (selectedLead.stage || 0) > idx;
+              return (
+                <button
+                  key={colName}
+                  onClick={() => {
+                    const updated = {
+                      ...selectedLead,
+                      stage: idx,
+                      history: [
+                        ...(selectedLead.history || []),
+                        {
+                          date: new Date().toISOString(),
+                          type: 'STAGE_CHANGE',
+                          description: `Estágio alterado para "${colName}"`,
+                          user: user?.full_name || 'Profissional'
+                        }
+                      ]
+                    };
+                    updateCrmLead(updated);
+                    setSelectedLead(updated);
+                  }}
+                  className={`w-full py-2 px-2 rounded-xl text-[10px] font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none text-center ${
+                    isCurrent 
+                      ? 'bg-[#196BFB] text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/30 font-black scale-[1.02]' 
+                      : isPassed
+                        ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20'
+                        : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
+                  }`}
+                  title={`Mover para ${colName}`}
+                >
+                  {isPassed && <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0" />}
+                  {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse flex-shrink-0" />}
+                  <span className="truncate">{colName}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* NAVEGAÇÃO DE ABAS CENTRAIS */}
-        <div className="flex border-b border-slate-100 dark:border-slate-800/60 px-6 bg-slate-50/50 dark:bg-slate-900/10">
+        <div className="flex border-b border-slate-200/80 dark:border-white/5 px-6 bg-slate-50/50 dark:bg-[#0B1220]/40 transition-colors duration-300">
           <button
             onClick={() => setActiveCenterTab('chat')}
             className={`py-3.5 px-4 font-bold text-xs border-b-2 transition-all ${
               activeCenterTab === 'chat' 
-                ? 'border-secondary text-secondary' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400' 
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
             Conversa & Timeline
           </button>
+
+          <button
+            onClick={() => setActiveCenterTab('financial')}
+            className={`py-3.5 px-4 font-bold text-xs border-b-2 transition-all flex items-center gap-1.5 ${
+              activeCenterTab === 'financial' 
+                ? 'border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 font-black' 
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>Orçamento & Financeiro</span>
+          </button>
+
           <button
             onClick={() => setActiveCenterTab('details')}
             className={`py-3.5 px-4 font-bold text-xs border-b-2 transition-all ${
               activeCenterTab === 'details' 
-                ? 'border-secondary text-secondary' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400' 
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
             Dados Cadastrais
           </button>
+
           <button
             onClick={() => setActiveCenterTab('files')}
             className={`py-3.5 px-4 font-bold text-xs border-b-2 transition-all ${
               activeCenterTab === 'files' 
-                ? 'border-secondary text-secondary' 
-                : 'border-transparent text-slate-400 hover:text-slate-600'
+                ? 'border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400' 
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
             Arquivos ({selectedLead.attachments?.length || 0})
@@ -381,7 +795,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
               {/* Balões de Chat e Notas */}
               <div className="space-y-4 overflow-y-auto flex-1 pr-1">
                 {/* Nota do sistema no topo de criação do lead */}
-                <div className="text-center py-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider bg-slate-100/50 dark:bg-slate-800/40 rounded-xl max-w-xs mx-auto">
+                <div className="text-center py-2 text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-100 dark:bg-[#0B1220]/60 border border-slate-200/60 dark:border-white/5 rounded-xl max-w-xs mx-auto transition-colors duration-300">
                   Lead iniciado em {selectedLead.history?.[0] ? new Date(selectedLead.history[0].date).toLocaleDateString('pt-BR') : 'Hoje'}
                 </div>
 
@@ -398,9 +812,9 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                       {/* Remetente/Data */}
                       <span className="text-[9px] text-slate-400 font-bold mb-1 px-1 flex items-center gap-1">
                         {isWa ? (
-                          <span className="text-emerald-500 font-extrabold uppercase">WhatsApp</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-extrabold uppercase">WhatsApp</span>
                         ) : (
-                          <span className="text-violet-500 font-extrabold uppercase">Nota Interna ({c.user})</span>
+                          <span className="text-purple-600 dark:text-purple-400 font-extrabold uppercase">Nota Interna ({c.user})</span>
                         )}
                         <span>•</span>
                         <span>{new Date(c.date).toLocaleDateString('pt-BR')} às {new Date(c.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -410,7 +824,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                       <div className={`p-3.5 rounded-2xl text-xs font-semibold ${
                         isWa 
                           ? 'bg-emerald-500 text-white rounded-tr-none shadow-[0_2px_8px_rgba(16,185,129,0.2)]' 
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 rounded-tl-none border border-slate-200/20'
+                          : 'bg-slate-100 dark:bg-[#0B1220]/60 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/80 dark:border-white/5'
                       }`}>
                         {c.text}
                       </div>
@@ -420,131 +834,168 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
                 {/* Se não houver conversas */}
                 {(!selectedLead.comments || selectedLead.comments.length === 0) && (
-                  <div className="py-12 text-center text-slate-450 italic text-xs">
+                  <div className="py-12 text-center text-slate-400 italic text-xs font-bold">
                     Nenhuma mensagem ou nota registrada para este lead.
                   </div>
                 )}
               </div>
 
-              {/* EDITOR DE MENSAGEM / NOTA NO RODAPÉ */}
-              <form onSubmit={handleSendMessage} className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setInputMode('whatsapp')}
-                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
-                        inputMode === 'whatsapp' 
-                          ? 'bg-white dark:bg-slate-700 text-emerald-500 shadow-sm' 
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      Enviar WhatsApp
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInputMode('note')}
-                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
-                        inputMode === 'note' 
-                          ? 'bg-white dark:bg-slate-700 text-violet-500 shadow-sm' 
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      Nota Interna
-                    </button>
-                  </div>
-
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">
-                    Destinatário: {selectedLead.name}
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <textarea
-                    rows={2}
-                    placeholder={inputMode === 'whatsapp' ? "Escrever mensagem de WhatsApp (simulada)..." : "Escrever nota interna de atendimento..."}
+              {/* EDITOR DE NOTA INTERNA NO RODAPÉ */}
+              <form onSubmit={handleSendMessage} className="mt-4 pt-4 border-t border-slate-200/80 dark:border-white/5 transition-colors duration-300">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Digite uma anotação interna..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl py-3 px-4 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-secondary placeholder:text-slate-500 resize-none pr-12"
+                    className="flex-1 bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
                   />
-
                   <button
                     type="submit"
-                    className="absolute right-3.5 bottom-3.5 p-2 bg-secondary hover:bg-secondary/90 text-white rounded-xl active:scale-95 transition-all shadow"
+                    className="px-4 py-2.5 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold text-xs rounded-xl shadow active:scale-95 transition-all flex items-center gap-1.5"
                   >
                     <Send className="w-3.5 h-3.5" />
+                    <span>Enviar</span>
                   </button>
                 </div>
               </form>
-
             </div>
           )}
 
-          {/* 2. ABA DADOS CADASTRAIS */}
-          {activeCenterTab === 'details' && (
-            <form onSubmit={handleSaveDetails} className="space-y-4 max-w-md text-slate-800 dark:text-slate-200">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Nome Completo</label>
-                  <input
-                    type="text"
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/65 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-500"
-                  />
+          {/* 2. ABA ORÇAMENTO & FINANCEIRO DO PACIENTE */}
+          {activeCenterTab === 'financial' && (
+            <div className="space-y-6 max-w-xl text-left">
+              {/* Card de Destaque Financeiro */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-[#0B1220] dark:to-emerald-900/10 border border-emerald-500/20 shadow-sm">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Proposta Comercial Estimada</span>
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-white mt-1">
+                      {selectedLead.budget_amount ? `R$ ${selectedLead.budget_amount.toLocaleString('pt-BR')}` : 'Sob Consulta'}
+                    </h3>
+                  </div>
+                  <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    {selectedLead.stage >= 7 ? 'Orçamento Aprovado' : 'Em Negociação'}
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200/60 dark:border-white/10 text-xs">
+                  <div>
+                    <span className="text-slate-400 font-medium block">Procedimento Dentário</span>
+                    <span className="font-bold text-slate-800 dark:text-white">{selectedLead.procedure_name || 'Consulta Geral / Diagnóstico'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-medium block">Etapa Comercial</span>
+                    <span className="font-bold text-slate-800 dark:text-white">{columns[selectedLead.stage || 0]}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Edição Rápida do Orçamento */}
+              <form onSubmit={handleSaveLeadEdits} className="p-5 rounded-2xl bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/5 space-y-4 shadow-sm">
+                <h4 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-emerald-500" />
+                  <span>Atualizar Proposta Financeira</span>
+                </h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1">Valor do Orçamento (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editBudget}
+                      onChange={(e) => setEditBudget(e.target.value)}
+                      placeholder="Ex: 8500"
+                      className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1">Procedimento Solicitado</label>
+                    <input
+                      type="text"
+                      value={editProcedure}
+                      onChange={(e) => setEditProcedure(e.target.value)}
+                      placeholder="Ex: Lentes de Contato"
+                      className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition-all"
+                >
+                  Salvar Proposta Financeira
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* 3. ABA DADOS CADASTRAIS DO LEAD */}
+          {activeCenterTab === 'details' && (
+            <form onSubmit={handleSaveLeadEdits} className="space-y-4 max-w-lg">
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Nome Completo</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Telefone Celular</label>
+                  <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Telefone / WhatsApp</label>
                   <input
                     type="text"
                     required
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/65 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-500"
+                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Grau de Prioridade</label>
+                  <select
+                    value={editPriority}
+                    onChange={(e) => setEditPriority(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer transition-colors"
+                  >
+                    <option value="high">Alta (Urgente)</option>
+                    <option value="medium">Média (Normal)</option>
+                    <option value="low">Baixa</option>
+                  </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Procedimento de Interesse</label>
+                  <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Procedimento de Interesse</label>
                   <input
                     type="text"
                     value={editProcedure}
                     onChange={(e) => setEditProcedure(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/65 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-500"
+                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Orçamento Previsto (R$)</label>
+                  <label className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">Orçamento Previsto (R$)</label>
                   <input
                     type="number"
                     value={editBudget}
                     onChange={(e) => setEditBudget(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/65 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-500"
+                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Grau de Prioridade</label>
-                <select
-                  value={editPriority}
-                  onChange={(e) => setEditPriority(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/65 rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer"
-                >
-                  <option value="high">Alta (Urgente)</option>
-                  <option value="medium">Média (Normal)</option>
-                  <option value="low">Baixa</option>
-                </select>
-              </div>
-
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-secondary text-white font-extrabold text-xs rounded-xl shadow-md active:scale-95 transition-all hover:opacity-95"
+                className="px-6 py-2.5 bg-[#196BFB] text-white font-extrabold text-xs rounded-xl shadow-md active:scale-95 transition-all hover:opacity-95"
               >
                 Salvar Dados Cadastrais
               </button>
@@ -553,19 +1004,19 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
           {/* 3. ABA ARQUIVOS E ANEXOS */}
           {activeCenterTab === 'files' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800/80">
+            <div className="space-y-4 font-body">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-white/5 transition-colors duration-300">
                 <span className="text-xs font-bold text-slate-800 dark:text-white">Lista de Anexos do Lead</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleAttachMockFile('RaioX_Panoramico_Dental.png', '2.4 MB')}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
                   >
                     + Simular Raio-X
                   </button>
                   <button
                     onClick={() => handleAttachMockFile('Ficha_Anamnese_Inicial.pdf', '890 KB')}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
                   >
                     + Simular Anamnese
                   </button>
@@ -576,10 +1027,10 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 {(selectedLead.attachments || []).map((file, idx) => (
                   <div 
                     key={idx} 
-                    className="p-4 bg-slate-50 dark:bg-slate-900/30 border border-slate-200/50 dark:border-slate-800/40 rounded-2xl flex items-center justify-between hover:border-slate-300 transition-colors"
+                    className="p-4 bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/5 rounded-2xl flex items-center justify-between hover:border-slate-300 transition-colors"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <FileText className="w-8 h-8 text-violet-500 flex-shrink-0" />
+                      <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />
                       <div className="overflow-hidden">
                         <h4 className="text-xs font-bold text-slate-800 dark:text-white truncate">{file.name}</h4>
                         <span className="text-[10px] text-slate-400 block mt-0.5">{file.size}</span>
@@ -588,7 +1039,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
                     <button
                       onClick={() => alert(`Fazendo download simulado de ${file.name}...`)}
-                      className="p-2 text-slate-450 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-all"
                       title="Download do Arquivo"
                     >
                       <Download className="w-4 h-4" />
@@ -597,8 +1048,8 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 ))}
 
                 {(!selectedLead.attachments || selectedLead.attachments.length === 0) && (
-                  <div className="col-span-2 py-12 text-center text-slate-450 italic text-xs">
-                    Nenhum documento anexado a este lead comercial.
+                  <div className="col-span-2 py-12 text-center text-slate-400 italic text-xs font-bold">
+                    Nenhum anexo salvo para este paciente.
                   </div>
                 )}
               </div>
@@ -606,9 +1057,9 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
           )}
 
         </div>
-      </div>
-
-
+      </>
+    )}
+  </div>
 
     </div>
   );

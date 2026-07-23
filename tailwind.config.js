@@ -64,8 +64,10 @@ export default {
         },
       },
       fontFamily: {
-        title: ['Outfit', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        title: ['Outfit', 'Geist', 'sans-serif'],
+        body: ['Inter', 'Manrope', 'sans-serif'],
+        geist: ['Geist', 'sans-serif'],
+        manrope: ['Manrope', 'sans-serif'],
       },
     },
   },
