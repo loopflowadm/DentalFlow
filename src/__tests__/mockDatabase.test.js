@@ -12,7 +12,7 @@ describe('mockDatabase Unit & Multi-tenant Isolation Tests', () => {
     expect(clinics.length).toBeGreaterThanOrEqual(3);
     const sorrisoClinic = clinics.find(c => c.id === 'clinic-sorriso-perfeito');
     expect(sorrisoClinic).toBeDefined();
-    expect(sorrisoClinic.name).toBe('ODONTO CRM');
+    expect(sorrisoClinic.name).toBe('DentalFlow');
   });
 
   it('should enforce multi-tenant isolation when fetching patients', () => {
