@@ -149,7 +149,7 @@ export default function ClinicApp() {
 
   return (
     <div 
-      className="h-screen w-screen p-2 sm:p-4 pb-20 md:pb-4 flex flex-col md:flex-row gap-2 sm:gap-4 overflow-hidden font-body transition-colors duration-300 relative bg-[#f8fafc] dark:bg-[#0B1220]"
+      className="h-screen w-screen p-2 sm:p-4 pb-20 md:pb-4 flex flex-col md:flex-row gap-2 sm:gap-4 overflow-hidden font-body transition-colors duration-300 relative bg-[#f8fafc] dark:bg-black"
       style={themeMode === 'clinic' ? { backgroundColor: currentTheme.body_bg } : undefined}
     >
       {/* Barra Lateral Navegação */}
@@ -176,7 +176,7 @@ export default function ClinicApp() {
       />
 
       {/* Conteúdo Principal + Cabeçalho Superior */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden rounded-[24px] border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0B1220] shadow-xl transition-colors duration-300">
+      <div className="flex-1 flex flex-col h-full overflow-hidden rounded-[24px] border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] shadow-xl transition-colors duration-300">
         <Header 
           activeTab={activeTab}
           onSearchChange={(q) => console.log('Search query:', q)}
@@ -185,7 +185,7 @@ export default function ClinicApp() {
           onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
         />
         
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-[#0B1220] transition-colors duration-300">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-[#080808] transition-colors duration-300">
           {renderContent()}
         </main>
       </div>

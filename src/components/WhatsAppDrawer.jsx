@@ -15,7 +15,7 @@ export default function WhatsAppDrawer({ isOpen, onClose }) {
 
       {/* Painel Deslizante da Gaveta */}
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-4xl bg-[#111827] border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="w-screen max-w-4xl bg-[#0D0D0D] border-l border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
           
           {/* Header da Gaveta */}
           <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/30">

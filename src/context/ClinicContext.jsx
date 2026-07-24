@@ -126,7 +126,21 @@ export function ClinicProvider({ children }) {
       };
     });
 
-    const leadChats = leadList.map(l => {
+    // Deduplicação inteligente: filtrar leads que já são pacientes ativos ou que possuem mesmo ID/telefone/nome
+    const existingPatientIds = new Set(patList.map(p => p.id));
+    const existingPatientPhones = new Set(patList.map(p => p.phone?.replace(/\D/g, '')).filter(Boolean));
+    const existingPatientNames = new Set(patList.map(p => p.name?.trim().toLowerCase()).filter(Boolean));
+
+    const distinctLeads = (leadList || []).filter(l => {
+      if (l.is_patient) return false;
+      if (l.patient_id && existingPatientIds.has(l.patient_id)) return false;
+      const cleanLeadPhone = l.phone?.replace(/\D/g, '');
+      if (cleanLeadPhone && existingPatientPhones.has(cleanLeadPhone)) return false;
+      if (l.name && existingPatientNames.has(l.name.trim().toLowerCase())) return false;
+      return true;
+    });
+
+    const leadChats = distinctLeads.map(l => {
       let savedTags = null;
       let savedNotes = null;
       try {
@@ -397,6 +411,40 @@ export function ClinicProvider({ children }) {
       setMedicalRecords(recData);
       setPrescriptions(presData);
       let finalLeadData = leadData || [];
+
+      // Auto-sincronizar pacientes da clínica que ainda não possuem um lead no CRM
+      const existingLeadPatientIds = new Set(finalLeadData.map(l => l.patient_id).filter(Boolean));
+      const existingLeadPhones = new Set(finalLeadData.map(l => l.phone?.replace(/\D/g, '')).filter(Boolean));
+      const existingLeadNames = new Set(finalLeadData.map(l => l.name?.trim().toLowerCase()).filter(Boolean));
+
+      const missingPatientsAsLeads = [];
+      (finalPatients || []).forEach(p => {
+        const cleanPhone = p.phone?.replace(/\D/g, '');
+        const normName = p.name?.trim().toLowerCase();
+        const isRecorded = (p.id && existingLeadPatientIds.has(p.id)) ||
+                           (cleanPhone && existingLeadPhones.has(cleanPhone)) ||
+                           (normName && existingLeadNames.has(normName));
+
+        if (!isRecorded) {
+          missingPatientsAsLeads.push({
+            id: `lead-sync-${p.id}`,
+            clinic_id: clinicId,
+            name: p.name,
+            phone: p.phone || '',
+            stage: 0, // Estágio 'Novo Paciente'
+            priority: 'medium',
+            procedure_name: 'Consulta Geral',
+            is_patient: true,
+            patient_id: p.id,
+            created_at: p.created_at || new Date().toISOString()
+          });
+        }
+      });
+
+      if (missingPatientsAsLeads.length > 0) {
+        finalLeadData = [...finalLeadData, ...missingPatientsAsLeads];
+      }
+
       setCrmLeads(finalLeadData);
 
       const formattedInstallments = instData.map(inst => {
@@ -456,6 +504,8 @@ export function ClinicProvider({ children }) {
       created_at: new Date().toISOString()
     };
 
+    let createdPat = null;
+
     if (fresh.clinic_id) {
       try {
         const { data, error } = await supabase
@@ -464,28 +514,67 @@ export function ClinicProvider({ children }) {
           .select()
           .single();
         if (!error && data) {
-          const finalPat = { ...data, cpf: newPat.cpf, notes: newPat.notes || '' };
-          setPatients(prev => [...prev, finalPat]);
-          return finalPat;
+          createdPat = { ...data, cpf: newPat.cpf, notes: newPat.notes || '' };
+          setPatients(prev => [...prev, createdPat]);
         }
       } catch (err) {
         console.warn('[Supabase] Aviso ao cadastrar paciente:', err);
       }
     }
-    const localPat = { id: `p-${Date.now()}`, ...newPat, clinic_id: clinicId };
-    setPatients(prev => [...prev, localPat]);
-    return localPat;
+
+    if (!createdPat) {
+      createdPat = { id: `p-${Date.now()}`, ...newPat, clinic_id: clinicId };
+      setPatients(prev => [...prev, createdPat]);
+    }
+
+    // Auto-sincronizar no CRM para o paciente aparecer imediatamente no Kanban / Jornada
+    try {
+      const cleanPhone = createdPat.phone?.replace(/\D/g, '');
+      const normName = createdPat.name?.trim().toLowerCase();
+      const alreadyInCrm = crmLeads.some(l => 
+        (l.patient_id && l.patient_id === createdPat.id) ||
+        (cleanPhone && l.phone && l.phone.replace(/\D/g, '') === cleanPhone) ||
+        (normName && l.name && l.name.trim().toLowerCase() === normName)
+      );
+
+      if (!alreadyInCrm) {
+        await addCrmLead({
+          name: createdPat.name,
+          phone: createdPat.phone || '',
+          procedure_name: newPat.procedure_name || 'Consulta Geral',
+          stage: 0, // Novo Paciente no CRM
+          priority: newPat.priority || 'medium',
+          is_patient: true,
+          patient_id: createdPat.id
+        });
+      }
+    } catch (crmErr) {
+      console.warn('[CRM Sync] Erro ao sincronizar novo paciente com CRM:', crmErr);
+    }
+
+    return createdPat;
   };
 
   const updatePatient = async (updatedPat) => {
-    const { notes, cpf, ...cleanPat } = updatedPat;
     if (isValidUUID(updatedPat.id)) {
+      // Sanitização estrita: enviar apenas colunas válidas da tabela 'patients' no Supabase
+      const allowedKeys = ['name', 'phone', 'cpf', 'email', 'birth_date', 'address', 'medical_history', 'notes', 'clinic_id'];
+      const dbPayload = {};
+
+      allowedKeys.forEach(key => {
+        if (updatedPat[key] !== undefined) {
+          dbPayload[key] = updatedPat[key];
+        }
+      });
+
       try {
-        const { error } = await supabase
-          .from('patients')
-          .update(cleanPat)
-          .eq('id', updatedPat.id);
-        if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error);
+        if (Object.keys(dbPayload).length > 0) {
+          const { error } = await supabase
+            .from('patients')
+            .update(dbPayload)
+            .eq('id', updatedPat.id);
+          if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error);
+        }
       } catch (err) {
         console.warn('[Supabase] Erro ao atualizar paciente:', err);
       }
@@ -525,7 +614,11 @@ export function ClinicProvider({ children }) {
 
   const updateCrmLead = async (updatedLead) => {
     // Sanitização de colunas sintéticas que não existem na tabela crm_leads do banco
-    const { status, ...dbPayload } = updatedLead;
+    const { 
+      status, patientName, patientPhone, unreadCount, badge, 
+      tags, messages, since, type, isBotPaused, patientId, 
+      ...dbPayload 
+    } = updatedLead;
 
     if (isValidUUID(updatedLead.id)) {
       const { error } = await supabase
@@ -536,6 +629,63 @@ export function ClinicProvider({ children }) {
     }
 
     setCrmLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+  };
+
+  const deletePatient = async (patientId) => {
+    const clinicId = clinic.id;
+    const pat = patients.find(p => p.id === patientId);
+
+    // 1. Excluir no banco Supabase
+    if (isValidUUID(patientId)) {
+      try {
+        await supabase.from('patients').delete().eq('id', patientId).eq('clinic_id', clinicId);
+        await supabase.from('crm_leads').delete().eq('patient_id', patientId).eq('clinic_id', clinicId);
+        await supabase.from('chat_messages').delete().eq('patient_id', patientId).eq('clinic_id', clinicId);
+        await supabase.from('chat_sessions').delete().eq('patient_id', patientId).eq('clinic_id', clinicId);
+      } catch (err) {
+        console.warn('[Supabase] Erro ao excluir paciente do banco:', err);
+      }
+    }
+
+    if (pat) {
+      const cleanPhone = pat.phone?.replace(/\D/g, '');
+      const normName = pat.name?.trim().toLowerCase();
+      const matchingLeads = crmLeads.filter(l => 
+        (l.patient_id && l.patient_id === patientId) ||
+        (cleanPhone && l.phone && l.phone.replace(/\D/g, '') === cleanPhone) ||
+        (normName && l.name && l.name.trim().toLowerCase() === normName)
+      );
+
+      for (const mLead of matchingLeads) {
+        if (isValidUUID(mLead.id)) {
+          try {
+            await supabase.from('crm_leads').delete().eq('id', mLead.id).eq('clinic_id', clinicId);
+          } catch (e) {}
+        }
+      }
+    }
+
+    // 2. Atualizar estados locais
+    setPatients(prev => prev.filter(p => p.id !== patientId));
+    setCrmLeads(prev => prev.filter(l => l.patient_id !== patientId && (!pat || l.name?.trim().toLowerCase() !== pat.name?.trim().toLowerCase())));
+    setWhatsappChats(prev => prev.filter(c => c.patientId !== patientId));
+  };
+
+  const deleteCrmLead = async (leadId) => {
+    const clinicId = clinic.id;
+
+    if (isValidUUID(leadId)) {
+      try {
+        await supabase.from('crm_leads').delete().eq('id', leadId).eq('clinic_id', clinicId);
+        await supabase.from('chat_messages').delete().eq('patient_id', leadId).eq('clinic_id', clinicId);
+        await supabase.from('chat_sessions').delete().eq('patient_id', leadId).eq('clinic_id', clinicId);
+      } catch (err) {
+        console.warn('[Supabase] Erro ao excluir lead do banco:', err);
+      }
+    }
+
+    setCrmLeads(prev => prev.filter(l => l.id !== leadId));
+    setWhatsappChats(prev => prev.filter(c => c.patientId !== leadId));
   };
 
   // Converter Lead para Paciente Clínico (Mantendo o lead na jornada comercial do CRM)
@@ -1460,10 +1610,12 @@ export function ClinicProvider({ children }) {
       deleteChair,
       addDentist,
       updatePatient,
+      deletePatient,
       addAppointment,
       updateAppointment,
       addCrmLead,
       updateCrmLead,
+      deleteCrmLead,
       convertLeadToPatient,
       sendWhatsAppMessage,
       updateChatNotes,

@@ -168,13 +168,13 @@ export default function Financeiro() {
     <div className="space-y-6 pb-10">
       
       {/* Header & Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
         <div className="flex items-center gap-3">
           <DollarSign className="w-5 h-5 text-violet-500" />
           <h2 className="text-sm font-bold font-title">Gestão Financeira & Comissões</h2>
         </div>
 
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex border border-slate-200/30 dark:border-slate-700/30">
+        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl flex border border-slate-200/30 dark:border-white/10">
           {[
             { id: 'fluxo', label: 'Fluxo de Caixa' },
             { id: 'pagar', label: 'Contas a Pagar' },
@@ -186,7 +186,7 @@ export default function Financeiro() {
               onClick={() => setActiveSubTab(tab.id)}
               className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
                 activeSubTab === tab.id 
-                  ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm' 
+                  ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm' 
                   : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
               }`}
             >
@@ -201,7 +201,7 @@ export default function Financeiro() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Receitas Totais</span>
                 <span className="text-xl font-extrabold font-title text-emerald-500 block mt-1.5">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -211,7 +211,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Despesas / Comissões</span>
                 <span className="text-xl font-extrabold font-title text-red-500 block mt-1.5">R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -221,7 +221,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Líquido</span>
                 <span className={`text-xl font-extrabold font-title block mt-1.5 ${netBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>R$ {netBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -242,14 +242,14 @@ export default function Financeiro() {
                   ['Descrição', 'Valor (R$)', 'Categoria', 'Tipo', 'Data'],
                   financeTransactions.map(t => [t.description, t.amount, t.category, t.type === 'INCOME' ? 'Entrada' : 'Saída', t.date])
                 )}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 title="Exportar em Planilha Excel / CSV"
               >
                 <Download className="w-3.5 h-3.5" /> CSV
               </button>
               <button
                 onClick={handlePrintTable}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 title="Imprimir ou Salvar em PDF"
               >
                 <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
@@ -264,10 +264,10 @@ export default function Financeiro() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black text-slate-500 border-b border-slate-200/40 dark:border-white/10">
                   <th className="py-3 px-4 font-bold">Descrição</th>
                   <th className="py-3 px-4 font-bold">Valor</th>
                   <th className="py-3 px-4 font-bold">Categoria</th>
@@ -303,14 +303,14 @@ export default function Financeiro() {
       {activeSubTab === 'comissoes' && (
         <div className="space-y-6 text-left">
           {/* BARRA DE CONFIGURAÇÕES & FILTROS DE REPASSE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-slate-850 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-[#0D0D0D] p-4 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-sm">
             <div className="flex items-center gap-3">
               <User className="w-4 h-4 text-violet-500 flex-shrink-0" />
               <span className="text-xs font-bold text-slate-400 uppercase">Filtrar Dentista:</span>
               <select
                 value={selectedDentist}
                 onChange={(e) => setSelectedDentist(e.target.value)}
-                className="bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-bold flex-1"
+                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-bold flex-1"
               >
                 <option value="Dr. Pedro Ramos">Dr. Pedro Ramos (Ortodontia & Implantes)</option>
                 <option value="Dra. Ana Paula">Dra. Ana Paula (Estética & Clareamento)</option>
@@ -323,7 +323,7 @@ export default function Financeiro() {
               <select
                 value={commissionReleaseRule}
                 onChange={(e) => setCommissionReleaseRule(e.target.value)}
-                className="bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-xl py-1.5 px-3 text-xs text-emerald-600 dark:text-emerald-400 focus:outline-none cursor-pointer font-extrabold"
+                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-emerald-600 dark:text-emerald-400 focus:outline-none cursor-pointer font-extrabold"
               >
                 <option value="CAIXA">Caixa / Liquidação (Após quitação do paciente)</option>
                 <option value="FATURAMENTO">Faturamento / Realizado (Conclusão da consulta)</option>
@@ -348,23 +348,23 @@ export default function Financeiro() {
                     return [log.date, log.dentist, log.patient, log.procedure, log.grossAmount, deductions.toFixed(2), netAmount.toFixed(2), `${log.percent}%`, commissionVal.toFixed(2), log.status === 'PAID' ? 'Pago' : 'Pendente'];
                   })
                 )}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> CSV / Excel
               </button>
               <button
                 onClick={handlePrintTable}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> PDF / Imprimir
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black text-slate-500 border-b border-slate-200/40 dark:border-white/10">
                   <th className="py-3 px-4 font-bold">Data</th>
                   <th className="py-3 px-4 font-bold">Paciente & Procedimento</th>
                   <th className="py-3 px-4 font-bold">Valor Bruto</th>
@@ -375,7 +375,7 @@ export default function Financeiro() {
                   <th className="py-3 px-4 font-bold">Status & Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
                 {commissionLogs.filter(log => log.dentist === selectedDentist).map((log) => {
                   const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
                   const totalDeductions = cardFee + (log.labCost || 0);
@@ -384,7 +384,7 @@ export default function Financeiro() {
                   const isEligibleForPayment = commissionReleaseRule === 'FATURAMENTO' || log.patientPaymentStatus === 'PAID';
 
                   return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                       <td className="py-3 px-4 font-medium">{log.date}</td>
                       <td className="py-3 px-4">
                         <div className="font-bold text-slate-850 dark:text-white">{log.patient}</div>
@@ -446,23 +446,23 @@ export default function Financeiro() {
                   ['Paciente', 'Tratamento', 'Nº Parcela', 'Valor (R$)', 'Vencimento', 'Status'],
                   installments.map(inst => [inst.patient, inst.desc, inst.number, inst.amount, inst.dueDate, inst.status === 'PAID' ? 'Pago' : 'Pendente'])
                 )}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> CSV / Excel
               </button>
               <button
                 onClick={handlePrintTable}
-                className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] hover:bg-slate-200 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> PDF / Imprimir
               </button>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black text-slate-500 border-b border-slate-200/40 dark:border-white/10">
                   <th className="py-3 px-4 font-bold">Paciente</th>
                   <th className="py-3 px-4 font-bold">Tratamento</th>
                   <th className="py-3 px-4 font-bold">Nº Parcela</th>
@@ -472,9 +472,9 @@ export default function Financeiro() {
                   <th className="py-3 px-4 font-bold">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
                 {installments.map(inst => (
-                  <tr key={inst.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                  <tr key={inst.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                     <td className="py-3 px-4 font-bold text-slate-850 dark:text-white">{inst.patient}</td>
                     <td className="py-3 px-4 font-semibold">{inst.desc}</td>
                     <td className="py-3 px-4 font-bold text-slate-450">{inst.number}</td>
@@ -510,12 +510,12 @@ export default function Financeiro() {
       {/* MODAL: NOVO LANÇAMENTO */}
       {showAddTransaction && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Adicionar Transação Manual</h3>
               <button 
                 onClick={() => setShowAddTransaction(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -530,7 +530,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de luvas e agulhas"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -543,7 +543,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
@@ -551,7 +551,7 @@ export default function Financeiro() {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                   >
                     <option value="INCOME">Receita (Entrada)</option>
                     <option value="EXPENSE">Despesa (Saída)</option>
@@ -564,7 +564,7 @@ export default function Financeiro() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 >
                   <option value="TREATMENT">Tratamento</option>
                   <option value="SALARY">Salários e Comissões</option>
@@ -596,7 +596,7 @@ export default function Financeiro() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddSupplier(true)}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-slate-700 font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                  className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-white/10 font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
                 >
                   Novo Fornecedor
                 </button>
@@ -610,10 +610,10 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-x-auto shadow-sm">
+            <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl overflow-x-auto shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                  <tr className="bg-slate-50 dark:bg-black text-slate-500 border-b border-slate-200/40 dark:border-white/10">
                     <th className="py-3 px-4 font-bold">Descrição</th>
                     <th className="py-3 px-4 font-bold">Fornecedor</th>
                     <th className="py-3 px-4 font-bold">Valor</th>
@@ -623,11 +623,11 @@ export default function Financeiro() {
                     <th className="py-3 px-4 font-bold">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
                   {accountsPayable.map(ap => {
                     const supplier = suppliers.find(s => s.id === ap.supplier_id);
                     return (
-                      <tr key={ap.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                      <tr key={ap.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                         <td className="py-3 px-4 font-bold text-slate-850 dark:text-white">{ap.description}</td>
                         <td className="py-3 px-4 font-semibold text-slate-500">{supplier ? supplier.name : 'Nenhum'}</td>
                         <td className="py-3 px-4 font-extrabold text-red-500">R$ {ap.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
@@ -687,12 +687,12 @@ export default function Financeiro() {
       {/* MODAL: NOVO FORNECEDOR */}
       {showAddSupplier && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title text-left">Cadastrar Fornecedor</h3>
               <button 
                 onClick={() => setShowAddSupplier(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -707,7 +707,7 @@ export default function Financeiro() {
                   placeholder="ex: Dental Cremer"
                   value={supName}
                   onChange={(e) => setSupName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -717,7 +717,7 @@ export default function Financeiro() {
                   placeholder="00.000.000/0000-00"
                   value={supCnpj}
                   onChange={(e) => setSupCnpj(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -727,7 +727,7 @@ export default function Financeiro() {
                   placeholder="0800 727 7527"
                   value={supPhone}
                   onChange={(e) => setSupPhone(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -737,7 +737,7 @@ export default function Financeiro() {
                   placeholder="comercial@dental.com"
                   value={supEmail}
                   onChange={(e) => setSupEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -756,12 +756,12 @@ export default function Financeiro() {
       {/* MODAL: NOVO CONTAS A PAGAR */}
       {showAddPayable && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title text-left">Cadastrar Nova Despesa</h3>
               <button 
                 onClick={() => setShowAddPayable(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -776,7 +776,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de Envelopes de Autoclave"
                   value={apDesc}
                   onChange={(e) => setApDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -789,7 +789,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={apAmount}
                     onChange={(e) => setApAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
@@ -799,7 +799,7 @@ export default function Financeiro() {
                     required
                     value={apDueDate}
                     onChange={(e) => setApDueDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                   />
                 </div>
               </div>
@@ -809,7 +809,7 @@ export default function Financeiro() {
                 <select
                   value={apSupplierId}
                   onChange={(e) => setApSupplierId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="">Nenhum Fornecedor</option>
                   {suppliers.map(sup => (
@@ -823,7 +823,7 @@ export default function Financeiro() {
                 <select
                   value={apCategory}
                   onChange={(e) => setApCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="SUPPLIES">Insumos e Produtos</option>
                   <option value="RENT">Aluguel e Infra</option>

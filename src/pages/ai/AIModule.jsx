@@ -173,16 +173,25 @@ export default function AIModule({ onClose }) {
     action: 'Iniciar atendimento e propor suporte.'
   });
 
-  const handleSaveConfigs = () => {
-    saveAiConfig({
-      prompt,
-      personality,
-      operatingHours: operatingHoursMode,
-      isActive,
-      autoSilence,
-      knowledgeBase: kb
-    });
-    alert('Configurações salvas!');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveConfigs = async () => {
+    setIsSaving(true);
+    try {
+      await saveAiConfig({
+        prompt,
+        personality,
+        operatingHours: operatingHoursMode,
+        isActive,
+        autoSilence,
+        knowledgeBase: kb
+      });
+      alert('Configurações salvas com sucesso!');
+    } catch (err) {
+      console.error('Erro ao salvar configurações de IA:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleRestoreDefaultPrompt = () => {
@@ -314,12 +323,12 @@ export default function AIModule({ onClose }) {
 
   return (
     <div className={`h-full flex flex-col overflow-hidden select-none font-sans relative transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#0c141a] text-[#e9edef]' : 'bg-[#f0f2f5] text-[#111b21]'
+      isDarkMode ? 'bg-black text-[#e9edef]' : 'bg-[#f0f2f5] text-[#111b21]'
     }`}>
       
       {/* CABEÇALHO DO AGENTE - CORES E ESTILO WHATSAPP */}
       <div className={`h-[57px] px-5 border-b flex items-center justify-between flex-shrink-0 transition-colors ${
-        isDarkMode ? 'border-[#1f2c34] bg-[#111c24]' : 'border-slate-200 bg-white'
+        isDarkMode ? 'border-[#1f2c34] bg-[#0D0D0D]' : 'border-slate-200 bg-white'
       }`}>
         <div className="flex items-center gap-3">
           {onClose && (
@@ -373,10 +382,11 @@ export default function AIModule({ onClose }) {
 
           <button 
             onClick={handleSaveConfigs}
-            className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+            disabled={isSaving}
+            className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>Salvar</span>
+            <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
           </button>
         </div>
       </div>

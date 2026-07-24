@@ -138,7 +138,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
   if (!selectedLead) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm bg-white dark:bg-[#111827] rounded-[28px] border border-slate-200/80 dark:border-white/5 p-8 transition-colors duration-300 text-center space-y-4">
+      <div className="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm bg-white dark:bg-[#0D0D0D] rounded-[28px] border border-slate-200/80 dark:border-white/5 p-8 transition-colors duration-300 text-center space-y-4">
         <div className="w-16 h-16 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center">
           <User className="w-8 h-8" />
         </div>
@@ -316,10 +316,10 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
       {/* ========================================================================= */}
       {/* COLUNA 2: DETALHES DO LEAD (CENTRO - FLEX-1)                               */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-[#111827] rounded-[28px] border border-slate-200/80 dark:border-white/5 shadow-sm dark:shadow-2xl overflow-hidden transition-colors duration-300 text-left">
+      <div className="flex-1 flex flex-col bg-white dark:bg-[#0D0D0D] rounded-[28px] border border-slate-200/80 dark:border-white/5 shadow-sm dark:shadow-2xl overflow-hidden transition-colors duration-300 text-left">
         
         {/* BARRA SUPERIOR DE MODO DE VISÃO & CONTROLE DA JORNADA */}
-        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#0B1220]/60 flex items-center justify-between transition-colors duration-300">
+        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCrmViewMode('kanban')}
@@ -401,7 +401,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 e.currentTarget.scrollLeft += e.deltaY;
               }
             }}
-            className={`flex-1 p-4 overflow-x-auto scrollbar-thin flex gap-4 bg-slate-100/60 dark:bg-[#0B1220]/40 min-w-0 transition-colors ${
+            className={`flex-1 p-4 overflow-x-auto scrollbar-thin flex gap-4 bg-slate-100/60 dark:bg-black min-w-0 transition-colors ${
               isDraggingBoard ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
           >
@@ -432,14 +432,14 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     setDragOverColIdx(null);
                     setDraggedLeadId(null);
                   }}
-                  className={`w-72 flex-shrink-0 bg-white dark:bg-[#111827] border rounded-2xl flex flex-col h-full shadow-sm overflow-hidden transition-all duration-200 ${
+                  className={`w-72 flex-shrink-0 bg-white dark:bg-[#0D0D0D] border rounded-2xl flex flex-col h-full shadow-sm overflow-hidden transition-all duration-200 ${
                     isDragOver 
                       ? 'border-[#196BFB] ring-2 ring-[#196BFB]/30 bg-blue-50/50 dark:bg-blue-900/20 scale-[1.01]' 
                       : 'border-slate-200/80 dark:border-white/5'
                   }`}
                 >
                   {/* Cabeçalho da Coluna do Kanban */}
-                  <div className="p-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-[#0B1220]/60 flex items-center justify-between">
+                  <div className="p-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-black/40 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-[#196BFB]" />
                       <h3 className="text-xs font-bold text-slate-800 dark:text-white font-title truncate max-w-[130px]">
@@ -485,7 +485,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                               ? 'opacity-40 scale-95 border-dashed border-[#196BFB] bg-blue-500/10'
                               : isSelected
                                 ? 'border-[#196BFB] bg-blue-50/40 dark:bg-blue-900/20 shadow-md'
-                                : 'border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0B1220]/60 hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md'
+                                : 'border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -653,7 +653,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
         </div>
 
         {/* BARRA VISUAL DE ESTÁGIOS DA JORNADA (FUNNEL STEPPER DIVIDIDO IGUALMENTE 6x2) */}
-        <div className="px-6 py-3.5 bg-slate-50/90 dark:bg-[#0B1220]/70 border-b border-slate-200/80 dark:border-white/5 space-y-3 transition-colors duration-300">
+        <div className="px-6 py-3.5 bg-slate-50/90 dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 space-y-3 transition-colors duration-300">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#196BFB] animate-pulse" />
@@ -683,7 +683,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                   updateCrmLead(updated);
                   setSelectedLead(updated);
                 }}
-                className="bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-1 text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer shadow-sm"
+                className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-1 text-xs font-bold text-slate-800 dark:text-white focus:outline-none cursor-pointer shadow-sm"
               >
                 {columns.map((colName, idx) => (
                   <option key={colName} value={idx}>
@@ -738,7 +738,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
         </div>
 
         {/* NAVEGAÇÃO DE ABAS CENTRAIS */}
-        <div className="flex border-b border-slate-200/80 dark:border-white/5 px-6 bg-slate-50/50 dark:bg-[#0B1220]/40 transition-colors duration-300">
+        <div className="flex border-b border-slate-200/80 dark:border-white/5 px-6 bg-slate-50/50 dark:bg-[#0D0D0D] transition-colors duration-300">
           <button
             onClick={() => setActiveCenterTab('chat')}
             className={`py-3.5 px-4 font-bold text-xs border-b-2 transition-all ${
@@ -795,7 +795,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
               {/* Balões de Chat e Notas */}
               <div className="space-y-4 overflow-y-auto flex-1 pr-1">
                 {/* Nota do sistema no topo de criação do lead */}
-                <div className="text-center py-2 text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-100 dark:bg-[#0B1220]/60 border border-slate-200/60 dark:border-white/5 rounded-xl max-w-xs mx-auto transition-colors duration-300">
+                <div className="text-center py-2 text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider bg-slate-100 dark:bg-[#0D0D0D] border border-slate-200/60 dark:border-white/5 rounded-xl max-w-xs mx-auto transition-colors duration-300">
                   Lead iniciado em {selectedLead.history?.[0] ? new Date(selectedLead.history[0].date).toLocaleDateString('pt-BR') : 'Hoje'}
                 </div>
 
@@ -824,7 +824,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                       <div className={`p-3.5 rounded-2xl text-xs font-semibold ${
                         isWa 
                           ? 'bg-emerald-500 text-white rounded-tr-none shadow-[0_2px_8px_rgba(16,185,129,0.2)]' 
-                          : 'bg-slate-100 dark:bg-[#0B1220]/60 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/80 dark:border-white/5'
+                          : 'bg-slate-100 dark:bg-[#0D0D0D] text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200/80 dark:border-white/5'
                       }`}>
                         {c.text}
                       </div>
@@ -848,7 +848,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     placeholder="Digite uma anotação interna..."
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    className="flex-1 bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    className="flex-1 bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3.5 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 transition-colors"
                   />
                   <button
                     type="submit"
@@ -866,7 +866,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
           {activeCenterTab === 'financial' && (
             <div className="space-y-6 max-w-xl text-left">
               {/* Card de Destaque Financeiro */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-[#0B1220] dark:to-emerald-900/10 border border-emerald-500/20 shadow-sm">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-[#0D0D0D] dark:to-emerald-900/10 border border-emerald-500/20 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Proposta Comercial Estimada</span>
@@ -892,7 +892,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
               </div>
 
               {/* Edição Rápida do Orçamento */}
-              <form onSubmit={handleSaveLeadEdits} className="p-5 rounded-2xl bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/5 space-y-4 shadow-sm">
+              <form onSubmit={handleSaveLeadEdits} className="p-5 rounded-2xl bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/5 space-y-4 shadow-sm">
                 <h4 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-emerald-500" />
                   <span>Atualizar Proposta Financeira</span>
@@ -907,7 +907,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                       value={editBudget}
                       onChange={(e) => setEditBudget(e.target.value)}
                       placeholder="Ex: 8500"
-                      className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                   <div>
@@ -917,7 +917,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                       value={editProcedure}
                       onChange={(e) => setEditProcedure(e.target.value)}
                       placeholder="Ex: Lentes de Contato"
-                      className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
@@ -942,7 +942,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
 
@@ -954,7 +954,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     required
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
                 <div>
@@ -962,7 +962,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                   <select
                     value={editPriority}
                     onChange={(e) => setEditPriority(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer transition-colors"
                   >
                     <option value="high">Alta (Urgente)</option>
                     <option value="medium">Média (Normal)</option>
@@ -978,7 +978,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     type="text"
                     value={editProcedure}
                     onChange={(e) => setEditProcedure(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
 
@@ -988,7 +988,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     type="number"
                     value={editBudget}
                     onChange={(e) => setEditBudget(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
               </div>
@@ -1010,13 +1010,13 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleAttachMockFile('RaioX_Panoramico_Dental.png', '2.4 MB')}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
                   >
                     + Simular Raio-X
                   </button>
                   <button
                     onClick={() => handleAttachMockFile('Ficha_Anamnese_Inicial.pdf', '890 KB')}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] text-slate-700 dark:text-slate-300 font-bold text-[10px] rounded-lg transition-colors border border-slate-200/80 dark:border-white/5"
                   >
                     + Simular Anamnese
                   </button>
@@ -1027,7 +1027,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 {(selectedLead.attachments || []).map((file, idx) => (
                   <div 
                     key={idx} 
-                    className="p-4 bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/5 rounded-2xl flex items-center justify-between hover:border-slate-300 transition-colors"
+                    className="p-4 bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/5 rounded-2xl flex items-center justify-between hover:border-slate-300 transition-colors"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileText className="w-8 h-8 text-blue-500 flex-shrink-0" />

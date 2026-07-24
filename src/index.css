@@ -32,10 +32,10 @@
     /* cyan-500 */
 
     /* Cores do Novo Design (Estilo macOS / High-Contrast) */
-    --sidebar-bg-1: 7 17 46;
-    /* #07112E - Azul marinho escuro profundo para a primeira coluna */
-    --sidebar-bg-2: 10 23 59;
-    /* #0A173B - Azul marinho escuro médio para a segunda coluna */
+    --sidebar-bg-1: 10 10 10;
+    /* #0A0A0A - Preto neutro profundo para a primeira coluna */
+    --sidebar-bg-2: 18 18 18;
+    /* #121212 - Preto neutro para a segunda coluna */
     --accent-neon-lime: 212 240 59;
     /* #D4F03B - Verde limão/neon de destaque */
     --widget-lavender: 178 178 255;
@@ -51,7 +51,7 @@
   }
 
   .dark body {
-    background-color: rgb(var(--color-background, 2 6 23));
+    background-color: rgb(var(--color-background, 0 0 0));
     @apply text-slate-100;
   }
 

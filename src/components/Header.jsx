@@ -49,7 +49,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
   const clinics = mockDb.getClinics();
 
   return (
-    <header className="h-16 border-b border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#111827]/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-300">
+    <header className="h-16 border-b border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#0D0D0D]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-300">
       {/* Esquerda: Breadcrumbs */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3.5">
@@ -62,7 +62,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         </div>
       </div>
 
-      {/* Direita: Grupo Único de Ações (Busca Lupa, + Novo, WhatsApp, Tema, Notificações, Perfil) */}
+      {/* Direita: Grupo Único de Ações (Busca Lupa, + Novo, Tema, Notificações, Perfil) */}
       <div className="flex items-center gap-2.5">
         
         {/* Ícone de Busca Expansível */}
@@ -70,13 +70,13 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           {!searchExpanded ? (
             <button
               onClick={() => setSearchExpanded(true)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2333] dark:hover:bg-[#222d42] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
               title="Buscar no sistema"
             >
               <IconSearch className="w-4 h-4" />
             </button>
           ) : (
-            <div className="flex items-center gap-2.5 h-9 w-56 sm:w-64 px-3 bg-slate-100 dark:bg-[#1A2333] border border-slate-200/80 dark:border-white/10 rounded-xl transition-all duration-300 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-2.5 h-9 w-56 sm:w-64 px-3 bg-slate-100 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl transition-all duration-300 animate-in fade-in zoom-in-95 duration-150">
               <IconSearch className="w-4 h-4 text-slate-500 dark:text-slate-400 flex-shrink-0" />
               <input
                 type="text"
@@ -120,7 +120,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         <div className="relative">
           <button
             onClick={() => setShowQuickMenu(!showQuickMenu)}
-            className="h-9 flex items-center gap-1.5 px-3.5 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95"
+            className="h-9 flex items-center gap-1.5 px-3.5 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
             style={{ backgroundColor: currentTheme.secondary_color }}
           >
             <IconPlus className="w-4 h-4 stroke-[3]" />
@@ -129,7 +129,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           </button>
 
           {showQuickMenu && (
-            <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white dark:bg-[#111827] shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
+            <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white dark:bg-[#0D0D0D] shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 text-left">
               <div className="px-3 py-1.5 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-200/80 dark:border-slate-800">
                 Ações Rápidas em 1 Clique
               </div>
@@ -138,19 +138,19 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                   setShowQuickMenu(false);
                   if (onQuickAction) onQuickAction('agenda');
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors mt-1"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               >
-                <IconCalendar className="w-4 h-4 text-blue-500" />
-                <span>Nova Consulta</span>
+                <IconCalendar className="w-3.5 h-3.5 text-blue-500" />
+                <span>Agendar Consulta</span>
               </button>
               <button
                 onClick={() => {
                   setShowQuickMenu(false);
                   if (onQuickAction) onQuickAction('paciente');
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors mt-0.5"
               >
-                <IconUserPlus className="w-4 h-4 text-emerald-500" />
+                <IconUser className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Novo Paciente</span>
               </button>
               <button
@@ -158,9 +158,9 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                   setShowQuickMenu(false);
                   if (onQuickAction) onQuickAction('lead');
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors mt-0.5"
               >
-                <IconLayoutKanban className="w-4 h-4 text-sky-500" />
+                <IconSparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>Novo Lead CRM</span>
               </button>
               <button
@@ -168,88 +168,20 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                   setShowQuickMenu(false);
                   if (onQuickAction) onQuickAction('whatsapp');
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors mt-0.5"
               >
-                <IconBrandWhatsapp className="w-4 h-4 text-emerald-500" />
-                <span>Abrir WhatsApp Completo</span>
-              </button>
-              <button
-                onClick={() => {
-                  setShowQuickMenu(false);
-                  if (onQuickAction) onQuickAction('financeiro');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors"
-              >
-                <IconCurrencyDollar className="w-4 h-4 text-amber-500" />
-                <span>Lançar Receita/Despesa</span>
+                <IconMessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Abrir WhatsApp Web</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Seletor de Clínica para SuperAdmin ou Plano Enterprise */}
-        {(user?.role === 'SUPER_ADMIN' || clinic?.plan_type === 'enterprise') && (
-          <div className="relative">
-            <button
-              onClick={() => setShowClinicSelector(!showClinicSelector)}
-              className="h-9 flex items-center gap-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2333] dark:hover:bg-[#222d42] rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all border border-slate-200/80 dark:border-white/10"
-            >
-              <IconBuilding className="w-3.5 h-3.5 text-blue-500" />
-              <span>{clinic?.name || 'Administrando SaaS'}</span>
-              {clinic?.plan_type === 'enterprise' && (
-                <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] font-black rounded uppercase">
-                  Multi-Filial
-                </span>
-              )}
-              <IconChevronDown className="w-3 h-3" />
-            </button>
-
-            {showClinicSelector && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-[#111827] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white">
-                <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Alternar Clínica / Filial
-                </div>
-                <button
-                  onClick={() => {
-                    selectClinic(null);
-                    setShowClinicSelector(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all text-left ${
-                    !clinic 
-                      ? 'bg-blue-500/10 text-blue-500' 
-                      : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <span>Visão Consolidada</span>
-                  {!clinic && <IconCheck className="w-3.5 h-3.5" />}
-                </button>
-                {clinics.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      selectClinic(c);
-                      setShowClinicSelector(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-semibold transition-all text-left mt-0.5 ${
-                      clinic?.id === c.id 
-                        ? 'bg-blue-500/10 text-blue-500' 
-                        : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <span>{c.name}</span>
-                    {clinic?.id === c.id && <IconCheck className="w-3.5 h-3.5" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Alternador de 3 Temas Padronizado (w-9 h-9) */}
         <div className="relative">
           <button
             onClick={() => setShowThemeMenu(!showThemeMenu)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2333] dark:hover:bg-[#222d42] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
             title="Alterar Tema"
           >
             {themeMode === 'light' && <IconSun className="w-4 h-4 text-amber-500" />}
@@ -258,7 +190,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           </button>
 
           {showThemeMenu && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-[#111827] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white text-xs">
+            <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-[#0D0D0D] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white text-xs">
               <button
                 onClick={() => {
                   setThemeMode('light');
@@ -303,7 +235,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#1A2333] dark:hover:bg-[#222d42] text-slate-700 dark:text-slate-300 transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 relative"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] text-slate-700 dark:text-slate-300 transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 relative"
             title="Notificações"
           >
             <IconBell className="w-4 h-4" />
@@ -315,7 +247,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#111827] shadow-xl border border-slate-200/80 dark:border-white/10 p-4 z-50">
+            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#0D0D0D] shadow-xl border border-slate-200/80 dark:border-white/10 p-4 z-50">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200/80 dark:border-slate-800">
                 <span className="text-xs font-bold text-slate-800 dark:text-white">Notificações</span>
                 {unreadCount > 0 && (
@@ -370,7 +302,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           </button>
 
           {showUserDropdown && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-[#111827] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white animate-in fade-in slide-in-from-top-1 duration-150 text-left">
+            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-[#0D0D0D] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white animate-in fade-in slide-in-from-top-1 duration-150 text-left">
               <div className="px-2.5 py-2 border-b border-slate-200/80 dark:border-slate-800">
                 <span className="text-xs font-black text-slate-800 dark:text-white block truncate">{user?.full_name || 'Doutor(a)'}</span>
                 <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider block mt-0.5">{user?.role === 'CLINIC_OWNER' || user?.role === 'CLINIC_ADMIN' ? 'Administrador' : user?.role === 'DOCTOR' ? 'Cirurgião-Dentista' : 'Administrador'}</span>

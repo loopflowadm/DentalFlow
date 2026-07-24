@@ -221,17 +221,17 @@ export default function Dashboard({ onNavigateTab }) {
     <div className="h-full flex flex-col space-y-6 overflow-y-auto pr-1 pb-10 scrollbar-thin">
       
       {/* Seletor de Abas do Dashboard (Visão Geral vs BI) */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-850 p-2 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex-shrink-0">
+      <div className="flex items-center justify-between bg-white dark:bg-[#0D0D0D] p-2 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-sm flex-shrink-0">
         <div className="flex items-center gap-2 pl-2">
           <span className="text-xs font-bold text-slate-800 dark:text-white font-title">Painel Inteligente</span>
         </div>
 
-        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/40 dark:border-slate-800">
+        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
           <button
             onClick={() => setDashboardTab('geral')}
             className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
               dashboardTab === 'geral'
-                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -241,7 +241,7 @@ export default function Dashboard({ onNavigateTab }) {
             onClick={() => setDashboardTab('bi')}
             className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${
               dashboardTab === 'bi'
-                ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -272,7 +272,7 @@ export default function Dashboard({ onNavigateTab }) {
         {/* Executivos Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {executiveStats.map((stat, idx) => (
-            <div key={idx} className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col justify-between hover:border-secondary/30 transition-all duration-300">
+            <div key={idx} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col justify-between hover:border-secondary/30 transition-all duration-300">
               <div className="flex justify-between items-start">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight max-w-[80%]">
                   {stat.label}
@@ -290,7 +290,7 @@ export default function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Gráfico Principal de Receita e Consultas */}
-        <div className="bg-white dark:bg-[#1A2333]/90 border border-slate-200/80 dark:border-white/5 rounded-2xl p-5 shadow-sm dark:shadow-2xl backdrop-blur-md text-left transition-colors duration-300">
+        <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-2xl backdrop-blur-md text-left transition-colors duration-300">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider font-title">Faturamento & Volume de Consultas</h3>
@@ -327,7 +327,7 @@ export default function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Sala de Espera (Fila da Recepção) */}
-        <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] animate-in fade-in duration-200">
+        <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] animate-in fade-in duration-200">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider">Sala de Espera (Fila da Recepção)</h3>
@@ -341,7 +341,7 @@ export default function Dashboard({ onNavigateTab }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <tr className="border-b border-slate-100 dark:border-white/10 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                   <th className="py-2.5">Horário</th>
                   <th>Paciente</th>
                   <th>Procedimento</th>
@@ -349,13 +349,13 @@ export default function Dashboard({ onNavigateTab }) {
                   <th className="text-right">Ação Clínica</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {todayAppointments.length > 0 ? (
                   todayAppointments.map((app) => {
                     const patient = patients.find(p => p.id === app.patient_id);
                     
                     return (
-                      <tr key={app.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors">
+                      <tr key={app.id} className="hover:bg-slate-50/40 dark:hover:bg-white/5 transition-colors">
                         <td className="py-3 font-bold text-slate-550">{app.appointment_time || (app.appointment_date ? new Date(app.appointment_date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--')}</td>
                         <td className="font-extrabold text-slate-800 dark:text-white">{patient?.name || 'Paciente'}</td>
                         <td className="text-slate-450 font-medium">{app.procedure_name || 'Consulta'}</td>
@@ -414,14 +414,14 @@ export default function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Dentistas Ativos da Clínica */}
-        <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+        <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
           <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider mb-4">Dentistas Disponíveis</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {doctorsList.length > 0 ? (
               doctorsList.map((doc, idx) => (
-                <div key={idx} className="border border-slate-200/40 dark:border-slate-800 rounded-2xl p-4 bg-slate-50/30 dark:bg-slate-900/10 flex items-center justify-between hover:border-secondary/20 transition-all cursor-pointer">
+                <div key={idx} className="border border-slate-200/40 dark:border-white/10 rounded-2xl p-4 bg-slate-50/30 dark:bg-white/5 flex items-center justify-between hover:border-secondary/20 transition-all cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl bg-white dark:bg-slate-850 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100 dark:border-slate-700/40 shadow-sm">
+                    <span className="text-2xl bg-white dark:bg-[#18181B] w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100 dark:border-white/10 shadow-sm">
                       {doc.avatar}
                     </span>
                     <div>
@@ -429,14 +429,14 @@ export default function Dashboard({ onNavigateTab }) {
                       <span className="text-[10px] text-slate-400 block">{doc.specialty} • {doc.exp}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#18181B] px-2 py-0.5 rounded-lg border border-slate-100 dark:border-white/10">
                     <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                     <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-350">{doc.rating}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="col-span-3 p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+              <div className="col-span-3 p-6 text-center border border-dashed border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
                 Nenhum dentista cadastrado na equipe. Vá em Configurações para adicionar.
               </div>
             )}
@@ -444,18 +444,18 @@ export default function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Estatísticas Gerais */}
-        <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+        <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
           <h3 className="text-xs font-bold text-slate-850 dark:text-white uppercase tracking-wider mb-4">Estatísticas Gerais</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 border-r border-slate-100 dark:border-white/10">
               <span className="text-[10px] text-slate-450 block font-semibold mb-1">Pacientes Cadastrados</span>
               <span className="text-lg font-black text-slate-800 dark:text-white">{patients.length}</span>
             </div>
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 border-r border-slate-100 dark:border-white/10">
               <span className="text-[10px] text-slate-450 block font-semibold mb-1">Consultas na Agenda</span>
               <span className="text-lg font-black text-slate-800 dark:text-white">{appointments.length}</span>
             </div>
-            <div className="p-3 border-r border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 border-r border-slate-100 dark:border-white/10">
               <span className="text-[10px] text-slate-450 block font-semibold mb-1">Leads Comercial (CRM)</span>
               <span className="text-lg font-black text-slate-800 dark:text-white">{crmLeads.length}</span>
             </div>
@@ -473,7 +473,7 @@ export default function Dashboard({ onNavigateTab }) {
       </div>
 
       {/* 2. ÁREA DIREITA (Widget do Calendário e Agenda de Hoje) - ColSpan 1 */}
-      <div className="w-full xl:w-80 bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.015)] flex flex-col space-y-6 flex-shrink-0">
+      <div className="w-full xl:w-80 bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-3xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.015)] flex flex-col space-y-6 flex-shrink-0">
         
         {/* Header Widget */}
         <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">

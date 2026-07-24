@@ -8,7 +8,7 @@ import {
   Smartphone, Key, Globe, Plus, AlertCircle, CheckCircle2, ChevronLeft,
   ChevronDown, ChevronUp, Settings, Filter, Edit3, SlidersHorizontal,
   Lock, DollarSign, MessageSquare, ExternalLink, Calendar, X, Copy, CheckCheck,
-  Activity, Sparkles, CreditCard, Clock, Star
+  Activity, Sparkles, CreditCard, Clock, Star, Trash2
 } from 'lucide-react';
 
 import AIModule from '../ai/AIModule';
@@ -23,18 +23,33 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     patients,
     procedures,
     chairs,
-    addAppointment
+    addAppointment,
+    deletePatient,
+    deleteCrmLead
   } = useClinic();
 
   const { currentTheme, themeMode } = useTheme();
   const { user, clinic } = useAuth();
 
-  // Sincronização 100% Real com os Contatos e Pacientes do Banco Supabase
+  // Sincronização 100% Real com os Contatos e Pacientes do Banco Supabase (com Deduplicação Secundária)
   const allChats = React.useMemo(() => {
     if (!contextChats || contextChats.length === 0) return [];
-    return contextChats.map(c => {
+
+    const seenKeys = new Set();
+    const uniqueList = [];
+
+    contextChats.forEach(c => {
       const pat = patients?.find(p => p.id === c.patientId);
-      return {
+      const cleanPhone = (c.phone || pat?.phone || '').replace(/\D/g, '');
+      const normName = (c.name || pat?.name || '').trim().toLowerCase();
+      
+      // Chave composta para evitar duplicatas sob qualquer hipótese
+      const uniqueKey = c.patientId ? `id:${c.patientId}` : cleanPhone ? `phone:${cleanPhone}` : `name:${normName}`;
+
+      if (seenKeys.has(uniqueKey)) return;
+      seenKeys.add(uniqueKey);
+
+      uniqueList.push({
         ...c,
         phone: c.phone || pat?.phone || '(83) 99999-9999',
         since: c.since || (pat?.created_at ? new Date(pat.created_at).toLocaleDateString('pt-BR') : '12/04/2024'),
@@ -43,8 +58,10 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
         tags: c.tags && c.tags.length > 0 ? c.tags : ['Paciente'],
         notes: c.notes || pat?.notes || 'Paciente cadastrado no sistema.',
         messages: c.messages || []
-      };
+      });
     });
+
+    return uniqueList;
   }, [contextChats, patients]);
 
   // URLs dos fundos oficiais do WhatsApp (Gist)
@@ -906,6 +923,24 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
                 </div>
               </div>
 
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Deseja realmente excluir "${activeChat.name}" e todas as suas mensagens do banco de dados?`)) {
+                      deletePatient(activeChat.patientId);
+                      deleteCrmLead(activeChat.patientId);
+                    }
+                  }}
+                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/30' 
+                      : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
+                  }`}
+                  title="Excluir paciente e conversa do banco"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Área Principal das Mensagens com Fundos Adaptativos do WhatsApp (Gist) */}

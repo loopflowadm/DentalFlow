@@ -11,7 +11,7 @@ import Card from '../../components/ui/Card';
 const CustomTooltip = ({ active, payload, label, formatter }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-[#111827]/95 border border-slate-200 dark:border-white/10 rounded-xl p-3 shadow-xl dark:shadow-2xl backdrop-blur-md text-left text-xs font-sans text-slate-800 dark:text-white transition-colors duration-300">
+      <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-white/10 rounded-xl p-3 shadow-xl dark:shadow-2xl backdrop-blur-md text-left text-xs font-sans text-slate-800 dark:text-white transition-colors duration-300">
         <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5 border-b border-slate-200 dark:border-white/10 pb-1 font-title">{label}</p>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2 text-[11px] font-semibold my-0.5">
@@ -140,7 +140,7 @@ export default function Relatorios({ onNavigateTab }) {
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="flex-1 sm:flex-none bg-slate-100 dark:bg-[#0B1220] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500/50 cursor-pointer font-bold transition-colors"
+            className="flex-1 sm:flex-none bg-slate-100 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500/50 cursor-pointer font-bold transition-colors"
           >
             <option value="7d">Últimos 7 dias</option>
             <option value="30d">Últimos 30 dias</option>
@@ -151,7 +151,7 @@ export default function Relatorios({ onNavigateTab }) {
           <select
             value={insuranceFilter}
             onChange={(e) => setInsuranceFilter(e.target.value)}
-            className="flex-1 sm:flex-none bg-slate-100 dark:bg-[#0B1220] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500/50 cursor-pointer font-bold transition-colors"
+            className="flex-1 sm:flex-none bg-slate-100 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500/50 cursor-pointer font-bold transition-colors"
           >
             <option value="">Todos Convênios</option>
             <option value="particular">Particular</option>

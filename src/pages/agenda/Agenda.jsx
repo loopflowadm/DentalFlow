@@ -647,7 +647,7 @@ export default function Agenda({
       {/* ========================================================================= */}
       {/* CONTROLES SUPERIORES DA GRADE                                            */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#111827] backdrop-blur border border-slate-200/80 dark:border-white/5 p-4 rounded-2xl shadow-sm dark:shadow-2xl flex-shrink-0 transition-colors duration-300">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/80 dark:border-white/5 p-4 rounded-2xl shadow-sm dark:shadow-2xl flex-shrink-0 transition-colors duration-300">
         
         {/* Date Navigator */}
         <div className="flex items-center gap-3">
@@ -673,7 +673,7 @@ export default function Agenda({
           </div>
 
           {/* View Toggle */}
-          <div className="bg-slate-100 dark:bg-[#0B1220] p-1 rounded-xl flex border border-slate-200/80 dark:border-white/5">
+          <div className="bg-slate-100 dark:bg-[#0D0D0D] p-1 rounded-xl flex border border-slate-200/80 dark:border-white/5">
             {['day', 'week', 'month', 'chair'].map(v => {
               if (window.innerWidth < 640 && (v === 'week' || v === 'chair')) return null;
               return (
@@ -721,12 +721,12 @@ export default function Agenda({
       {/* ========================================================================= */}
       {/* CONTEÚDO PRINCIPAL (GRADE DE HORÁRIOS)                                   */}
       {/* ========================================================================= */}
-      <div className="flex-1 bg-white dark:bg-[#111827] backdrop-blur border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden flex flex-col transition-colors duration-300">
+      <div className="flex-1 bg-white dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden flex flex-col transition-colors duration-300">
         
         {/* VIEW: SEMANA */}
         {view === 'week' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            <div className="grid grid-cols-8 border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0B1220]/60 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase tracking-wider transition-colors duration-300">
+            <div className="grid grid-cols-8 border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0D0D0D] text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase tracking-wider transition-colors duration-300">
               <div className="flex items-center justify-center border-r border-slate-200/80 dark:border-white/5">Horário</div>
               {weekDates.map((date, idx) => {
                 const isToday = date.toDateString() === new Date().toDateString();
@@ -1219,7 +1219,7 @@ export default function Agenda({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="bg-white dark:bg-[#111827] rounded-[28px] max-w-md w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 relative text-slate-800 dark:text-white transition-colors duration-300"
+              className="bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 relative text-slate-800 dark:text-white transition-colors duration-300"
             >
               {/* Fechar */}
               <button 
@@ -1235,7 +1235,7 @@ export default function Agenda({
 
               {/* TABS DE SELEÇÃO */}
               {!editingApp ? (
-                <div className="flex bg-slate-100 dark:bg-[#0B1220] p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/5 mb-5 max-w-xs transition-colors duration-300">
+                <div className="flex bg-slate-100 dark:bg-black p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/5 mb-5 max-w-xs transition-colors duration-300">
                   {['consulta', 'compromisso', 'tarefa'].map(tab => (
                     <button
                       key={tab}
@@ -1271,7 +1271,7 @@ export default function Agenda({
                           required
                           value={appDoctorId}
                           onChange={(e) => setAppDoctorId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
                         >
                           {dentists.map(d => (
                             <option key={d.id} value={d.id}>{d.full_name}</option>
@@ -1284,7 +1284,7 @@ export default function Agenda({
                           required
                           value={appChairId}
                           onChange={(e) => setAppChairId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
                         >
                           {chairs.map(c => (
                             <option key={c.id} value={c.id}>{c.name}</option>

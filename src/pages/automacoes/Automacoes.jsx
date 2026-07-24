@@ -166,8 +166,8 @@ export default function Automacoes() {
     <div className="h-full flex flex-col lg:flex-row gap-6 overflow-hidden">
       
       {/* Coluna Esquerda: Construtor n8n Vibe */}
-      <div className="flex-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 rounded-2xl p-5 flex flex-col overflow-y-auto space-y-5 text-left text-slate-800 dark:text-slate-200 shadow-sm scrollbar-thin">
-        <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-850 pb-3 flex-shrink-0">
+      <div className="flex-1 bg-white/80 dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/40 dark:border-white/10 rounded-2xl p-5 flex flex-col overflow-y-auto space-y-5 text-left text-slate-800 dark:text-slate-200 shadow-sm scrollbar-thin">
+        <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/10 pb-3 flex-shrink-0">
           <h3 className="text-sm font-bold font-title flex items-center gap-2">
             <Zap className="w-5 h-5 text-violet-500" />
             {showBuilder ? 'Novo Fluxo de Automação' : 'Criador de Automações LoopFlow'}
@@ -213,7 +213,7 @@ export default function Automacoes() {
                 placeholder="ex: Lembrete de Falta - WhatsApp"
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
               />
             </div>
 
@@ -231,7 +231,7 @@ export default function Automacoes() {
                       className={`p-3 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
                         isSelected 
                           ? 'bg-violet-500/10 border-violet-500/30 shadow-[0_1px_4px_rgba(var(--color-primary),0.02)]' 
-                          : 'bg-white dark:bg-slate-855 border-slate-200/50 dark:border-slate-800'
+                          : 'bg-white dark:bg-[#0D0D0D] border-slate-200/50 dark:border-white/10'
                       }`}
                     >
                       <Zap className={`w-4 h-4 ${isSelected ? 'text-violet-500' : 'text-slate-400'}`} />
@@ -247,7 +247,7 @@ export default function Automacoes() {
 
             {/* CONNECTING ARROW */}
             <div className="flex justify-center select-none">
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#18181B] flex items-center justify-center text-slate-400">
                 <ArrowDown className="w-4 h-4" />
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function Automacoes() {
                       className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
                         isSelected 
                           ? 'bg-emerald-500/5 border-emerald-500/30' 
-                          : 'bg-white dark:bg-slate-850 border-slate-200/50 dark:border-slate-800'
+                          : 'bg-white dark:bg-[#0D0D0D] border-slate-200/50 dark:border-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -304,7 +304,7 @@ export default function Automacoes() {
       <div className="w-80 flex flex-col gap-4 flex-shrink-0 text-slate-800 dark:text-slate-200">
         
         {/* Painel 1: Sandbox de Testes */}
-        <div className="bg-white/85 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 rounded-2xl p-4 flex flex-col text-left space-y-3 shadow-sm flex-shrink-0">
+        <div className="bg-white/85 dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/40 dark:border-white/10 rounded-2xl p-4 flex flex-col text-left space-y-3 shadow-sm flex-shrink-0">
           <h3 className="text-xs font-bold font-title flex items-center gap-1.5">
             <Play className="w-4 h-4 text-emerald-500" />
             Sandbox de Simulações
@@ -332,8 +332,8 @@ export default function Automacoes() {
 
           {/* Logs da simulação ativa */}
           {simLog.length > 0 && (
-            <div className="bg-slate-900 text-slate-200 p-3 rounded-xl border border-slate-800 font-mono text-[9px] space-y-1.5 max-h-36 overflow-y-auto mt-2">
-              <span className="text-slate-400 block border-b border-slate-800 pb-1 font-bold">Console de Simulação:</span>
+            <div className="bg-[#050505] text-slate-200 p-3 rounded-xl border border-white/10 font-mono text-[9px] space-y-1.5 max-h-36 overflow-y-auto mt-2">
+              <span className="text-slate-400 block border-b border-white/10 pb-1 font-bold">Console de Simulação:</span>
               {simLog.map((log, idx) => (
                 <div key={idx} className="leading-normal">
                   <span className="text-emerald-450 mr-1">[{log.time}]</span>
@@ -345,10 +345,10 @@ export default function Automacoes() {
         </div>
 
         {/* Painel 2: Fluxos Ativos */}
-        <div className="flex-1 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-200/50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex-shrink-0 flex items-center justify-between">
+        <div className="flex-1 bg-white/80 dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/40 dark:border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-slate-200/50 dark:border-white/10 bg-slate-50/50 dark:bg-black flex-shrink-0 flex items-center justify-between">
             <h3 className="text-xs font-bold font-title">Fluxos Ativos</h3>
-            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[10px] bg-slate-100 dark:bg-[#18181B] px-2 py-0.5 rounded-full font-bold">
               {automations.length}
             </span>
           </div>
@@ -357,7 +357,7 @@ export default function Automacoes() {
             {automations.map((aut) => (
               <div 
                 key={aut.id} 
-                className="p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/80 bg-white dark:bg-slate-850 space-y-2 shadow-[0_2px_8px_rgba(0,0,0,0.01)]"
+                className="p-3 rounded-xl border border-slate-200/60 dark:border-white/10 bg-white dark:bg-[#18181B] space-y-2 shadow-[0_2px_8px_rgba(0,0,0,0.01)]"
               >
                 <div className="flex justify-between items-start gap-3">
                   <h4 className="font-bold text-[11px] text-slate-800 dark:text-white leading-tight">{aut.name}</h4>

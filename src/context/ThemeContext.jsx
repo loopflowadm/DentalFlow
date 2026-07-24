@@ -72,11 +72,12 @@ export function ThemeProvider({ children }) {
         prev.primary_color === theme.primary_color &&
         prev.secondary_color === theme.secondary_color &&
         prev.logo_url === theme.logo_url &&
-        prev.accent_color === theme.accent_color
+        prev.accent_color === theme.accent_color &&
+        prev.theme_base === theme.theme_base
       ) {
         return prev;
       }
-      return { ...defaultTheme, ...theme };
+      return { ...defaultTheme, ...prev, ...theme };
     });
   }, []);
 
@@ -111,12 +112,12 @@ export function ThemeProvider({ children }) {
     } else if (themeMode === 'dark') {
       activeTheme = {
         ...clinicTheme,
-        primary_color: '#0F172A',
-        secondary_color: '#3B82F6',
-        accent_color: '#1E293B',
-        sidebar_bg_1: '#07112E',
-        sidebar_bg_2: '#0A173B',
-        body_bg: '#020617'
+        primary_color: '#000000',
+        secondary_color: '#196BFB',
+        accent_color: '#18181B',
+        sidebar_bg_1: '#0A0A0A',
+        sidebar_bg_2: '#121212',
+        body_bg: '#000000'
       };
     } else {
       // 'clinic'
@@ -127,9 +128,9 @@ export function ThemeProvider({ children }) {
       let finalSidebar2;
       
       if (isClinicDark) {
-        finalBodyBg = '#020617';
-        finalSidebar1 = adjustColorBrightness(clinicTheme.primary_color, -40);
-        finalSidebar2 = adjustColorBrightness(clinicTheme.primary_color, -55);
+        finalBodyBg = '#000000';
+        finalSidebar1 = adjustColorBrightness(clinicTheme.primary_color, -70);
+        finalSidebar2 = adjustColorBrightness(clinicTheme.primary_color, -85);
       } else {
         finalBodyBg = '#f8fafc';
         finalSidebar1 = '#ffffff';
@@ -168,8 +169,8 @@ export function ThemeProvider({ children }) {
     }
 
     // Injetar variáveis de fundo e sidebar
-    document.documentElement.style.setProperty('--sidebar-bg-1', sidebarBg1RGB || '7 17 46');
-    document.documentElement.style.setProperty('--sidebar-bg-2', sidebarBg2RGB || '10 23 59');
+    document.documentElement.style.setProperty('--sidebar-bg-1', sidebarBg1RGB || '10 10 10');
+    document.documentElement.style.setProperty('--sidebar-bg-2', sidebarBg2RGB || '18 18 18');
     document.documentElement.style.setProperty('--color-background', backgroundRGB || '248 250 252');
 
     // Injetar fonte do Google Fonts dinamicamente

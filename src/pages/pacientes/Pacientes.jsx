@@ -869,20 +869,20 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   };
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-[#0B1220] font-body overflow-hidden transition-colors duration-300">
+    <div className="h-full flex bg-slate-50 dark:bg-black font-body overflow-hidden transition-colors duration-300">
       
 
       {/* ========================================================================= */}
       {/* PAINEL DIREITO: DETALHES / PRONTUÁRIO                                    */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-[#0B1220] transition-colors duration-300">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-300">
         {selectedPatient ? (
           <>
             {/* 1. Header do Prontuário */}
-            <div className="p-6 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 flex items-center justify-between transition-colors duration-300">
+            <div className="p-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 flex items-center justify-between transition-colors duration-300">
               <div className="flex items-center gap-4">
                 {/* Big Avatar */}
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1A2333] flex items-center justify-center text-2xl border border-slate-200/80 dark:border-white/10 shadow-inner text-blue-500 dark:text-blue-400">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#18181B] flex items-center justify-center text-2xl border border-slate-200/80 dark:border-white/10 shadow-inner text-blue-500 dark:text-blue-400">
                   <User className="w-8 h-8" />
                 </div>
                 
@@ -922,7 +922,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                   <button
                     onClick={() => alert('Categorizar paciente em desenvolvimento.')}
-                    className="mt-1.5 px-2.5 py-0.5 bg-slate-100 dark:bg-[#1A2333] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-[9px] font-bold transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 flex items-center gap-1"
+                    className="mt-1.5 px-2.5 py-0.5 bg-slate-100 dark:bg-[#18181B] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-[9px] font-bold transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 flex items-center gap-1"
                   >
                     <Tag className="w-2.5 h-2.5 text-blue-500 dark:text-blue-400" /> Categorizar
                   </button>
@@ -932,7 +932,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               {/* Botão de Edição estilo macOS Depth UI */}
               <button
                 onClick={openEditModal}
-                className="px-4 py-2 bg-slate-100 dark:bg-[#1A2333] hover:bg-slate-200 dark:hover:bg-[#222d42] text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-sm active:scale-95"
+                className="px-4 py-2 bg-slate-100 dark:bg-[#18181B] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-sm active:scale-95"
               >
                 <Edit className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                 Editar Perfil
@@ -940,7 +940,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
             </div>
 
             {/* 2. Barra de Navegação das Abas do Prontuário */}
-            <div className="px-6 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
+            <div className="px-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
               <div className="flex gap-4">
                 {[
                   { id: 'visao_geral', label: 'Visão Geral' },
@@ -996,7 +996,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               {activeSubTab === 'anamnese' && (
                 <div className="space-y-6 text-left animate-in fade-in">
                   
-                  <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl gap-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl gap-3">
                     <div>
                       <h4 className="text-xs font-black text-slate-855 dark:text-white font-title uppercase tracking-wider flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-secondary" /> Ficha de Anamnese Padrão
@@ -1015,14 +1015,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       <button
                         type="button"
                         onClick={() => window.print()}
-                        className="px-3 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-855 text-slate-650 dark:text-slate-355 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-2 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-855 text-slate-650 dark:text-slate-355 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
                       >
                         <Printer className="w-3.5 h-3.5" /> Imprimir
                       </button>
                     </div>
                   </div>
 
-                  <form onSubmit={handleSaveAnamneseSubmit} className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-[28px] p-6 space-y-6 text-xs text-slate-750 dark:text-slate-200 font-semibold">
+                  <form onSubmit={handleSaveAnamneseSubmit} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 rounded-[28px] p-6 space-y-6 text-xs text-slate-750 dark:text-slate-200 font-semibold">
                     
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-0.5">Queixa Principal *</label>
@@ -1643,7 +1643,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   {/* Top summary cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Total Pago Card */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-5 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-5 rounded-2xl flex justify-between items-center shadow-sm">
                       <div className="space-y-1.5">
                         <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider block">Total pago</span>
                         <h3 className="text-lg font-black text-slate-900 dark:text-white">R$ {totalPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
@@ -1654,7 +1654,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     </div>
 
                     {/* A receber Card */}
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-5 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-5 rounded-2xl flex justify-between items-center shadow-sm">
                       <div className="space-y-1.5">
                         <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider block">A receber</span>
                         <h3 className="text-lg font-black text-slate-900 dark:text-white">R$ {totalAReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
@@ -1666,7 +1666,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   </div>
 
                   {/* Filters row */}
-                  <div className="flex gap-2.5 flex-wrap items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl shadow-sm text-xs font-semibold">
+                  <div className="flex gap-2.5 flex-wrap items-center bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl shadow-sm text-xs font-semibold">
                     <button className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-slate-500" /> Selecionar período
                     </button>
@@ -1746,11 +1746,11 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <div className="space-y-6 text-left animate-in fade-in">
                     
                     {/* Header selectors */}
-                    <div className="flex gap-3 flex-wrap items-center bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 p-4 rounded-2xl shadow-sm text-xs font-semibold">
+                    <div className="flex gap-3 flex-wrap items-center bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl shadow-sm text-xs font-semibold">
                       <select 
                         value={evolucaoDentist} 
                         onChange={(e) => setEvolucaoDentist(e.target.value)}
-                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl py-1.5 px-3 focus:outline-none"
+                        className="bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-3 focus:outline-none text-slate-800 dark:text-white"
                       >
                         {dentists.map(d => (
                           <option key={d.id} value={d.full_name}>{d.full_name}</option>
@@ -1761,12 +1761,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         type="date" 
                         value={evolucaoDate} 
                         onChange={(e) => setEvolucaoDate(e.target.value)}
-                        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl py-1.5 px-3 focus:outline-none"
+                        className="bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-3 focus:outline-none text-slate-800 dark:text-white"
                       />
                     </div>
 
                     {/* Editor Form */}
-                    <form onSubmit={handleAddRecordSubmit} className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-[28px] p-6 shadow-sm space-y-4">
+                    <form onSubmit={handleAddRecordSubmit} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 rounded-[28px] p-6 shadow-sm space-y-4">
                       
                       {/* Editor Toolbar */}
                       <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-slate-100 dark:border-slate-800/80">

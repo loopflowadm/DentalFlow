@@ -44,7 +44,8 @@ export default function Sidebar({
 }) {
   const { user, logout, clinic } = useAuth();
   const { currentTheme, themeMode } = useTheme();
-  const { patients, appointments, crmLeads, addCrmLead, chairs, dentists, addChair, addDentist } = useClinic();
+  const { patients, appointments, crmLeads, whatsappChats, addCrmLead, chairs, dentists, addChair, addDentist } = useClinic();
+  const totalUnreadWhatsApp = (whatsappChats || []).reduce((acc, chat) => acc + (chat.unreadCount || 0), 0);
 
   // Estados dos filtros da segunda sidebar
   const [crmSearch, setCrmSearch] = useState('');
@@ -201,7 +202,7 @@ export default function Sidebar({
       {/* COLUNA 1: BARRA DE ÍCONES DE NAVEGAÇÃO (FIXA 80px NO DESKTOP)              */}
       {/* ========================================================================= */}
       <aside 
-        className="flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative bg-white dark:bg-[#0B1220] transition-colors duration-300 z-30 overflow-hidden"
+        className="flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative bg-white dark:bg-[#0D0D0D] transition-colors duration-300 z-30 overflow-hidden"
         style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_1 } : undefined}
       >
         <div className="flex flex-col items-center gap-4 w-full">
@@ -252,8 +253,13 @@ export default function Sidebar({
                 >
                   <Icon className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${iconStyle}`} />
                   
-                  {isWhatsApp && (
-                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+                  {isWhatsApp && totalUnreadWhatsApp > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center z-20">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-[10px] rounded-full border-2 border-white dark:border-[#0B1220] shadow-md shadow-emerald-500/40 leading-none">
+                        {totalUnreadWhatsApp > 99 ? '99+' : totalUnreadWhatsApp}
+                      </span>
+                    </span>
                   )}
 
                   {/* Tooltip Lateral */}
@@ -290,14 +296,14 @@ export default function Sidebar({
             onClick={() => setCollapsed(true)}
           />
           <aside 
-            className={`border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#111827] flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 transition-colors duration-300 ${
+            className={`border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0D0D0D] flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 transition-colors duration-300 ${
               collapsed ? 'hidden' : 'fixed inset-4 w-[calc(100vw-32px)] md:relative md:inset-auto md:w-64'
             }`} 
             style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_2 } : undefined}
           >
           
           {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
-          <div className="px-4 py-3 border-b border-slate-200/80 dark:border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-100/50 dark:bg-slate-950/5 transition-colors duration-300">
+          <div className="h-16 px-4 border-b border-slate-200/80 dark:border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-100/50 dark:bg-slate-950/5 transition-colors duration-300">
             <span className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider font-title pl-1">
               {activeTab === 'crm' && "Jornada do Paciente"}
               {activeTab === 'pacientes' && "Pacientes"}
@@ -326,7 +332,7 @@ export default function Sidebar({
                     className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'all'
                         ? 'bg-[#196BFB]/10 border-[#196BFB] shadow-sm ring-1 ring-[#196BFB]/30'
-                        : 'bg-white dark:bg-[#0B1220]/60 border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total</span>
@@ -338,7 +344,7 @@ export default function Sidebar({
                     className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'new'
                         ? 'bg-sky-500/10 border-sky-500 shadow-sm ring-1 ring-sky-400/30'
-                        : 'bg-white dark:bg-[#0B1220]/60 border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Novos</span>
@@ -350,7 +356,7 @@ export default function Sidebar({
                     className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'negotiating'
                         ? 'bg-purple-500/10 border-purple-500 shadow-sm ring-1 ring-purple-400/30'
-                        : 'bg-white dark:bg-[#0B1220]/60 border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Negociando</span>
@@ -362,7 +368,7 @@ export default function Sidebar({
                     className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'closed'
                         ? 'bg-emerald-500/10 border-emerald-500 shadow-sm ring-1 ring-emerald-400/30'
-                        : 'bg-white dark:bg-[#0B1220]/60 border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Fechados</span>
@@ -379,7 +385,7 @@ export default function Sidebar({
                       placeholder="Buscar paciente por nome..."
                       value={crmSearch}
                       onChange={(e) => setCrmSearch(e.target.value)}
-                      className="w-full bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm dark:shadow-none"
+                      className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm dark:shadow-none"
                     />
                   </div>
 
@@ -387,7 +393,7 @@ export default function Sidebar({
                     <select
                       value={crmPriority}
                       onChange={(e) => setCrmPriority(e.target.value)}
-                      className="flex-1 bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs text-slate-700 dark:text-slate-400 focus:outline-none cursor-pointer shadow-sm dark:shadow-none font-bold"
+                      className="flex-1 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs text-slate-700 dark:text-slate-400 focus:outline-none cursor-pointer shadow-sm dark:shadow-none font-bold"
                     >
                       <option value="">Todas prioridades</option>
                       <option value="high">Alta</option>
@@ -421,8 +427,8 @@ export default function Sidebar({
                         }}
                         className={`p-3 rounded-2xl cursor-pointer relative transition-all border group ${
                           isActive 
-                            ? 'bg-slate-900 dark:bg-[#151c2c] border-slate-800 dark:border-slate-700 text-white shadow-xl ring-2 ring-slate-700/60 dark:ring-white/10 scale-[1.01]' 
-                            : 'bg-white hover:bg-slate-100 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333]/60 border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none hover:-translate-y-0.5'
+                            ? 'bg-blue-50/90 dark:bg-[#18181B] border-[#196BFB]/50 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-md ring-2 ring-[#196BFB]/20 dark:ring-blue-500/20 scale-[1.01]' 
+                            : 'bg-white hover:bg-slate-100 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none hover:-translate-y-0.5'
                         }`}
                       >
                         {/* Indicador de Prioridade */}
@@ -432,29 +438,31 @@ export default function Sidebar({
 
                         {/* Seta no topo direito se ativo */}
                         {isActive && (
-                          <IconArrowUpRight className="w-3.5 h-3.5 absolute right-3 top-3 text-slate-300 dark:text-slate-400" />
+                          <IconArrowUpRight className="w-3.5 h-3.5 absolute right-3 top-3 text-[#196BFB] dark:text-blue-400 font-bold" />
                         )}
 
                         <div className="flex items-center gap-2.5 pl-1.5">
-                          <span className="text-xl flex-shrink-0 flex items-center justify-center text-slate-400">
+                          <span className={`text-xl flex-shrink-0 flex items-center justify-center ${isActive ? 'text-[#196BFB] dark:text-blue-400' : 'text-slate-400'}`}>
                             {lead.avatar && lead.avatar !== '👤' ? lead.avatar : <IconUser className="w-5 h-5" />}
                           </span>
                           <div className="overflow-hidden flex-1">
-                            <h4 className={`text-xs font-bold truncate ${isActive ? 'text-white font-black' : 'text-slate-800 dark:text-white'}`}>
+                            <h4 className={`text-xs font-bold truncate ${isActive ? 'text-[#196BFB] dark:text-white font-black' : 'text-slate-800 dark:text-white'}`}>
                               {lead.name}
                             </h4>
-                            <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                            <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-slate-600 dark:text-slate-300 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                               {lead.procedure_name || 'Consulta Geral'}
                             </p>
                           </div>
                         </div>
 
                         {/* Rodapé do Card (Design Minimalista) */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-800/60 dark:border-slate-800/80 flex justify-between items-center text-[10px] pl-1.5 gap-1">
+                        <div className={`mt-3 pt-2.5 border-t flex justify-between items-center text-[10px] pl-1.5 gap-1 ${
+                          isActive ? 'border-blue-200/80 dark:border-slate-700/80' : 'border-slate-200/80 dark:border-slate-800/80'
+                        }`}>
                           {/* Badge do Estágio do Funil */}
                           <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold truncate max-w-[110px] ${
                             isActive 
-                              ? 'bg-slate-800 dark:bg-white/10 text-slate-200 border border-slate-700 dark:border-white/10 font-extrabold' 
+                              ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-slate-200 border border-blue-200/80 dark:border-white/10 font-bold shadow-2xs' 
                               : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
                           }`}>
                             {columnsList[lead.stage || 0]}
@@ -463,7 +471,7 @@ export default function Sidebar({
                           {/* Badge de Prioridade */}
                           <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold ${
                             isActive 
-                              ? 'bg-slate-800 dark:bg-white/10 text-slate-200 border border-slate-700 dark:border-white/10 font-extrabold' 
+                              ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-slate-200 border border-blue-200/80 dark:border-white/10 font-bold shadow-2xs' 
                               : lead.priority === 'high' ? 'bg-[#FF5B60]/10 text-[#FF5B60]' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                           }`}>
                             {lead.priority === 'high' ? 'Alta' : lead.priority === 'medium' ? 'Média' : 'Baixa'}
@@ -493,7 +501,7 @@ export default function Sidebar({
                       placeholder="Buscar paciente..."
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
-                      className="w-full bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm dark:shadow-none"
+                      className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm dark:shadow-none"
                     />
                   </div>
 
@@ -521,8 +529,8 @@ export default function Sidebar({
                         }}
                         className={`p-3 rounded-xl cursor-pointer transition-all border text-left ${
                           isActive 
-                            ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-white shadow-md' 
-                            : 'bg-white hover:bg-slate-100 dark:bg-[#1A2333]/60 dark:hover:bg-[#1A2333] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none'
+                            ? 'bg-blue-50/90 dark:bg-[#18181B] border-[#196BFB]/50 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-md ring-2 ring-[#196BFB]/20 dark:ring-blue-500/20' 
+                            : 'bg-white hover:bg-slate-100 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none'
                         }`}
                       >
                         <h4 className={`text-xs font-bold font-title ${isActive ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-800 dark:text-white'}`}>
@@ -549,7 +557,7 @@ export default function Sidebar({
               <div className="space-y-4">
                 
                 {/* 3a. Mini Calendário (DatePicker) */}
-                <div className="p-3 bg-white dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-none transition-colors duration-300">
+                <div className="p-3 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-none transition-colors duration-300">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[11px] font-bold text-slate-800 dark:text-white capitalize font-title pl-1">
                       {monthNames[miniCalDate.getMonth()]} {miniCalDate.getFullYear()}
@@ -633,7 +641,7 @@ export default function Sidebar({
                     </button>
                   </div>
 
-                  <div className="space-y-1 bg-white dark:bg-[#0B1220]/60 p-2 border border-slate-200/80 dark:border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none shadow-sm dark:shadow-none transition-colors duration-300">
+                  <div className="space-y-1 bg-white dark:bg-[#0D0D0D] p-2 border border-slate-200/80 dark:border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none shadow-sm dark:shadow-none transition-colors duration-300">
                     {/* Opção Todas */}
                     <button
                       type="button"
@@ -694,7 +702,7 @@ export default function Sidebar({
                     </button>
                   </div>
 
-                  <div className="space-y-1 bg-white dark:bg-[#0B1220]/60 p-2 border border-slate-200/80 dark:border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none shadow-sm dark:shadow-none transition-colors duration-300">
+                  <div className="space-y-1 bg-white dark:bg-[#0D0D0D] p-2 border border-slate-200/80 dark:border-white/5 rounded-2xl max-h-40 overflow-y-auto scrollbar-none shadow-sm dark:shadow-none transition-colors duration-300">
                     {/* Opção Todos */}
                     <button
                       type="button"
@@ -747,7 +755,7 @@ export default function Sidebar({
       {/* ========================================================================= */}
       {showAddLeadSidebar && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#111827] rounded-[28px] max-w-sm w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 text-left text-slate-800 dark:text-white transition-colors duration-300">
+          <div className="bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-sm w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 text-left text-slate-800 dark:text-white transition-colors duration-300">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
               <h3 className="text-sm font-bold font-title flex items-center gap-1.5">
                 <IconSparkles className="w-4 h-4 text-secondary" style={{ color: currentTheme.secondary_color }} />
@@ -770,7 +778,7 @@ export default function Sidebar({
                   placeholder="Nome do paciente"
                   value={newLeadName}
                   onChange={(e) => setNewLeadName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
                 />
               </div>
 
@@ -782,7 +790,7 @@ export default function Sidebar({
                   placeholder="ex: 5511999999999"
                   value={newLeadPhone}
                   onChange={(e) => setNewLeadPhone(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
                 />
               </div>
 
@@ -794,7 +802,7 @@ export default function Sidebar({
                     placeholder="ex: Implante"
                     value={newLeadProcedure}
                     onChange={(e) => setNewLeadProcedure(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
                   />
                 </div>
                 <div>
@@ -804,7 +812,7 @@ export default function Sidebar({
                     placeholder="ex: 3500"
                     value={newLeadBudget}
                     onChange={(e) => setNewLeadBudget(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
                   />
                 </div>
               </div>
@@ -814,7 +822,7 @@ export default function Sidebar({
                 <select
                   value={newLeadPriority}
                   onChange={(e) => setNewLeadPriority(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white cursor-pointer transition-colors"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white cursor-pointer transition-colors"
                 >
                   <option value="high">Alta (Urgente)</option>
                   <option value="medium">Média (Normal)</option>
@@ -838,7 +846,7 @@ export default function Sidebar({
       {hasSubSidebar && collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="absolute left-[72px] top-6 w-6 h-12 bg-white dark:bg-[#0A173B] hover:bg-slate-100 dark:hover:bg-[#12245C] border border-slate-200/80 dark:border-slate-800 border-l-transparent rounded-r-xl flex items-center justify-center text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-all shadow-md z-40 group hover:w-7 active:scale-95"
+          className="absolute left-[72px] top-6 w-6 h-12 bg-white dark:bg-[#0D0D0D] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-white/10 border-l-transparent rounded-r-xl flex items-center justify-center text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-all shadow-md z-40 group hover:w-7 active:scale-95"
           title="Expandir painel"
         >
           <IconChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />

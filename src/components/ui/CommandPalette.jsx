@@ -54,10 +54,10 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onOpenWhat
 
       {/* Raycast Modal Window */}
       <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl p-4">
-        <div className="bg-[#111827] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-left text-white">
+        <div className="bg-[#0D0D0D] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-left text-white">
           
           {/* Input de Busca */}
-          <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-[#1A2333]/50">
+          <div className="p-4 border-b border-white/5 flex items-center gap-3 bg-black/50">
             <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
             <input
               type="text"

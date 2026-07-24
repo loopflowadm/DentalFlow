@@ -3,10 +3,11 @@ import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  Settings, Clock, Trash2, Check, 
+  Settings, Clock, Trash2, Check, Sun, Moon,
   Smartphone, Calendar, Mail, Key, QrCode, X, Palette, Image,
   Sparkles, Building, Type, Globe, Compass, Lock,
-  Activity, DollarSign, User, Gem, Shield, Bot, Zap
+  Activity, DollarSign, User, Gem, Shield, Bot, Zap,
+  ChevronRight, CheckCircle, ExternalLink, Copy, Users, ClipboardList
 } from 'lucide-react';
 import AIModule from '../ai/AIModule';
 import Automacoes from '../automacoes/Automacoes';
@@ -28,7 +29,7 @@ const BRAND_PRESETS = [
   {
     name: 'Safira Premium',
     primary: '#1E3A8A',
-    secondary: '#3B82F6',
+    secondary: '#196BFB',
     accent: '#DBEAFE',
   },
   {
@@ -95,7 +96,7 @@ export default function Configuracoes() {
   } = useClinic();
   
   const { user, clinic, updateClinic } = useAuth();
-  const { currentTheme } = useTheme();
+  const { currentTheme, setThemeMode, applyTheme } = useTheme();
 
   // Estados locais
   const [activeSubTab, setActiveSubTab] = useState('identidade'); // 'identidade' | 'equipe' | 'procs' | 'integracoes'
@@ -142,6 +143,8 @@ export default function Configuracoes() {
     }
   }, [clinic]);
 
+  const [showSavedAlert, setShowSavedAlert] = useState(false);
+
   const handleSaveBranding = (e) => {
     e.preventDefault();
     if (!cName) return;
@@ -158,12 +161,33 @@ export default function Configuracoes() {
       login_bg: cLoginBg,
       subdomain: cSubdomain
     });
+    if (applyTheme) {
+      applyTheme({
+        name: cName,
+        logo_url: cLogo,
+        primary_color: cPrimary,
+        secondary_color: cSecondary,
+        accent_color: cAccent,
+        theme_base: cThemeBase
+      });
+    }
+    setShowSavedAlert(true);
+    setTimeout(() => setShowSavedAlert(false), 3500);
   };
 
   const handleApplyPreset = (preset) => {
     setCPrimary(preset.primary);
     setCSecondary(preset.secondary);
     setCAccent(preset.accent);
+    if (applyTheme) {
+      applyTheme({
+        ...currentTheme,
+        primary_color: preset.primary,
+        secondary_color: preset.secondary,
+        accent_color: preset.accent,
+        theme_base: cThemeBase
+      });
+    }
   };
 
   const handleLogoUpload = (e) => {
@@ -345,385 +369,589 @@ export default function Configuracoes() {
     <div className="h-full overflow-y-auto pr-1 space-y-6 pb-10 text-slate-800 dark:text-slate-200 scrollbar-thin">
       
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur border border-slate-200/40 dark:border-slate-800/60 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <Settings className="w-5 h-5 text-violet-500" />
-          <h2 className="text-sm font-bold font-title">Configurações Gerais da Clínica</h2>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white/90 dark:bg-[#0D0D0D] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 p-5 rounded-[24px] shadow-lg flex-shrink-0 transition-colors duration-300">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-500/20 shadow-sm flex-shrink-0">
+            <Palette className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-extrabold font-title text-slate-900 dark:text-white">Configurações & Whitelabel Studio</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Whitelabel Ativo
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Personalize a marca, cores, logotipo e subdomínio exclusivo de sua clínica em tempo real.</p>
+          </div>
         </div>
 
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/30 dark:border-slate-700/30 overflow-x-auto">
+        {/* NAVEGAÇÃO DE SUB-ABAS */}
+        <div className="flex bg-slate-100/80 dark:bg-black p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/5 overflow-x-auto w-full md:w-auto">
           {[
-            { id: 'identidade', label: 'Identidade Visual & Clínica' },
-            { id: 'equipe', label: 'Equipe & Permissões' },
-            { id: 'procs', label: 'Procedimentos & Convênios' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer ${
-                activeSubTab === tab.id 
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-black' 
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { id: 'identidade', label: 'Identidade Visual', icon: Palette },
+            { id: 'equipe', label: 'Equipe & Permissões', icon: Users },
+            { id: 'procs', label: 'Procedimentos & Convênios', icon: ClipboardList }
+          ].map(tab => {
+            const TabIcon = tab.icon;
+            const isTabActive = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveSubTab(tab.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                  isTabActive 
+                    ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-md font-extrabold scale-[1.02]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <TabIcon className={`w-3.5 h-3.5 ${isTabActive ? 'text-violet-500' : 'text-slate-400'}`} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* SUB-ABA: IDENTIDADE VISUAL & WHITELABEL */}
       {activeSubTab === 'identidade' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
+        <form onSubmit={handleSaveBranding} className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left">
           
-          {/* Formulário de Configuração */}
-          <div className="lg:col-span-5 space-y-4">
+          {/* FORMULÁRIO DE CONFIGURAÇÃO DE MARCA (COLUNA DA ESQUERDA - COMPACTO E SEM SCROLL) */}
+          <div className="lg:col-span-5 space-y-3">
             {(() => {
               const isImageUrl = cLogo && (cLogo.startsWith('http') || cLogo.startsWith('/') || cLogo.includes('.') || cLogo.includes('data:image'));
               return (
-                <form onSubmit={handleSaveBranding} className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Palette className="w-4 h-4 text-violet-500" /> Painel Whitelabel & Marca
-                  </h3>
+                <>
+                  {/* ALERTA DE SUCESSO AO SALVAR */}
+                  {showSavedAlert && (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center justify-between animate-in fade-in zoom-in-95 duration-200 shadow-md">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span>Identidade visual salva com sucesso!</span>
+                      </div>
+                      <span className="text-[9px] uppercase tracking-wider font-extrabold bg-emerald-500/20 px-2 py-0.5 rounded-lg">Aplicado</span>
+                    </div>
+                  )}
 
-                  <div className="space-y-4 text-xs text-left">
-                    {/* Nome & Subdomínio */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome da Empresa</label>
-                        <input
-                          type="text"
-                          required
-                          value={cName}
-                          onChange={(e) => setCName(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none"
-                          placeholder="Nome da clínica/empresa"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Subdomínio</label>
-                        <input
-                          type="text"
-                          value={cSubdomain}
-                          onChange={(e) => setCSubdomain(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none font-mono text-[11px]"
-                          placeholder="Link (ex: sorriso)"
-                        />
-                      </div>
+                  {/* BLOCO 1: DADOS DA MARCA & TEMA BASE DA CLÍNICA */}
+                  <div className="bg-white dark:bg-[#0D0D0D] p-4 rounded-[20px] border border-slate-200/80 dark:border-white/10 shadow-md space-y-3 transition-colors duration-300">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                      <h3 className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2 font-title">
+                        <Building className="w-3.5 h-3.5 text-violet-500" /> Marca & Tema da Clínica
+                      </h3>
+                      <span className="text-[9px] font-bold text-slate-400">Identidade Visual</span>
                     </div>
 
-                    {/* Logo Upload & Emoji */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Logo URL, Emoji ou Upload</label>
-                      <div className="flex gap-2.5 items-center">
-                        <input
-                          type="text"
-                          value={cLogo}
-                          onChange={(e) => setCLogo(e.target.value)}
-                          className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 focus:outline-none text-xs text-slate-800 dark:text-white"
-                          placeholder="ex: 💎 ou URL da imagem"
-                        />
-                        <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/60 rounded-xl cursor-pointer text-[10px] font-bold text-slate-700 dark:text-slate-350 transition-all select-none whitespace-nowrap">
-                          Upload Imagem
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center text-xs text-left">
+                      {/* Nome da Clínica */}
+                      <div>
+                        <label className="block text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Nome Comercial</label>
+                        <div className="relative">
                           <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
+                            type="text"
+                            required
+                            value={cName}
+                            onChange={(e) => setCName(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-8 pr-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-violet-500 transition-colors shadow-inner"
+                            placeholder="ex: OdontoFace Clínica"
                           />
-                        </label>
-                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-800 text-lg select-none flex-shrink-0 shadow-inner">
-                          {isImageUrl ? (
-                            <img src={cLogo} alt="Logo" className="w-8 h-8 object-contain" />
-                          ) : cLogo === '🦷' ? (
-                            <Logo collapsed={true} className="w-7 h-7" />
-                          ) : (
-                            <span>
-                              {(() => {
-                                const logoMap = {
-                                  '✨': Sparkles,
-                                  '💎': Gem,
-                                  '🏥': Building,
-                                  '🛡️': Shield,
-                                  '⚕️': Activity
-                                };
-                                const IconComponent = logoMap[cLogo] || Activity;
-                                return <IconComponent className="w-5 h-5 text-secondary" />;
-                              })()}
-                            </span>
-                          )}
+                          <Building className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                        </div>
+                      </div>
+
+                      {/* Logotipo da Clínica */}
+                      <div>
+                        <label className="block text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Logotipo</label>
+                        
+                        <div className="flex gap-2 items-center p-1 px-2 rounded-xl bg-slate-50/80 dark:bg-black border border-slate-200/80 dark:border-white/10 min-h-[38px]">
+                          <div className="w-7 h-7 rounded-lg overflow-hidden bg-white dark:bg-[#18181B] flex items-center justify-center border border-slate-200 dark:border-white/10 text-sm select-none flex-shrink-0 shadow-sm">
+                            {isImageUrl ? (
+                              <img src={cLogo} alt="Logo" className="w-5 h-5 object-contain" />
+                            ) : (
+                              <Logo collapsed={true} className="w-4 h-4" />
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                            <label className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-500 hover:bg-violet-600 text-white rounded-lg cursor-pointer text-[10px] font-extrabold transition-all shadow-md active:scale-[0.98] select-none truncate">
+                              <Image className="w-3 h-3 flex-shrink-0" />
+                              <span>Fazer Upload</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleLogoUpload}
+                                className="hidden"
+                              />
+                            </label>
+
+                            {isImageUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setCLogo('🦷')}
+                                className="text-[9px] text-rose-500 hover:text-rose-400 font-bold cursor-pointer hover:underline flex-shrink-0"
+                              >
+                                Remover
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Paleta de Cores */}
-                    <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Paleta de Cores da Marca</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { label: 'Primária', val: cPrimary, set: setCPrimary },
-                          { label: 'Secundária', val: cSecondary, set: setCSecondary },
-                          { label: 'Destaque', val: cAccent, set: setCAccent }
-                        ].map((item, idx) => (
-                          <div key={idx} className="flex flex-col items-center p-2 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-150 dark:border-slate-800/80">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase mb-1.5">{item.label}</span>
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200/70 dark:border-slate-600 flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 transition-transform" style={{ backgroundColor: item.val }}>
-                              <input 
-                                type="color" 
-                                value={item.val} 
-                                onChange={(e) => item.set(e.target.value)} 
-                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
-                              />
-                            </div>
-                            <span className="text-[8px] font-mono font-semibold text-slate-500 mt-2 tracking-tight">{item.val.toUpperCase()}</span>
-                          </div>
-                        ))}
+                    {/* Divisor & Tema Padrão */}
+                    <div className="pt-2 border-t border-slate-100 dark:border-white/5">
+                      <label className="block text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Tema Padrão do App</label>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTheme = 'light';
+                            setCThemeBase(newTheme);
+                            setSandboxMode(newTheme);
+                            if (applyTheme) {
+                              applyTheme({
+                                ...currentTheme,
+                                primary_color: cPrimary,
+                                secondary_color: cSecondary,
+                                accent_color: cAccent,
+                                theme_base: newTheme
+                              });
+                            }
+                          }}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                            cThemeBase === 'light'
+                              ? 'bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-sm font-black ring-2 ring-amber-500/20'
+                              : 'bg-slate-50 dark:bg-black border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                          }`}
+                        >
+                          <Sun className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Claro</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTheme = 'dark';
+                            setCThemeBase(newTheme);
+                            setSandboxMode(newTheme);
+                            if (applyTheme) {
+                              applyTheme({
+                                ...currentTheme,
+                                primary_color: cPrimary,
+                                secondary_color: cSecondary,
+                                accent_color: cAccent,
+                                theme_base: newTheme
+                              });
+                            }
+                          }}
+                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 border ${
+                            cThemeBase === 'dark'
+                              ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 shadow-sm font-black ring-2 ring-indigo-500/20'
+                              : 'bg-slate-50 dark:bg-black border-slate-200/80 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                          }`}
+                        >
+                          <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Escuro</span>
+                        </button>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* BLOCO 2: PALETA DE CORES DA MARCA (DESIGN TOKENS) */}
+                  <div className="bg-white dark:bg-[#0D0D0D] p-4 rounded-[20px] border border-slate-200/80 dark:border-white/10 shadow-md space-y-3 transition-colors duration-300">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/5">
+                      <h3 className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2 font-title">
+                        <Palette className="w-3.5 h-3.5 text-violet-500" /> Paleta de Cores da Marca
+                      </h3>
+                      <span className="text-[9px] font-bold text-slate-400">Design Tokens</span>
+                    </div>
+
+                    {/* 3 Swatches Limpos de Cores da Marca */}
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: 'Primária', val: cPrimary, set: setCPrimary },
+                        { label: 'Secundária', val: cSecondary, set: setCSecondary },
+                        { label: 'Destaque', val: cAccent, set: setCAccent }
+                      ].map((item, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex flex-col items-center p-2 bg-slate-50/80 dark:bg-[#0D0D0D] rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs hover:shadow-md transition-all group relative overflow-hidden text-center"
+                        >
+                          <span className="text-[9px] font-extrabold text-slate-800 dark:text-slate-200 uppercase mb-1">{item.label}</span>
+
+                          {/* Swatch de cor tátil */}
+                          <div 
+                            className="relative w-8 h-8 rounded-xl border-2 border-white dark:border-slate-800 flex items-center justify-center cursor-pointer shadow-md group-hover:scale-105 transition-transform" 
+                            style={{ backgroundColor: item.val, boxShadow: `0 4px 12px ${item.val}40` }}
+                          >
+                            <input 
+                              type="color" 
+                              value={item.val} 
+                              onChange={(e) => item.set(e.target.value)} 
+                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer" 
+                            />
+                          </div>
+
+                          <span className="text-[8px] font-mono font-extrabold text-slate-800 dark:text-slate-200 mt-1.5 bg-white dark:bg-white/10 px-1.5 py-0.5 rounded border border-slate-200/60 dark:border-white/5">
+                            {item.val.toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Presets do Designer */}
-                    <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-150 dark:border-slate-800/80">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-2">Paletas Prontas (Presets)</label>
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="pt-2 border-t border-slate-100 dark:border-white/5">
+                      <label className="block text-[9px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Paletas Prontas Recomendadas</label>
+                      <div className="grid grid-cols-2 gap-1.5">
                         {BRAND_PRESETS.map((preset, idx) => (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => handleApplyPreset(preset)}
-                            className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 text-left transition-all active:scale-[0.98] flex items-center justify-between"
+                            className="p-1.5 px-2 bg-slate-50 dark:bg-[#0D0D0D] hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg border border-slate-200/80 dark:border-white/5 text-left transition-all active:scale-[0.98] flex items-center justify-between group cursor-pointer"
                           >
-                            <span className="text-[9px] font-bold text-slate-700 dark:text-slate-350 truncate max-w-[75px]">{preset.name}</span>
-                            <div className="flex gap-0.5 flex-shrink-0">
-                              <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: preset.primary }} />
-                              <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: preset.secondary }} />
-                              <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: preset.accent }} />
+                            <span className="text-[9px] font-extrabold text-slate-800 dark:text-slate-200 truncate max-w-[85px]">{preset.name}</span>
+                            <div className="flex gap-1 flex-shrink-0">
+                              <span className="w-2.5 h-2.5 rounded-full border border-white/40 shadow-xs" style={{ backgroundColor: preset.primary }} />
+                              <span className="w-2.5 h-2.5 rounded-full border border-white/40 shadow-xs" style={{ backgroundColor: preset.secondary }} />
+                              <span className="w-2.5 h-2.5 rounded-full border border-white/40 shadow-xs" style={{ backgroundColor: preset.accent }} />
                             </div>
                           </button>
                         ))}
                       </div>
                     </div>
-
-                    {/* Tipografia & Base */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipografia (Fonte)</label>
-                        <select
-                          value={cFontFamily}
-                          onChange={(e) => setCFontFamily(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-2.5 text-xs text-slate-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          {['Geist', 'Inter', 'Outfit', 'Poppins', 'Montserrat', 'Roboto'].map(font => (
-                            <option key={font} value={font}>{font}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Base do Tema</label>
-                        <select
-                          value={cThemeBase}
-                          onChange={(e) => setCThemeBase(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-2.5 text-xs text-slate-800 dark:text-white focus:outline-none cursor-pointer"
-                        >
-                          <option value="light">Claro (Recomendado)</option>
-                          <option value="dark">Escuro</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Fim das Configurações de Aparência */}
-
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 hover:opacity-90 text-white font-extrabold rounded-xl shadow-md text-xs mt-2 transition-all active:scale-[0.99]"
-                      style={{ backgroundColor: cSecondary }}
-                    >
-                      Salvar Identidade Visual
-                    </button>
                   </div>
-                </form>
+                </>
               );
             })()}
           </div>
 
-          {/* Sandbox: Mockup Interativo em Tempo Real */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-violet-500" /> Sandbox: Preview em Tempo Real
-              </h3>
-              
-              {/* Chaveador de tema no Sandbox */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setSandboxMode('light')}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                    sandboxMode === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                  }`}
-                >
-                  Modo Claro
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSandboxMode('dark')}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                    sandboxMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-                  }`}
-                >
-                  Modo Escuro
-                </button>
-              </div>
-            </div>
+          {/* SANDBOX STUDIO: MOCKUP INTERATIVO + CTA DE SALVAR NO LADO DIREITO */}
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-3">
 
+            {/* JANELA MACOS DO SANDBOX */}
             {(() => {
-              const darkerPrimary = adjustColorBrightness(cPrimary, -25);
-              const accentBg = cAccent || '#D9E2FF';
               const isDarkPreview = sandboxMode === 'dark' || (cThemeBase === 'dark' && sandboxMode !== 'light');
-              const lightBg = adjustColorBrightness(accentBg, 80);
+              const mockSidebarBg = isDarkPreview 
+                ? adjustColorBrightness(cPrimary || '#000000', -70) 
+                : '#ffffff';
+              const canvasBg = isDarkPreview ? '#000000' : '#F1F5F9';
+              const isImageUrl = cLogo && (cLogo.startsWith('http') || cLogo.startsWith('/') || cLogo.includes('.') || cLogo.includes('data:image'));
+
               return (
                 <div 
-                  className="w-full aspect-[16/10] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden flex select-none transition-all duration-300 relative bg-white"
-                  style={{ backgroundColor: isDarkPreview ? '#020617' : lightBg, fontFamily: `"${cFontFamily}", sans-serif` }}
+                  className="w-full rounded-[24px] border border-slate-300/80 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col select-none transition-all duration-300 relative bg-black"
+                  style={{ fontFamily: `"${cFontFamily}", sans-serif` }}
                 >
-                  {/* 1. Sidebar Fictícia */}
-                  <div 
-                    className="w-12 h-full flex flex-col justify-between items-center py-3 border-r border-black/10 flex-shrink-0"
-                    style={{ backgroundColor: isDarkPreview ? '#0f172a' : cPrimary }}
-                  >
-                    <div className="flex flex-col items-center gap-4 w-full">
-                      {/* Logo compacta */}
-                      <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center border border-white/10 text-xs overflow-hidden text-white font-bold">
-                        {cLogo && (cLogo.startsWith('http') || cLogo.startsWith('data:image/') || cLogo.includes('.')) ? (
-                          <img src={cLogo} alt="Logo" className="w-4 h-4 object-contain" />
-                        ) : cLogo === '🦷' ? (
-                          <Logo collapsed={true} className="w-4 h-4" />
-                        ) : (
-                          <span>
-                            {(() => {
-                              const logoMap = {
-                                '✨': Sparkles,
-                                '💎': Gem,
-                                '🏥': Building,
-                                '🛡️': Shield,
-                                '⚕️': Activity
-                              };
-                              const IconComponent = logoMap[cLogo] || Activity;
-                              return <IconComponent className="w-3.5 h-3.5 text-white" />;
-                            })()}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Links */}
-                      {[1, 2, 3].map((item, idx) => (
-                        <div 
-                          key={idx} 
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all opacity-80"
-                          style={idx === 0 ? { backgroundColor: isDarkPreview ? '#3b82f6' : cSecondary, color: '#ffffff' } : { color: 'rgba(255,255,255,0.4)' }}
-                        >
-                          <span className="text-[9px] font-black">{idx === 0 ? '★' : '●'}</span>
-                        </div>
-                      ))}
+                  {/* BARRA SUPERIOR MACOS STUDIO */}
+                  <div className="h-9 bg-slate-200/90 dark:bg-[#0A0A0A] border-b border-slate-300/60 dark:border-white/10 px-4 flex items-center justify-between flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] block" />
+                      <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] block" />
+                      <span className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] block" />
                     </div>
 
-                    {/* Logout */}
-                    <div className="w-6 h-6 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-[8px] text-white/40">
-                      ✕
+                    {/* URL BADGE DO SUBDOMÍNIO */}
+                    <div className="px-3 py-0.5 rounded-full bg-white/70 dark:bg-white/10 text-[10px] font-mono text-slate-700 dark:text-slate-300 font-bold border border-slate-300/50 dark:border-white/10 flex items-center gap-1.5 shadow-xs">
+                      <Lock className="w-3 h-3 text-emerald-500" />
+                      <span>https://{cSubdomain || 'sorriso'}.dentalflow.com.br/dashboard</span>
                     </div>
+
+                    <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">DentalFlow Studio</span>
                   </div>
 
-                  {/* 2. Sub-Sidebar Fictícia */}
+                  {/* CORPO DA APLICAÇÃO MOCKUP (LAYOUT EXATO DO APP EM ESTILO ULTRA-MINIMALISTA) */}
                   <div 
-                    className="w-32 h-full border-r border-black/5 flex flex-col p-2.5 flex-shrink-0"
-                    style={{ backgroundColor: isDarkPreview ? '#080d1c' : darkerPrimary }}
+                    className="flex flex-1 min-h-[460px] p-3 gap-3 relative overflow-hidden transition-colors duration-300" 
+                    style={{ backgroundColor: canvasBg }}
                   >
-                    <span className="text-[7px] font-black text-white/50 uppercase tracking-widest pl-1 mb-2">Jornada</span>
-                    <div className="space-y-1.5">
-                      {[
-                        { l: 'Total', v: '24' },
-                        { l: 'Novos', v: '6', color: 'text-sky-400' }
-                      ].map((m, idx) => (
-                        <div key={idx} className="p-1.5 bg-black/20 border border-white/5 rounded-lg flex flex-col justify-between text-white">
-                          <span className="text-[6px] text-slate-400 uppercase font-bold">{m.l}</span>
-                          <span className={`text-xs font-black mt-0.5 ${m.color || ''}`}>{m.v}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 3. Área de Conteúdo Principal */}
-                  <div className="flex-1 flex flex-col h-full overflow-hidden text-slate-800 dark:text-slate-200">
-                    {/* Cabeçalho */}
-                    <div className={`h-10 border-b border-black/5 px-3.5 flex items-center justify-between ${
-                      isDarkPreview ? 'bg-slate-900/80 text-white' : 'bg-white/80 text-slate-800'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-md overflow-hidden bg-white flex items-center justify-center border border-slate-200/50 flex-shrink-0 select-none shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                          {cLogo && (cLogo.startsWith('http') || cLogo.startsWith('data:image/') || cLogo.includes('.')) ? (
-                            <img src={cLogo} alt="Logo" className="w-3 h-3 object-contain" />
-                          ) : cLogo === '🦷' ? (
-                            <Logo collapsed={true} className="w-3.5 h-3.5" />
+                    {/* 1. SIDEBAR FLUTUANTE DE NAVEGAÇÃO DA APLICAÇÃO (UTILIZA A COR PRIMÁRIA DA CLÍNICA) */}
+                    <div 
+                      className="w-16 flex flex-col justify-between items-center py-3.5 px-2 rounded-[24px] border border-white/10 shadow-lg flex-shrink-0 z-10 transition-colors duration-300"
+                      style={{ backgroundColor: mockSidebarBg }}
+                    >
+                      <div className="flex flex-col items-center gap-3.5 w-full">
+                        {/* Placeholder de Logo Minimalista */}
+                        <div className={`w-9 h-9 rounded-2xl border flex items-center justify-center shadow-xs flex-shrink-0 ${
+                          isDarkPreview ? 'bg-white/10 border-white/15' : 'bg-slate-100 border-slate-200/80'
+                        }`}>
+                          {isImageUrl ? (
+                            <img src={cLogo} alt="Logo" className="w-6 h-6 object-contain" />
                           ) : (
-                            (() => {
-                              const logoMap = {
-                                '✨': Sparkles,
-                                '💎': Gem,
-                                '🏥': Building,
-                                '🛡️': Shield,
-                                '⚕️': Activity
-                              };
-                              const IconComponent = logoMap[cLogo] || Activity;
-                              return <IconComponent className="w-2.5 h-2.5 text-secondary" />;
-                            })()
+                            <span className="w-4 h-4 rounded-md bg-white/70 block" />
                           )}
                         </div>
-                        <span className={`text-[9px] font-black tracking-wide truncate max-w-[70px] ${
-                          isDarkPreview ? 'text-white' : 'text-slate-800'
-                        }`}>{cName || 'OdontoLar'}</span>
+
+                        {/* Ícones do Menu Minimalistas */}
+                        <div className="flex flex-col gap-2.5 w-full items-center mt-1">
+                          {/* Ícone Ativo -> Usa a Cor Secundária da Clínica */}
+                          <div 
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md transition-all scale-105"
+                            style={{ backgroundColor: cSecondary, boxShadow: `0 4px 14px ${cSecondary}50` }}
+                          >
+                            <span className="w-4 h-4 rounded-md bg-white block" />
+                          </div>
+
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDarkPreview ? 'bg-white/5' : 'bg-slate-100/80'}`}>
+                            <span className={`w-4 h-4 rounded-sm block ${isDarkPreview ? 'bg-white/30' : 'bg-slate-400/40'}`} />
+                          </div>
+
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDarkPreview ? 'bg-white/5' : 'bg-slate-100/80'}`}>
+                            <span className={`w-4 h-4 rounded-sm block ${isDarkPreview ? 'bg-white/30' : 'bg-slate-400/40'}`} />
+                          </div>
+
+                          {/* WhatsApp Icon com Indicador Pulsante */}
+                          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 relative">
+                            <span className="w-4 h-4 rounded-sm bg-emerald-500 block" />
+                            <span className={`w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5 border-2 animate-pulse ${
+                              isDarkPreview ? 'border-[#0B1220]' : 'border-white'
+                            }`} />
+                          </div>
+
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDarkPreview ? 'bg-white/5' : 'bg-slate-100/80'}`}>
+                            <span className={`w-4 h-4 rounded-sm block ${isDarkPreview ? 'bg-white/30' : 'bg-slate-400/40'}`} />
+                          </div>
+
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isDarkPreview ? 'bg-white/5' : 'bg-slate-100/80'}`}>
+                            <span className={`w-4 h-4 rounded-sm block ${isDarkPreview ? 'bg-white/30' : 'bg-slate-400/40'}`} />
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Botões do Topo */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-4 h-4 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[7px] text-slate-500 border border-slate-200/40">☼</div>
-                        <div className="w-4 h-4 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[7px] text-slate-500 border border-slate-200/40 font-bold">🔔</div>
+                      {/* Avatar do Usuário Minimalista */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDarkPreview ? 'bg-white/10' : 'bg-slate-200'}`}>
+                        <span className={`w-3 h-3 rounded-full block ${isDarkPreview ? 'bg-white/60' : 'bg-slate-400/60'}`} />
                       </div>
                     </div>
 
-                    {/* Corpo do Dashboard */}
-                    <div className="flex-1 p-3 overflow-hidden">
-                      <h4 className={`text-[10px] font-black tracking-tight leading-tight ${
-                        isDarkPreview ? 'text-white' : 'text-slate-900'
+                    {/* 2. ÁREA DE CONTEÚDO DA APLICAÇÃO (LAYOUT EXATO MINIMALISTA) */}
+                    <div className={`flex-1 rounded-[24px] border shadow-lg flex flex-col overflow-hidden text-left transition-colors duration-300 ${
+                      isDarkPreview ? 'bg-[#0D0D0D] border-white/10' : 'bg-white border-slate-200/80'
+                    }`}>
+                      
+                      {/* BARRA SUPERIOR HEADER SKELETON */}
+                      <div className={`h-12 border-b px-4 flex items-center justify-between flex-shrink-0 ${
+                        isDarkPreview ? 'border-white/5 bg-[#0D0D0D]' : 'border-slate-100 bg-white'
                       }`}>
-                        {user?.full_name ? `Olá, ${user.full_name}!` : 'Olá, Doutor(a)!'}
-                      </h4>
-                      <p className={`text-[6px] mt-0.5 ${
-                        isDarkPreview ? 'text-slate-400' : 'text-slate-500'
-                      }`}>Acompanhe as métricas de sua clínica em tempo real.</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-6 h-6 rounded-lg block ${isDarkPreview ? 'bg-slate-800' : 'bg-slate-200'}`} />
+                          <span className={`w-20 h-2.5 rounded block font-black ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                          <span className={isDarkPreview ? 'text-slate-600 text-xs' : 'text-slate-300 text-xs'}>›</span>
+                          <span className={`w-16 h-2 rounded block ${isDarkPreview ? 'bg-slate-600' : 'bg-slate-300'}`} />
+                        </div>
 
-                      {/* Exemplo de Card */}
-                      <div className={`mt-2.5 p-2 rounded-xl border shadow-sm flex flex-col justify-between h-[65px] transition-transform duration-300 ${
-                        isDarkPreview ? 'bg-slate-800/90 border-slate-700 text-white' : 'bg-white border-slate-200/40 text-slate-800'
-                      }`}>
-                        <span className="text-[6px] font-bold text-slate-400 uppercase tracking-wide">Faturamento Estimado</span>
-                        <span className="text-sm font-black font-title tracking-tight mt-0.5" style={{ color: cSecondary }}>
-                          R$ 38.450,00
-                        </span>
-                        <span className="text-[5px] text-emerald-500 font-bold mt-1">▲ +12% em relação ao mês anterior</span>
+                        {/* Botões do Canto Direito */}
+                        <div className="flex items-center gap-2">
+                          <span className={`w-7 h-7 rounded-xl block ${isDarkPreview ? 'bg-slate-800' : 'bg-slate-100'}`} />
+
+                          {/* BOTÃO + NOVO PINTADO NA COR SECUNDÁRIA */}
+                          <div 
+                            className="w-20 h-7 rounded-xl shadow-md flex items-center justify-center gap-1"
+                            style={{ backgroundColor: cSecondary }}
+                          >
+                            <span className="w-2.5 h-2.5 rounded-full bg-white block" />
+                            <span className="w-10 h-2 rounded bg-white block" />
+                          </div>
+
+                          <span className="w-7 h-7 rounded-xl bg-violet-500/10 block" />
+                          <span className={`w-7 h-7 rounded-xl block ${isDarkPreview ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                          <span className="w-7 h-7 rounded-full bg-emerald-500 block" />
+                        </div>
+                      </div>
+
+                      {/* CORPO DO DASHBOARD MINIMALISTA */}
+                      <div className="flex-1 p-4 space-y-3.5 overflow-y-auto">
+                        
+                        {/* HERO BOX DE BOAS-VINDAS PINTADO NA COR DE DESTAQUE (ACCENT) */}
+                        <div 
+                          className="p-3.5 rounded-2xl border transition-colors space-y-2"
+                          style={{ 
+                            backgroundColor: isDarkPreview ? '#18181B' : adjustColorBrightness(cAccent || '#D9E2FF', 75),
+                            borderColor: isDarkPreview ? 'rgba(255, 255, 255, 0.08)' : adjustColorBrightness(cAccent || '#D9E2FF', 20)
+                          }}
+                        >
+                          <span className={`w-32 h-3 rounded block font-black ${isDarkPreview ? 'bg-white' : 'bg-slate-900'}`} />
+                          <span className={`w-64 h-2 rounded block ${isDarkPreview ? 'bg-slate-400/50' : 'bg-slate-500/50'}`} />
+                        </div>
+
+                        {/* 4 CARDS KPI DE MÉTRICAS */}
+                        <div className="grid grid-cols-4 gap-2.5">
+                          {/* Card 1: Faturamento (Colorido na Cor Secundária) */}
+                          <div className={`p-3 rounded-2xl border shadow-sm flex flex-col justify-between h-20 ${
+                            isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                          }`}>
+                            <span className={`w-20 h-2 rounded block ${isDarkPreview ? 'bg-white/20' : 'bg-slate-300'}`} />
+                            <span className="w-24 h-4 rounded-md block" style={{ backgroundColor: cSecondary }} />
+                            <span className="w-10 h-1.5 rounded bg-emerald-500/60 block" />
+                          </div>
+
+                          {/* Card 2 */}
+                          <div className={`p-3 rounded-2xl border shadow-sm flex flex-col justify-between h-20 ${
+                            isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                          }`}>
+                            <span className={`w-24 h-2 rounded block ${isDarkPreview ? 'bg-white/20' : 'bg-slate-300'}`} />
+                            <span className={`w-10 h-4 rounded-md block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                            <span className="w-12 h-1.5 rounded bg-slate-400/40 block" />
+                          </div>
+
+                          {/* Card 3 */}
+                          <div className={`p-3 rounded-2xl border shadow-sm flex flex-col justify-between h-20 ${
+                            isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                          }`}>
+                            <span className={`w-16 h-2 rounded block ${isDarkPreview ? 'bg-white/20' : 'bg-slate-300'}`} />
+                            <span className={`w-14 h-4 rounded-md block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                            <span className="w-10 h-1.5 rounded bg-slate-400/40 block" />
+                          </div>
+
+                          {/* Card 4 */}
+                          <div className={`p-3 rounded-2xl border shadow-sm flex flex-col justify-between h-20 ${
+                            isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                          }`}>
+                            <span className={`w-16 h-2 rounded block ${isDarkPreview ? 'bg-white/20' : 'bg-slate-300'}`} />
+                            <span className={`w-10 h-4 rounded-md block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                            <span className="w-12 h-1.5 rounded bg-slate-400/40 block" />
+                          </div>
+                        </div>
+
+                        {/* SEÇÃO PRINCIPAL EM 2 COLUNAS: GRÁFICO (ESQUERDA) E CALENDÁRIO/AGENDA (DIREITA) */}
+                        <div className="grid grid-cols-12 gap-3">
+                          
+                          {/* COLUNA ESQUERDA GRÁFICO (8 COLS) */}
+                          <div className="col-span-8 space-y-3">
+                            <div className={`p-3.5 rounded-2xl border shadow-sm ${
+                              isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                            }`}>
+                              <div className="flex justify-between items-center mb-3">
+                                <div className="space-y-1">
+                                  <span className={`w-44 h-2.5 rounded block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                                  <span className="w-32 h-1.5 rounded bg-slate-400/40 block" />
+                                </div>
+                                <span className="w-16 h-2 rounded block" style={{ backgroundColor: cSecondary }} />
+                              </div>
+
+                              {/* Gráfico Simulado de Linhas na Cor Secundária */}
+                              <div className={`h-28 w-full flex items-end gap-2 pt-4 px-2 border-b border-l relative ${
+                                isDarkPreview ? 'border-slate-800' : 'border-slate-200'
+                              }`}>
+                                <svg className="absolute inset-0 w-full h-full p-2 overflow-visible" preserveAspectRatio="none">
+                                  <path 
+                                    d="M 10 70 Q 60 20, 120 50 T 240 30 T 320 10" 
+                                    fill="none" 
+                                    stroke={cSecondary} 
+                                    strokeWidth="3" 
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+
+                            {/* Sala de Espera Minimalista */}
+                            <div className={`p-3 rounded-2xl border shadow-sm flex justify-between items-center ${
+                              isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                            }`}>
+                              <div className="space-y-1">
+                                <span className={`w-36 h-2 rounded block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                                <span className="w-48 h-1.5 rounded bg-slate-400/40 block" />
+                              </div>
+                              <span className="w-16 h-3 rounded-full bg-amber-500/20 border border-amber-500/30 block" />
+                            </div>
+                          </div>
+
+                          {/* COLUNA DIREITA CALENDÁRIO & AGENDA (4 COLS) */}
+                          <div className="col-span-4 space-y-3">
+                            
+                            {/* Mini Calendário Clínico Skeleton */}
+                            <div className={`p-3 rounded-2xl border shadow-sm ${
+                              isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                            }`}>
+                              <div className={`flex justify-between items-center mb-2 pb-1 border-b ${
+                                isDarkPreview ? 'border-white/5' : 'border-slate-100'
+                              }`}>
+                                <span className={`w-20 h-2 rounded block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                                <span className="w-10 h-1.5 rounded bg-slate-400/40 block" />
+                              </div>
+
+                              {/* Grid do Mês com o Dia Atual Destacado em cSecondary */}
+                              <div className="grid grid-cols-7 gap-1 text-center">
+                                {[...Array(7)].map((_, i) => (
+                                  <span key={i} className={`w-full h-1.5 rounded block my-1 ${isDarkPreview ? 'bg-white/20' : 'bg-slate-300'}`} />
+                                ))}
+                                {[...Array(28)].map((_, i) => {
+                                  const isCurrentDay = i + 1 === 23;
+                                  return (
+                                    <div 
+                                      key={i} 
+                                      className={`h-4 rounded-md flex items-center justify-center ${
+                                        isCurrentDay 
+                                          ? 'shadow-sm scale-105' 
+                                          : (isDarkPreview ? 'bg-white/5' : 'bg-slate-100')
+                                      }`}
+                                      style={isCurrentDay ? { backgroundColor: cSecondary } : {}}
+                                    >
+                                      {isCurrentDay && <span className="w-1.5 h-1.5 rounded-full bg-white block" />}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Agenda de Hoje Skeleton */}
+                            <div className={`p-3 rounded-2xl border shadow-sm ${
+                              isDarkPreview ? 'bg-[#0D0D0D] border-white/5' : 'bg-white border-slate-200/80'
+                            }`}>
+                              <div className="flex justify-between items-center mb-2">
+                                <span className={`w-16 h-2 rounded block ${isDarkPreview ? 'bg-white' : 'bg-slate-800'}`} />
+                                <span className="w-8 h-1.5 rounded bg-slate-400/40 block" />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <div className={`p-1.5 rounded-xl border flex justify-between items-center ${
+                                  isDarkPreview ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200/60'
+                                }`}>
+                                  <span className={`w-20 h-2 rounded block ${isDarkPreview ? 'bg-white/80' : 'bg-slate-700'}`} />
+                                  <span className="w-10 h-2.5 rounded bg-emerald-500/20 block" />
+                                </div>
+                                <div className={`p-1.5 rounded-xl border flex justify-between items-center ${
+                                  isDarkPreview ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200/60'
+                                }`}>
+                                  <span className={`w-18 h-2 rounded block ${isDarkPreview ? 'bg-white/80' : 'bg-slate-700'}`} />
+                                  <span className="w-10 h-2.5 rounded bg-amber-500/20 block" />
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+
                       </div>
                     </div>
                   </div>
 
-                  {/* Dica Flutuante no Sandbox */}
-                  <div className="absolute right-3.5 bottom-3.5 px-2 py-1 rounded-md bg-slate-900/90 text-white text-[7px] font-bold tracking-wider uppercase select-none pointer-events-none shadow-lg border border-white/5 flex items-center gap-1 backdrop-blur-md">
-                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                    Visualização em tempo real
+                  {/* BADGE FLUTUANTE DE HARMONIA DE CORES */}
+                  <div className="absolute right-4 bottom-4 px-3 py-1.5 rounded-xl bg-slate-950/90 text-white text-[9px] font-extrabold tracking-wider uppercase select-none pointer-events-none shadow-2xl border border-white/10 flex items-center gap-2 backdrop-blur-md">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>⚡ Harmonia Minimalista da Marca</span>
                   </div>
                 </div>
               );
             })()}
+
+            {/* BOTÃO CTA PRINCIPAL DE SALVAR NO LADO DIREITO */}
+            <button
+              type="submit"
+              className="w-full py-3.5 text-white font-black text-xs rounded-2xl shadow-xl transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+              style={{ 
+                backgroundColor: cSecondary, 
+                boxShadow: `0 8px 25px ${cSecondary}50` 
+              }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Salvar Identidade Visual da Clínica</span>
+            </button>
+
           </div>
-        </div>
+        </form>
       )}
 
       {/* SUB-ABA: GERENCIAMENTO DE EQUIPE */}

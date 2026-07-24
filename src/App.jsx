@@ -18,7 +18,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center font-sans relative overflow-hidden transition-colors duration-500 bg-slate-50 text-slate-800 dark:bg-[#0B1220] dark:text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center font-sans relative overflow-hidden transition-colors duration-500 bg-slate-50 text-slate-800 dark:bg-black dark:text-white">
         {/* Glow de fundo sutil */}
         <div className="absolute w-[450px] h-[450px] rounded-full blur-[130px] pointer-events-none transition-all duration-500 bg-blue-400/15 dark:bg-[#196BFB]/15 -top-20 -left-20" />
         <div className="absolute w-[450px] h-[450px] rounded-full blur-[130px] pointer-events-none transition-all duration-500 bg-indigo-300/20 dark:bg-indigo-500/15 -bottom-20 -right-20" />
