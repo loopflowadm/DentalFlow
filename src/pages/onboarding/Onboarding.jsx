@@ -225,10 +225,21 @@ export default function Onboarding({ onComplete }) {
       {step > 1 && step < 11 && (
         <button
           onClick={prevStep}
-          className="absolute top-6 left-6 px-4 py-2 border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-700 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-md flex items-center gap-1.5 z-30"
+          className="absolute top-6 left-6 px-4 py-2 border border-slate-200 bg-white/80 backdrop-blur-sm text-slate-700 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-md flex items-center gap-1.5 z-30 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
           Voltar
+        </button>
+      )}
+
+      {/* Botão de Pular Onboarding */}
+      {step < 11 && (
+        <button
+          onClick={onComplete}
+          className="absolute top-6 right-6 px-4 py-2 border border-slate-200/80 bg-white/80 backdrop-blur-sm text-slate-500 hover:text-slate-800 rounded-xl text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-md z-30 cursor-pointer"
+          title="Ir direto para o painel"
+        >
+          Pular introdução
         </button>
       )}
 

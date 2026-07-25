@@ -17,9 +17,19 @@ import {
   IconBrandWhatsapp,
   IconArrowUpRight,
   IconLogout,
-  IconSparkles,
   IconUser
 } from '@tabler/icons-react';
+
+const formatPhone = (phone) => {
+  if (!phone) return '';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 11) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+  } else if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+};
 
 export default function Sidebar({ 
   activeTab, 
@@ -518,6 +528,9 @@ export default function Sidebar({
                 <div className="space-y-2 pt-2">
                   {filteredPatients.map(patient => {
                     const isActive = selectedPatient?.id === patient.id;
+                    const photo = patient.photoUrl || patient.avatar_url;
+                    const patientCode = patient.id ? `ID: #${String(patient.id).substring(0, 8).toUpperCase()}` : 'Prontuário Ativo';
+
                     return (
                       <div
                         key={patient.id}
@@ -527,18 +540,35 @@ export default function Sidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-3 rounded-xl cursor-pointer transition-all border text-left ${
+                        className={`p-2.5 rounded-xl cursor-pointer transition-all border flex items-center gap-3 text-left relative overflow-hidden ${
                           isActive 
-                            ? 'bg-blue-50/90 dark:bg-[#18181B] border-[#196BFB]/50 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-md ring-2 ring-[#196BFB]/20 dark:ring-blue-500/20' 
-                            : 'bg-white hover:bg-slate-100 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none'
+                            ? 'bg-white dark:bg-[#151c2c] border-blue-500/40 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/20 border-l-4 border-l-blue-600 dark:border-l-blue-500' 
+                            : 'bg-white/80 hover:bg-slate-100/90 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/10'
                         }`}
                       >
-                        <h4 className={`text-xs font-bold font-title ${isActive ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-800 dark:text-white'}`}>
-                          {patient.name}
-                        </h4>
-                        <p className={`text-[10px] mt-0.5 truncate font-medium ${isActive ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
-                          Tel: {patient.phone || 'Sem celular'}
-                        </p>
+                        {/* Foto do Paciente ou Avatar Vetorial */}
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-2xs">
+                          {photo ? (
+                            <img src={photo} alt={patient.name} className="w-full h-full object-cover rounded-xl" />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center ${
+                              isActive
+                                ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
+                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
+                            }`}>
+                              <IconUser className="w-4.5 h-4.5 stroke-[2]" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="overflow-hidden flex-1">
+                          <h4 className={`text-xs font-bold truncate ${isActive ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-slate-800 dark:text-white'}`}>
+                            {patient.name}
+                          </h4>
+                          <p className="text-[10px] mt-0.5 truncate font-bold font-mono tracking-tight text-slate-500 dark:text-slate-400">
+                            {patientCode}
+                          </p>
+                        </div>
                       </div>
                     );
                   })}

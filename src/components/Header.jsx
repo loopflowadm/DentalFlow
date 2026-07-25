@@ -14,6 +14,7 @@ import {
   IconX,
   IconPlus,
   IconCalendar,
+  IconUser,
   IconUserPlus,
   IconLayoutKanban,
   IconCurrencyDollar,
@@ -170,7 +171,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors mt-0.5"
               >
-                <IconMessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                <IconBrandWhatsapp className="w-3.5 h-3.5 text-emerald-500" />
                 <span>Abrir WhatsApp Web</span>
               </button>
             </div>

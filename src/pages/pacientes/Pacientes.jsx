@@ -9,12 +9,13 @@ import {
   ArrowRight, AlertCircle, Printer, Download, Sparkles, Send,
   Check, MoreVertical, Bold, Italic, Link2, AlignLeft, AlignCenter,
   AlignRight, List, Undo, Redo, ImageIcon, HelpCircle,
-  Gift, Tag, AlertTriangle, Lock, Shield, ClipboardList
+  Gift, Tag, AlertTriangle, Lock, Shield, ClipboardList, Camera
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OdontogramView from './components/odontogram/OdontogramView';
 import VisaoGeralView from './components/views/VisaoGeralView';
 import PlanoTratamentoView from './components/views/PlanoTratamentoView';
+import { formatPhone, formatCPF, formatRG } from '../../lib/formatters';
 
 
 export default function Pacientes({ selectedPatient: propSelectedPatient, setSelectedPatient: propSetSelectedPatient, onOpenWhatsApp }) {
@@ -67,6 +68,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   const [pName, setPName] = useState('');
   const [pPhone, setPPhone] = useState('');
   const [pEmail, setPEmail] = useState('');
+  const [pPhotoUrl, setPPhotoUrl] = useState('');
   const [pCPF, setPCPF] = useState('');
   const [pRG, setPRG] = useState('');
   const [pBirthDate, setPBirthDate] = useState('');
@@ -136,6 +138,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     setPName(selectedPatient.name || '');
     setPPhone(selectedPatient.phone || '');
     setPEmail(selectedPatient.email || '');
+    setPPhotoUrl(selectedPatient.photoUrl || selectedPatient.avatar_url || '');
     setPCPF(history.cpf || '');
     setPRG(history.rg || '');
     setPBirthDate(history.birth_date || '');
@@ -291,8 +294,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
   // Calcular idade exata do paciente
   const calculateAge = (birthDateString) => {
-    if (!birthDateString) return 'Idade não cadastrada';
+    if (!birthDateString) return null;
     const birthDate = new Date(birthDateString);
+    if (isNaN(birthDate.getTime())) return null;
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
     let months = today.getMonth() - birthDate.getMonth();
@@ -301,7 +305,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       years--;
       months = 12 + months;
     }
-    return `${years} anos e ${months} meses`;
+    return `${years} anos`;
   };
 
   // Cadastrar Paciente Geral
@@ -362,6 +366,8 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       name: pName,
       phone: pPhone,
       email: pEmail || null,
+      photoUrl: pPhotoUrl || null,
+      avatar_url: pPhotoUrl || null,
       medical_history: JSON.stringify(updatedHistory)
     };
 
@@ -879,68 +885,112 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
         {selectedPatient ? (
           <>
             {/* 1. Header do Prontuário */}
-            <div className="p-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 flex items-center justify-between transition-colors duration-300">
+            <div className="p-5 sm:p-6 bg-white dark:bg-gradient-to-r dark:from-[#151c2c] dark:via-[#0b0f19] dark:to-[#111726] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-300 shadow-md">
               <div className="flex items-center gap-4">
-                {/* Big Avatar */}
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#18181B] flex items-center justify-center text-2xl border border-slate-200/80 dark:border-white/10 shadow-inner text-blue-500 dark:text-blue-400">
-                  <User className="w-8 h-8" />
+                {/* Avatar Minimalista de Profundidade do Paciente */}
+                <div 
+                  onClick={openEditModal}
+                  className="relative group w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200/90 dark:border-white/10 shadow-xs shrink-0 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:border-blue-500 hover:shadow-md"
+                  title="Clique para alterar a foto do paciente"
+                >
+                  {selectedPatient.photoUrl || selectedPatient.avatar_url ? (
+                    <img 
+                      src={selectedPatient.photoUrl || selectedPatient.avatar_url} 
+                      alt={selectedPatient.name} 
+                      className="w-full h-full object-cover rounded-2xl" 
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center w-full h-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+                      <User className="w-7 h-7 stroke-[2]" />
+                    </div>
+                  )}
+
+                  {/* Overlay interativo com Câmera */}
+                  <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-0.5 text-white backdrop-blur-[2px]">
+                    <Camera className="w-5 h-5 text-blue-300 drop-shadow-md" />
+                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-200">Foto</span>
+                  </div>
                 </div>
                 
-                <div className="text-left">
+                <div className="text-left space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-lg font-black text-slate-800 dark:text-white font-title leading-tight">
+                    <h2 className="text-xl font-black text-slate-800 dark:text-white font-title leading-tight">
                       {selectedPatient.name}
                     </h2>
                     
-                    {/* Alertas */}
-                    {criticalConditions.length > 0 && (
-                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
-                        <AlertTriangle className="w-2.5 h-2.5" /> {criticalConditions.length} Alerta de Saúde
+                    {/* Alertas Médicos */}
+                    {criticalConditions.map((cond, idx) => (
+                      <span key={idx} className="px-2.5 py-0.5 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 leading-none shadow-xs">
+                        <AlertTriangle className="w-3 h-3" /> {cond}
                       </span>
-                    )}
+                    ))}
 
                     {isBirthdayTomorrow(selectedHistory.birth_date) && (
-                      <span className="px-2 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 leading-none">
-                        <Gift className="w-2.5 h-2.5" /> Aniversário amanhã
+                      <span className="px-2.5 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 leading-none shadow-xs">
+                        <Gift className="w-3 h-3" /> Aniversário amanhã
                       </span>
                     )}
                   </div>
 
-                  {/* Sub details */}
-                  <div className="flex items-center gap-3.5 text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 font-bold flex-wrap">
-                    <a 
-                      href={`https://wa.me/${selectedPatient.phone}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5 fill-emerald-500/20" /> {selectedPatient.phone}
-                    </a>
-                    {selectedHistory.cpf && <span>CPF {selectedHistory.cpf}</span>}
-                    <span>{calculateAge(selectedHistory.birth_date)}</span>
-                  </div>
+                  {/* Detalhes de contato, idade e documentos */}
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold flex-wrap pt-0.5">
+                    {selectedPatient.phone && (
+                      <a 
+                        href={`https://wa.me/${selectedPatient.phone.replace(/\D/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg hover:underline transition-all shadow-xs"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 fill-emerald-500/20" /> {formatPhone(selectedPatient.phone)}
+                      </a>
+                    )}
 
-                  <button
-                    onClick={() => alert('Categorizar paciente em desenvolvimento.')}
-                    className="mt-1.5 px-2.5 py-0.5 bg-slate-100 dark:bg-[#18181B] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg text-[9px] font-bold transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 flex items-center gap-1"
-                  >
-                    <Tag className="w-2.5 h-2.5 text-blue-500 dark:text-blue-400" /> Categorizar
-                  </button>
+                    {calculateAge(selectedHistory.birth_date) && (
+                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono">
+                        {calculateAge(selectedHistory.birth_date)}
+                      </span>
+                    )}
+
+                    {selectedHistory.cpf && (
+                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono">
+                        CPF: {formatCPF(selectedHistory.cpf)}
+                      </span>
+                    )}
+
+                    {selectedHistory.gender && (
+                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg text-slate-600 dark:text-slate-300">
+                        {selectedHistory.gender}
+                      </span>
+                    )}
+
+                    <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono text-slate-500 dark:text-slate-400">
+                      ID: {selectedPatient.id ? (typeof selectedPatient.id === 'string' && selectedPatient.id.startsWith('p-') ? selectedPatient.id.replace('p-', '') : selectedPatient.id.substring(0, 8).toUpperCase()) : 'C16A3F1B'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Botão de Edição estilo macOS Depth UI */}
-              <button
-                onClick={openEditModal}
-                className="px-4 py-2 bg-slate-100 dark:bg-[#18181B] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-sm active:scale-95"
-              >
-                <Edit className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
-                Editar Perfil
-              </button>
+              {/* Botões de Edição e Ações */}
+              <div className="flex items-center gap-2 self-end md:self-center">
+                <button
+                  onClick={() => alert('Categorizar paciente em desenvolvimento.')}
+                  className="px-3.5 py-2 bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-xs cursor-pointer active:scale-95"
+                >
+                  <Tag className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> Categorizar
+                </button>
+
+                <button
+                  onClick={openEditModal}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/30 cursor-pointer active:scale-95"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  Editar Perfil
+                </button>
+              </div>
             </div>
 
             {/* 2. Barra de Navegação das Abas do Prontuário */}
-            <div className="px-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
+            <div className="px-6 bg-white dark:bg-[#0b0f19] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
               <div className="flex gap-4">
                 {[
                   { id: 'visao_geral', label: 'Visão Geral' },
@@ -2268,11 +2318,23 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <input
                       type="text"
                       required
+                      placeholder="(83) 99999-9999"
                       value={pPhone}
-                      onChange={(e) => setPPhone(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      onChange={(e) => setPPhone(formatPhone(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Foto do Paciente (Link / URL da Imagem)</label>
+                  <input
+                    type="url"
+                    placeholder="https://exemplo.com/foto-do-paciente.jpg"
+                    value={pPhotoUrl}
+                    onChange={(e) => setPPhotoUrl(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -2280,6 +2342,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">E-mail</label>
                     <input
                       type="email"
+                      placeholder="paciente@exemplo.com"
                       value={pEmail}
                       onChange={(e) => setPEmail(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
@@ -2289,9 +2352,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">CPF</label>
                     <input
                       type="text"
+                      placeholder="000.000.000-00"
                       value={pCPF}
-                      onChange={(e) => setPCPF(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      onChange={(e) => setPCPF(formatCPF(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -2301,9 +2365,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">RG</label>
                     <input
                       type="text"
+                      placeholder="00.000.000-0"
                       value={pRG}
-                      onChange={(e) => setPRG(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      onChange={(e) => setPRG(formatRG(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                   <div>

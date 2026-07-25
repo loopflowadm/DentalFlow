@@ -213,10 +213,11 @@ export function ClinicProvider({ children }) {
 
   // Escuta em Tempo Real (Supabase Realtime) para mensagens do WhatsApp
   useEffect(() => {
-    if (!clinic?.id) return;
-    const channel = supabase
-      .channel('realtime_chat_messages')
-      .on(
+    if (!clinic?.id || typeof supabase?.channel !== 'function') return;
+    const channel = supabase.channel('realtime_chat_messages');
+    if (!channel || typeof channel.on !== 'function') return;
+
+    channel.on(
         'postgres_changes',
         {
           event: 'INSERT',
@@ -289,7 +290,8 @@ export function ClinicProvider({ children }) {
         if (res.status === 'fulfilled') {
           if (res.value.error) {
             const isFetchErr = res.value.error.message?.includes('fetch') || res.value.error.details?.includes('fetch');
-            if (!isFetchErr) {
+            const isDemoErr = res.value.error.message?.includes('Modo Demo');
+            if (!isFetchErr && !isDemoErr) {
               console.warn('[ClinicContext] Aviso ao carregar tabela Supabase:', res.value.error.message || res.value.error);
             }
             return defaultValue;

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { mockDb } from '../lib/mockDatabase';
 import { useTheme } from './ThemeContext';
 
 const AuthContext = createContext();
@@ -21,7 +22,8 @@ const unpackClinicData = (clinic) => {
         login_bg: parsed.login_bg || '',
         address: parsed.address || null,
         plan_type: parsed.plan_type || clinic.plan_type || 'professional',
-        trial_ends_at: parsed.trial_ends_at || clinic.trial_ends_at || null
+        trial_ends_at: parsed.trial_ends_at || clinic.trial_ends_at || null,
+        onboarding_completed: parsed.onboarding_completed ?? clinic.onboarding_completed ?? false
       };
     } catch (e) {
       console.error('Failed to parse clinic whitelabel config from logo_url:', e);
@@ -37,7 +39,8 @@ const unpackClinicData = (clinic) => {
     login_bg: clinic.login_bg || '',
     address: null,
     plan_type: clinic.plan_type || 'professional',
-    trial_ends_at: clinic.trial_ends_at || null
+    trial_ends_at: clinic.trial_ends_at || null,
+    onboarding_completed: clinic.onboarding_completed ?? false
   };
 };
 
@@ -98,51 +101,162 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
-      // Buscar dados do perfil do usuário logado
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+        if (!error && data?.user) {
+          // Buscar dados do perfil do usuário logado
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-      if (profileError) throw profileError;
+          if (profile) {
+            const sessionUser = {
+              id: data.user.id,
+              email: data.user.email,
+              role: profile.role,
+              full_name: profile.full_name,
+              phone: profile.phone || data.user.user_metadata?.phone || '',
+              clinic_id: profile.clinic_id
+            };
 
-      const sessionUser = {
-        id: data.user.id,
-        email: data.user.email,
-        role: profile.role,
-        full_name: profile.full_name,
-        phone: profile.phone || data.user.user_metadata?.phone || '',
-        clinic_id: profile.clinic_id
-      };
+            setUser(sessionUser);
+            localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
 
-      setUser(sessionUser);
-      localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+            if (profile.clinic_id) {
+              const clinicData = await fetchClinicData(profile.clinic_id);
+              setClinic(clinicData);
+              if (clinicData) {
+                localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
+                applyTheme(clinicData);
+              }
+            } else {
+              setClinic(null);
+              localStorage.removeItem('df_session_clinic');
+              resetTheme();
+            }
+            setLoading(false);
+            return { success: true, user: sessionUser };
+          }
+        }
+      }
 
-      if (profile.clinic_id) {
-        const clinicData = await fetchClinicData(profile.clinic_id);
-        setClinic(clinicData);
-        if (clinicData) {
+      // Fallback para Modo Demo (mockDb)
+      const mockUsers = mockDb.getUsers();
+      const matchedUser = mockUsers.find(u => u.email?.toLowerCase() === email?.toLowerCase() && u.password === password);
+
+      if (matchedUser) {
+        const sessionUser = {
+          id: matchedUser.id,
+          email: matchedUser.email,
+          role: matchedUser.role,
+          full_name: matchedUser.full_name,
+          phone: matchedUser.phone || '',
+          clinic_id: matchedUser.clinic_id
+        };
+
+        setUser(sessionUser);
+        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+
+        if (matchedUser.clinic_id) {
+          const clinics = mockDb.getClinics();
+          const clinicData = clinics.find(c => c.id === matchedUser.clinic_id) || unpackClinicData(clinics[0]);
+          setClinic(clinicData);
+          if (clinicData) {
+            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
+            applyTheme(clinicData);
+          }
+        } else {
+          setClinic(null);
+          localStorage.removeItem('df_session_clinic');
+          resetTheme();
+        }
+
+        setLoading(false);
+        return { success: true, user: sessionUser };
+      }
+
+      // Se não encontrou no mockDb e estamos em Modo Demo (sem Supabase real), auto-cadastrar o usuário demo
+      if (!isSupabaseConfigured && email) {
+        const clinics = mockDb.getClinics();
+        const defaultClinic = clinics[0];
+        const newDemoUser = {
+          id: 'user-' + Math.random().toString(36).substr(2, 9),
+          email: email.trim().toLowerCase(),
+          password: password || '123',
+          role: 'CLINIC_ADMIN',
+          full_name: email.split('@')[0] || 'Usuário Demo',
+          phone: '',
+          clinic_id: defaultClinic?.id || 'clinic-sorriso-perfeito'
+        };
+        mockDb.saveUser(newDemoUser);
+
+        const sessionUser = {
+          id: newDemoUser.id,
+          email: newDemoUser.email,
+          role: newDemoUser.role,
+          full_name: newDemoUser.full_name,
+          phone: newDemoUser.phone,
+          clinic_id: newDemoUser.clinic_id
+        };
+
+        setUser(sessionUser);
+        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+        if (defaultClinic) {
+          const clinicData = unpackClinicData(defaultClinic);
+          setClinic(clinicData);
           localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
           applyTheme(clinicData);
         }
-      } else {
-        setClinic(null);
-        localStorage.removeItem('df_session_clinic');
-        resetTheme();
+
+        setLoading(false);
+        return { success: true, user: sessionUser };
       }
+
       setLoading(false);
-      return { success: true, user: sessionUser };
+      return { success: false, error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
     } catch (err) {
-      console.error('Falha de login no Supabase:', err.message);
+      console.warn('Falha de login no Supabase, tentando Modo Demo (mockDb):', err.message);
+
+      // Fallback de contingência mockDb
+      const mockUsers = mockDb.getUsers();
+      const matchedUser = mockUsers.find(u => u.email?.toLowerCase() === email?.toLowerCase() && u.password === password) ||
+                          (!isSupabaseConfigured ? mockUsers[0] : null);
+
+      if (matchedUser) {
+        const sessionUser = {
+          id: matchedUser.id,
+          email: matchedUser.email,
+          role: matchedUser.role,
+          full_name: matchedUser.full_name,
+          phone: matchedUser.phone || '',
+          clinic_id: matchedUser.clinic_id
+        };
+
+        setUser(sessionUser);
+        localStorage.setItem('df_session_user', JSON.stringify(sessionUser));
+
+        if (matchedUser.clinic_id) {
+          const clinics = mockDb.getClinics();
+          const clinicData = clinics.find(c => c.id === matchedUser.clinic_id) || unpackClinicData(clinics[0]);
+          setClinic(clinicData);
+          if (clinicData) {
+            localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
+            applyTheme(clinicData);
+          }
+        }
+
+        setLoading(false);
+        return { success: true, user: sessionUser };
+      }
+
       setLoading(false);
-      return { success: false, error: err.message };
+      return { success: false, error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
     }
   };
 
@@ -259,7 +373,8 @@ export function AuthProvider({ children }) {
       login_bg: updatedClinic.login_bg || '',
       address: updatedClinic.address || null,
       plan_type: updatedClinic.plan_type || 'professional',
-      trial_ends_at: updatedClinic.trial_ends_at || null
+      trial_ends_at: updatedClinic.trial_ends_at || null,
+      onboarding_completed: updatedClinic.onboarding_completed !== undefined ? updatedClinic.onboarding_completed : (clinic.onboarding_completed || false)
     });
 
     const supabasePayload = {
@@ -276,7 +391,9 @@ export function AuthProvider({ children }) {
         .eq('id', clinic.id);
       if (error) throw error;
     } catch (err) {
-      console.warn('[AuthContext] Supabase offline/inacessível. Operando no modo local:', err.message || err);
+      if (!err.message?.includes('Modo Demo')) {
+        console.warn('[AuthContext] Supabase offline/inacessível. Operando no modo local:', err.message || err);
+      }
     }
 
     applyTheme(updatedClinic);

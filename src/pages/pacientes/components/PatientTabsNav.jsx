@@ -1,5 +1,6 @@
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../../context/ThemeContext';
+import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   FileCheck, 
@@ -26,12 +27,12 @@ export default function PatientTabsNav({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className={`w-full backdrop-blur-md rounded-2xl border px-3 py-1.5 mb-4 overflow-x-auto custom-scrollbar transition-all ${
+    <div className={`w-full backdrop-blur-md rounded-2xl border px-2 py-1.5 mb-4 overflow-x-auto custom-scrollbar transition-all ${
       isDarkMode 
-        ? 'bg-[#111726]/90 border-white/10 shadow-lg text-white' 
-        : 'bg-white border-slate-200 shadow-xs text-slate-800'
+        ? 'bg-[#111726]/90 border-white/10 shadow-xl text-white' 
+        : 'bg-white border-slate-200 shadow-sm text-slate-800'
     }`}>
-      <div className="flex items-center gap-1.5 min-w-max">
+      <div className="flex items-center gap-1 min-w-max">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -39,26 +40,30 @@ export default function PatientTabsNav({ activeTab, setActiveTab }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
                 isActive
                   ? isDarkMode
-                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-md'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs font-extrabold'
+                    ? 'bg-blue-600/25 text-blue-300 border border-blue-500/40 shadow-md font-extrabold'
+                    : 'bg-blue-50 text-blue-700 border border-blue-200 shadow-xs font-black'
                   : isDarkMode
                     ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5 border border-transparent'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}`} />
-              <span className={isActive ? (isDarkMode ? 'text-blue-400 font-extrabold' : 'text-blue-700 font-black') : (isDarkMode ? 'text-slate-400' : 'text-slate-700 font-bold')}>
+              <Icon className={`w-4 h-4 transition-colors ${isActive ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') : (isDarkMode ? 'text-slate-400' : 'text-slate-500')}`} />
+              <span className={isActive ? (isDarkMode ? 'text-blue-300 font-extrabold' : 'text-blue-700 font-black') : (isDarkMode ? 'text-slate-400' : 'text-slate-700 font-bold')}>
                 {tab.label}
               </span>
 
-              {/* Indicador inferior iluminado para aba ativa */}
+              {/* Indicador inferior animado com Framer Motion */}
               {isActive && (
-                <div className={`absolute bottom-0 left-3 right-3 h-[2px] rounded-full ${
-                  isDarkMode ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]' : 'bg-blue-600'
-                }`} />
+                <motion.div 
+                  layoutId="activeTabGlow"
+                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                  className={`absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full ${
+                    isDarkMode ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.9)]' : 'bg-blue-600'
+                  }`} 
+                />
               )}
             </button>
           );

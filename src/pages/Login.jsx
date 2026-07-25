@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Logo from '../components/Logo';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mockDb } from '../lib/mockDatabase';
 import {
   KeyRound, Mail, AlertTriangle, ShieldCheck, HelpCircle,
@@ -14,8 +14,27 @@ export default function Login({ initialView = 'login', onBack }) {
   const [view, setView] = useState(initialView); // 'login' | 'register' | 'forgot'
 
   // Login Form States
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    try {
+      return localStorage.getItem('df_remember_me') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem('df_remember_me') === 'true' ? (localStorage.getItem('df_remembered_email') || '') : '';
+    } catch (e) {
+      return '';
+    }
+  });
+  const [password, setPassword] = useState(() => {
+    try {
+      return localStorage.getItem('df_remember_me') === 'true' ? (localStorage.getItem('df_remembered_password') || '') : '';
+    } catch (e) {
+      return '';
+    }
+  });
 
   // Register Form States
   const [clinicName, setClinicName] = useState('');
@@ -27,7 +46,7 @@ export default function Login({ initialView = 'login', onBack }) {
   const [regLogo, setRegLogo] = useState('🦷');
   const [regRole, setRegRole] = useState('CLINIC_OWNER'); // Default role when registering clinic
   const [regFullName, setRegFullName] = useState('');
-  const [regPhone, setRegPhone] = useState(() => localStorage.getItem('df_temp_phone') || '');
+  const [regPhone, setRegPhone] = useState('');
 
   const formatPhone = (val) => {
     const nums = val.replace(/\D/g, '').slice(0, 11);
@@ -39,7 +58,6 @@ export default function Login({ initialView = 'login', onBack }) {
   const handlePhoneChange = (val) => {
     const formatted = formatPhone(val);
     setRegPhone(formatted);
-    localStorage.setItem('df_temp_phone', formatted);
   };
 
   // Forgot Form States
@@ -130,6 +148,16 @@ export default function Login({ initialView = 'login', onBack }) {
     setLoadingState(true);
 
     try {
+      if (rememberMe) {
+        localStorage.setItem('df_remember_me', 'true');
+        localStorage.setItem('df_remembered_email', email);
+        localStorage.setItem('df_remembered_password', password);
+      } else {
+        localStorage.removeItem('df_remember_me');
+        localStorage.removeItem('df_remembered_email');
+        localStorage.removeItem('df_remembered_password');
+      }
+
       const res = await login(email, password);
       if (!res.success) {
         setError(res.error || 'Erro desconhecido ao efetuar login.');
@@ -157,7 +185,7 @@ export default function Login({ initialView = 'login', onBack }) {
       created_at: new Date().toISOString()
     };
 
-    if (supabaseActive) {
+    if (isSupabaseConfigured) {
       try {
         // 1. Inserir a clínica no banco real Supabase
         const { data: clinicData, error: clinicErr } = await supabase
@@ -199,43 +227,46 @@ export default function Login({ initialView = 'login', onBack }) {
           setPassword(regPassword);
           setView('login');
           setSuccess('');
-        }, 4000);
-      } catch (err) {
-        console.error('Erro ao cadastrar no Supabase:', err);
-        setError(err.message || 'Falha ao cadastrar clínica no Supabase.');
-        setLoadingState(false);
-      }
-    } else {
-      // Salvar Local
-      try {
-        const savedClinic = mockDb.saveClinic(newClinic);
-
-        // Criar conta do proprietário/administrador da clínica
-        const newUser = {
-          id: 'user-' + Math.random().toString(36).substr(2, 9),
-          email: regEmail,
-          password: regPassword,
-          role: 'CLINIC_ADMIN', // CLINIC_OWNER / CLINIC_ADMIN
-          full_name: regFullName.trim() || 'Administrador',
-          phone: regPhone.trim(),
-          clinic_id: savedClinic.id
-        };
-        mockDb.saveUser(newUser);
-
-        setSuccess(`Clínica cadastrada com sucesso! Faça login com o email: ${regEmail}`);
-        setLoadingState(false);
-
-        // Mover para login pré-preenchido
-        setTimeout(() => {
-          setEmail(regEmail);
-          setPassword(regPassword);
-          setView('login');
-          setSuccess('');
         }, 3000);
+        return;
       } catch (err) {
-        setError('Falha ao salvar clínica localmente.');
-        setLoadingState(false);
+        console.warn('Erro ou indisponibilidade no Supabase, efetuando cadastro em Modo Demo:', err);
       }
+    }
+
+    // Salvar Localmente (Modo Demo / Fallback)
+    try {
+      const savedClinic = mockDb.saveClinic(newClinic);
+
+      // Criar conta do proprietário/administrador da clínica
+      const newUser = {
+        id: 'user-' + Math.random().toString(36).substr(2, 9),
+        email: regEmail,
+        password: regPassword,
+        role: 'CLINIC_ADMIN', // CLINIC_OWNER / CLINIC_ADMIN
+        full_name: regFullName.trim() || 'Administrador',
+        phone: regPhone.trim(),
+        clinic_id: savedClinic.id
+      };
+      mockDb.saveUser(newUser);
+
+      setSuccess(`Clínica "${clinicName}" cadastrada com sucesso em Modo Demo! Redirecionando para login...`);
+      setLoadingState(false);
+
+      // Mover para login pré-preenchido
+      setTimeout(async () => {
+        setEmail(regEmail);
+        setPassword(regPassword);
+        const res = await login(regEmail, regPassword);
+        if (!res?.success) {
+          setView('login');
+        }
+        setSuccess('');
+      }, 1500);
+    } catch (err) {
+      console.error('Erro ao cadastrar clínica localmente:', err);
+      setError('Falha ao registrar clínica localmente.');
+      setLoadingState(false);
     }
   };
 
@@ -320,9 +351,9 @@ export default function Login({ initialView = 'login', onBack }) {
               )}
             </div>
 
-            {view === 'login' && (
+            {view === 'login' && (clinic?.login_title || (currentTheme?.name && currentTheme.name !== 'ODONTO CRM' && currentTheme.name !== 'DentalFlow')) && (
               <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white mb-1 font-title">
-                {clinic?.login_title ? clinic.login_title : (currentTheme?.name && currentTheme.name !== 'ODONTO CRM' ? `Portal ${currentTheme.name}` : 'Portal DentalFlow')}
+                {clinic?.login_title || currentTheme.name}
               </h2>
             )}
 
@@ -332,11 +363,12 @@ export default function Login({ initialView = 'login', onBack }) {
                 {view === 'forgot' && 'Recuperar Senha'}
               </h2>
             )}
-            <p className="text-xs text-slate-400 mt-1 max-w-xs">
-              {view === 'login' && 'Acesse com suas credenciais para gerenciar o painel da clínica'}
-              {view === 'register' && 'Cadastre sua clínica e customize seu tema em segundos'}
-              {view === 'forgot' && 'Digite seu e-mail para receber as instruções de recuperação'}
-            </p>
+            {(view === 'register' || view === 'forgot') && (
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                {view === 'register' && 'Cadastre sua clínica e customize seu tema em segundos'}
+                {view === 'forgot' && 'Digite seu e-mail para receber as instruções de recuperação'}
+              </p>
+            )}
           </div>
 
           {error && (
@@ -401,6 +433,20 @@ export default function Login({ initialView = 'login', onBack }) {
                     className="w-full bg-black/30 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-secondary/50 focus:border-secondary transition-all"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 pb-1">
+                <label className="flex items-center gap-2 cursor-pointer group select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/20 bg-black/40 text-secondary focus:ring-secondary/50 focus:ring-offset-0 transition-all accent-blue-600 cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">
+                    Salvar minhas informações de acesso
+                  </span>
+                </label>
               </div>
 
               <button

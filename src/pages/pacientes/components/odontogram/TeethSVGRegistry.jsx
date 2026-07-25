@@ -2,111 +2,179 @@ import React from 'react';
 
 /**
  * TeethSVGRegistry
- * Biblioteca de Componentes SVG para o Odontograma FDI (Dentes 11-48 e Decíduos 51-85).
- * Cada dente renderiza uma anatomia realista e detalhada dividida em sub-elementos SVG:
- * - root (raiz)
- * - occlusal / incisal (centro de oclusão)
- * - vestibular (topo/externo)
- * - lingual (base/interno)
- * - mesial (esquerda/linha média)
- * - distal (direita/lateral)
+ * Biblioteca de Componentes SVG para o Odontograma Clínico FDI Mapeado.
+ * Anatomia realista baseada no padrão FDI (viewBox 0 0 58 120).
+ * - Arcada Superior: Raiz no topo, Coroa/Oclusal embaixo.
+ * - Arcada Inferior: Coroa/Oclusal no topo, Raiz embaixo.
  */
 
-// Estilos de degradês para profundidade realista (macOS Depth UI)
+// Catálogo completo de Condições Odontológicas com Preços Médios TUSS e Categorias
+export const DENTAL_CONDITIONS = [
+  { id: 'carie', name: 'Cárie Dental', color: '#EF4444', stroke: '#DC2626', price: 150, type: 'surface', category: 'Restauração & Prevenção' },
+  { id: 'resina', name: 'Restauração Resina', color: '#3B82F6', stroke: '#2563EB', price: 220, type: 'surface', category: 'Restauração & Prevenção' },
+  { id: 'amalgama', name: 'Restauração Amálgama', color: '#64748B', stroke: '#475569', price: 180, type: 'surface', category: 'Restauração & Prevenção' },
+  { id: 'selante', name: 'Selante Oclusal', color: '#06B6D4', stroke: '#0891B2', price: 100, type: 'surface', category: 'Restauração & Prevenção' },
+  { id: 'coroa', name: 'Coroa Total / Prótese', color: '#EAB308', stroke: '#CA8A04', price: 1400, type: 'whole', category: 'Prótese & Reabilitação' },
+  { id: 'faceta', name: 'Faceta / Lente Cerâmica', color: '#A855F7', stroke: '#9333EA', price: 1800, type: 'whole', category: 'Prótese & Reabilitação' },
+  { id: 'implante', name: 'Implante Osseointegrado', color: '#0EA5E9', stroke: '#0284C7', price: 2800, type: 'whole', category: 'Prótese & Reabilitação' },
+  { id: 'endo', name: 'Endodontia (Trat. Canal)', color: '#22C55E', stroke: '#16A34A', price: 750, type: 'root', category: 'Prótese & Reabilitação' },
+  { id: 'extraido', name: 'Dente Extraído', color: '#F43F5E', stroke: '#E11D48', price: 0, type: 'whole', category: 'Cirurgia & Diagnóstico' },
+  { id: 'ausente', name: 'Dente Ausente / Agenesia', color: '#475569', stroke: '#334155', price: 0, type: 'whole', category: 'Cirurgia & Diagnóstico' },
+  { id: 'fratura', name: 'Fratura Coronária', color: '#F97316', stroke: '#EA580C', price: 200, type: 'whole', category: 'Cirurgia & Diagnóstico' },
+  { id: 'cervical', name: 'Lesão Cervical / Abfracção', color: '#D97706', stroke: '#B45309', price: 160, type: 'surface', category: 'Restauração & Prevenção' },
+  { id: 'saudavel', name: 'Higienizado / Saudável', color: '#10B981', stroke: '#059669', price: 0, type: 'whole', category: 'Cirurgia & Diagnóstico' }
+];
+
+export const CONDITION_COLORS = {
+  carie: { fill: '#EF4444', label: 'Cárie Dental', stroke: '#DC2626' },
+  resina: { fill: '#3B82F6', label: 'Restauração Resina', stroke: '#2563EB' },
+  restauracao_resina: { fill: '#3B82F6', label: 'Restauração Resina', stroke: '#2563EB' },
+  amalgama: { fill: '#64748B', label: 'Restauração Amálgama', stroke: '#475569' },
+  restauracao_amalgama: { fill: '#64748B', label: 'Restauração Amálgama', stroke: '#475569' },
+  selante: { fill: '#06B6D4', label: 'Selante Oclusal', stroke: '#0891B2' },
+  coroa: { fill: '#EAB308', label: 'Coroa Total', stroke: '#CA8A04' },
+  faceta: { fill: '#A855F7', label: 'Faceta Cerâmica', stroke: '#9333EA' },
+  implante: { fill: '#0EA5E9', label: 'Implante Titânio', stroke: '#0284C7' },
+  endo: { fill: '#22C55E', label: 'Endodontia', stroke: '#16A34A' },
+  endodontia: { fill: '#22C55E', label: 'Endodontia', stroke: '#16A34A' },
+  extraido: { fill: '#F43F5E', label: 'Dente Extraído', stroke: '#E11D48' },
+  ausente: { fill: 'transparent', label: 'Dente Ausente', stroke: '#475569' },
+  fratura: { fill: '#F97316', label: 'Fratura Coronária', stroke: '#EA580C' },
+  cervical: { fill: '#D97706', label: 'Lesão Cervical', stroke: '#B45309' },
+  lesao_cervical: { fill: '#D97706', label: 'Lesão Cervical', stroke: '#B45309' },
+  saudavel: { fill: '#10B981', label: 'Saudável', stroke: '#059669' }
+};
+
 export const ToothGradients = () => (
   <svg style={{ height: 0, width: 0, position: 'absolute' }} aria-hidden="true">
     <defs>
-      {/* Degradê padrão para o corpo do dente */}
-      <linearGradient id="toothBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#2a354c" />
-        <stop offset="100%" stopColor="#192233" />
-      </linearGradient>
-
-      {/* Degradê do implante de titânio (cyan metallic glow) */}
       <linearGradient id="implantScrewGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#38bdf8" />
         <stop offset="50%" stopColor="#0284c7" />
         <stop offset="100%" stopColor="#0369a1" />
       </linearGradient>
 
-      {/* Degradê da Coroa de Ouro / Cerâmica */}
       <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#fde047" />
         <stop offset="100%" stopColor="#ca8a04" />
       </linearGradient>
 
-      {/* Degradê da Faceta de Cerâmica */}
       <linearGradient id="facetaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#c084fc" />
         <stop offset="100%" stopColor="#7e22ce" />
       </linearGradient>
-
-      {/* Efeito Glow para dente selecionado */}
-      <filter id="toothGlow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="3" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
     </defs>
   </svg>
 );
 
-// Mapeamento de Cores para os Procedimentos
-export const CONDITION_COLORS = {
-  carie: { fill: '#ef4444', label: 'Cárie', stroke: '#dc2626' },
-  restauracao_resina: { fill: '#3b82f6', label: 'Restauração Resina', stroke: '#2563eb' },
-  restauracao_amalgama: { fill: '#64748b', label: 'Restauração Amálgama', stroke: '#475569' },
-  coroa: { fill: '#eab308', label: 'Coroa', stroke: '#ca8a04' },
-  faceta: { fill: '#a855f7', label: 'Faceta', stroke: '#9333ea' },
-  implante: { fill: '#06b6d4', label: 'Implante', stroke: '#0891b2' },
-  endodontia: { fill: '#22c55e', label: 'Endodontia', stroke: '#16a34a' },
-  selante: { fill: '#14b8a6', label: 'Selante', stroke: '#0d9488' },
-  extraido: { fill: '#ffffff', label: 'Extraído', stroke: '#cbd5e1' },
-  ausente: { fill: 'transparent', label: 'Ausente', stroke: '#64748b' },
-  fratura: { fill: '#f97316', label: 'Fratura', stroke: '#ea580c' },
-  lesao_cervical: { fill: '#b45309', label: 'Lesão Cervical', stroke: '#92400e' },
-  outros: { fill: '#0d9488', label: 'Outros / Obs.', stroke: '#0f766e' },
-  saudavel: { fill: '#10b981', label: 'Saudável', stroke: '#059669' }
+export const BracketSVG = ({ isUpper, bracketType = 'metal', elasticColor = '#2563EB' }) => {
+  if (bracketType === 'attachment') {
+    return (
+      <g transform="translate(22, 54)">
+        <polygon points="7,0 14,7 7,14 0,7" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="1.2" />
+      </g>
+    );
+  }
+
+  if (bracketType === 'safira') {
+    return (
+      <g transform="translate(18, 50)">
+        <rect x="0" y="0" width="20" height="20" rx="4" fill="rgba(241, 245, 249, 0.45)" stroke="#CBD5E1" strokeWidth="1.5" />
+        <line x1="10" y1="0" x2="10" y2="20" stroke="#94A3B8" strokeWidth="1" />
+        <line x1="0" y1="10" x2="20" y2="10" stroke="#94A3B8" strokeWidth="1" />
+      </g>
+    );
+  }
+
+  if (bracketType === 'autoligavel') {
+    return (
+      <g transform="translate(18, 50)">
+        <rect x="0" y="0" width="20" height="20" rx="4" fill="#64748B" stroke="#94A3B8" strokeWidth="1.5" />
+        <rect x="4" y="4" width="12" height="12" rx="2" fill="#E2E8F0" />
+      </g>
+    );
+  }
+
+  // Metálico Convencional
+  return (
+    <g transform="translate(18, 50)">
+      <rect x="0" y="0" width="22" height="22" rx="4" fill={elasticColor} opacity="0.9" />
+      <rect x="3" y="3" width="16" height="16" rx="2" fill="#94A3B8" stroke="#475569" strokeWidth="1" />
+      <line x1="0" y1="11" x2="22" y2="11" stroke="#1E293B" strokeWidth="2.5" />
+    </g>
+  );
 };
 
-/**
- * AnatomicalToothSVG
- * Renderiza a anatomia vetorial completa de um dente (Molar, Pré-Molar, Canino ou Incisivo)
- * com 5 superfícies interativas e raiz.
- */
 export const AnatomicalToothSVG = ({ 
   toothNumber, 
   surfaces = {}, 
   activeTool, 
   onSurfaceClick,
+  onToothClick,
+  onRootClick,
   isSelected,
-  viewMode = 'Padrao'
+  viewMode = 'Padrao',
+  hasOrtho = false,
+  orthoBracketType = 'metal',
+  orthoElasticColor = '#2563EB'
 }) => {
   const num = parseInt(toothNumber, 10);
   const isUpper = (num >= 11 && num <= 28) || (num >= 51 && num <= 65);
-  const isMolar = [18, 17, 16, 26, 27, 28, 48, 47, 46, 36, 37, 38, 55, 54, 64, 65, 85, 84, 74, 75].includes(num);
-  const isPremolar = [15, 14, 24, 25, 45, 44, 34, 35].includes(num);
+  const digit = num % 10;
+  const isDeciduous = num >= 51 && num <= 85;
+  const isMolar = isDeciduous ? (digit === 4 || digit === 5) : (digit >= 6);
 
-  const isImplante = surfaces.full === 'implante';
-  const isExtraido = surfaces.full === 'extraido';
-  const isAusente = surfaces.full === 'ausente';
-  const isCoroa = surfaces.full === 'coroa';
-  const isFaceta = surfaces.full === 'faceta';
+  const toothData = typeof surfaces === 'object' && surfaces !== null ? surfaces : {};
+  const surfaceState = toothData.surfaces || toothData;
 
-  // Obter cor da superfície
-  const getSurfaceFill = (surfaceName) => {
+  const isImplante = toothData.whole === 'implante' || toothData.root === 'implante' || surfaceState.full === 'implante';
+  const isExtraido = toothData.whole === 'extraido' || surfaceState.full === 'extraido';
+  const isAusente = toothData.whole === 'ausente' || surfaceState.full === 'ausente';
+  const isCoroa = toothData.whole === 'coroa' || surfaceState.full === 'coroa';
+  const isFaceta = toothData.whole === 'faceta' || surfaceState.full === 'faceta';
+  const isEndo = toothData.root === 'endo' || toothData.root === 'endodontia' || surfaceState.root === 'endodontia';
+  const isPlanned = toothData.status === 'planejado';
+
+  const showRoot = viewMode === 'Padrao' || viewMode === 'Raiz' || viewMode === 'padrao' || viewMode === 'raiz';
+  const showOcclusal = viewMode === 'Padrao' || viewMode === 'Oclusal' || viewMode === 'padrao' || viewMode === 'oclusal';
+
+  // Cor de fundo padrão do esmalte dental (Branco / Marfim em Light Mode, Slate 800 em Dark Mode)
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const defaultEnamelColor = isDarkMode ? '#1F2937' : '#FFFFFF';
+  const defaultStrokeColor = isDarkMode ? '#64748B' : '#94A3B8';
+
+  const getSurfaceFill = (surfKey) => {
     if (isExtraido || isAusente) return 'transparent';
-    if (isCoroa) return 'url(#crownGrad)';
-    if (isFaceta) return 'url(#facetaGrad)';
-    const cond = surfaces[surfaceName];
-    if (cond && CONDITION_COLORS[cond]) {
-      return CONDITION_COLORS[cond].fill;
+    if (isCoroa) return '#EAB308';
+    if (isFaceta) return '#A855F7';
+
+    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
+    const mappedKey = keyMap[surfKey] || surfKey;
+    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
+
+    if (condId) {
+      const cond = DENTAL_CONDITIONS.find(c => c.id === condId) || CONDITION_COLORS[condId];
+      if (cond) return cond.color || cond.fill;
     }
-    return '#1e293b'; // Tom escuro neutro da face
+    return defaultEnamelColor;
   };
 
-  const getSurfaceStroke = (surfaceName) => {
-    if (surfaces[surfaceName]) {
-      return CONDITION_COLORS[surfaces[surfaceName]]?.stroke || '#475569';
+  const getSurfaceOpacity = (surfKey) => {
+    if (isCoroa || isFaceta) return 0.35;
+    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
+    const mappedKey = keyMap[surfKey] || surfKey;
+    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
+    return condId ? 1 : (isDarkMode ? 0.4 : 1);
+  };
+
+  const getSurfaceStroke = (surfKey) => {
+    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
+    const mappedKey = keyMap[surfKey] || surfKey;
+    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
+
+    if (condId) {
+      const cond = DENTAL_CONDITIONS.find(c => c.id === condId) || CONDITION_COLORS[condId];
+      if (cond) return cond.stroke || defaultStrokeColor;
     }
     return '#475569';
   };
@@ -114,167 +182,266 @@ export const AnatomicalToothSVG = ({
   const handleFaceClick = (e, face) => {
     e.stopPropagation();
     if (onSurfaceClick) {
-      onSurfaceClick(toothNumber, face);
+      onSurfaceClick(num, face);
     }
   };
 
+  const handleToothContainerClick = (e) => {
+    if (onToothClick) {
+      onToothClick(e, num);
+    }
+  };
+
+  const handleRootAreaClick = (e) => {
+    e.stopPropagation();
+    if (onRootClick) {
+      onRootClick(e, num);
+    } else if (onSurfaceClick) {
+      onSurfaceClick(num, 'root');
+    }
+  };
+
+  // Caminhos de Raízes Curvas Anatômicas
+  let rootPath = '';
+  if (isUpper) {
+    rootPath = isMolar
+      ? "M 8 58 C 8 36, 12 16, 18 4 C 21 18, 24 36, 28 44 C 30 26, 34 10, 40 4 C 46 20, 50 38, 52 58 Z"
+      : "M 14 58 C 16 26, 22 6, 28 2 C 34 6, 40 26, 42 58 Z";
+  } else {
+    rootPath = isMolar
+      ? "M 8 4 C 8 30, 12 52, 18 66 C 24 50, 27 30, 29 18 C 31 30, 35 50, 40 66 C 47 52, 52 30, 52 4 Z"
+      : "M 14 4 C 16 28, 22 50, 28 68 C 34 50, 40 28, 42 4 Z";
+  }
+
+  let rootStrokeAttrs = isEndo 
+    ? 'stroke="#22C55E" stroke-width="2" fill="rgba(34, 197, 94, 0.3)"'
+    : `stroke="${defaultStrokeColor}" stroke-width="1.3" fill="${defaultEnamelColor}"`;
+
   return (
     <div 
-      className={`relative flex flex-col items-center select-none cursor-pointer transition-all duration-200 ${
-        isSelected ? 'scale-105 filter drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]' : 'hover:scale-102'
-      } ${isAusente ? 'opacity-30' : ''}`}
-      onClick={(e) => handleFaceClick(e, 'full')}
+      id={`tooth-card-${num}`}
+      className={`relative flex flex-col items-center select-none cursor-pointer transition-all duration-200 shrink-0 ${
+        isSelected ? 'scale-105 filter drop-shadow-[0_0_12px_rgba(59,130,246,0.8)]' : 'hover:scale-102'
+      } ${isAusente ? 'opacity-25' : ''}`}
+      onClick={handleToothContainerClick}
     >
-      {/* Número do dente acima (se for arcada superior) */}
+      {/* Rótulo do Dente Superior */}
       {isUpper && (
-        <span className={`text-[11px] font-extrabold mb-1 px-1.5 py-0.5 rounded transition-colors ${
-          isSelected ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-        }`}>
+        <span className={`text-[10px] font-mono font-bold mb-1.5 px-1.5 py-0.5 rounded transition-colors z-40 ${
+          isSelected ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-blue-500'
+        } ${isPlanned ? 'border border-dashed border-amber-500/60 text-amber-500' : ''}`}>
           {toothNumber}
         </span>
       )}
 
-      {/* Container SVG do Dente */}
-      <div className="relative w-11 h-24 flex items-center justify-center">
+      {/* SVG do Dente Anatômico FDI Proporcional (46x110, viewBox 0 0 58 120) */}
+      <div className="relative w-10 sm:w-11 h-[114px] flex items-center justify-center">
         <svg 
-          viewBox="0 0 100 200" 
-          className="w-full h-full overflow-visible drop-shadow-md"
+          width="46" 
+          height="110" 
+          viewBox="0 0 58 120" 
+          className="overflow-visible drop-shadow-xs"
         >
-          {/* Se for IMPLANTE, renderizar o parafuso de titânio 3D */}
-          {isImplante ? (
-            <g className="animate-fade-in" onClick={(e) => handleFaceClick(e, 'full')}>
-              {/* Parafuso de Titânio */}
-              <rect x="35" y="30" width="30" height="130" rx="6" fill="url(#implantScrewGrad)" stroke="#38bdf8" strokeWidth="3" />
-              <line x1="30" y1="50" x2="70" y2="50" stroke="#0284c7" strokeWidth="3" />
-              <line x1="30" y1="70" x2="70" y2="70" stroke="#0284c7" strokeWidth="3" />
-              <line x1="30" y1="90" x2="70" y2="90" stroke="#0284c7" strokeWidth="3" />
-              <line x1="30" y1="110" x2="70" y2="110" stroke="#0284c7" strokeWidth="3" />
-              <line x1="30" y1="130" x2="70" y2="130" stroke="#0284c7" strokeWidth="3" />
-              {/* Conector Hexagonal do Implante */}
-              <polygon points="50,10 65,22 65,30 35,30 35,22" fill="#e0f2fe" stroke="#38bdf8" strokeWidth="2" />
+          {isUpper ? (
+            /* DENTE SUPERIOR (RAIZ NO TOPO, COROA/OCLUSAL EMBAIXO) */
+            <g>
+              {showRoot && (
+                isImplante ? (
+                  <g className="implant-group" onClick={handleRootAreaClick}>
+                    <path d="M 20 6 L 36 6 L 32 56 L 24 56 Z" fill="#06B6D4" fillOpacity="0.3" stroke="#06B6D4" strokeWidth="1.8"/>
+                    <line x1="21" y1="16" x2="35" y2="16" stroke="#06B6D4" strokeWidth="1.5"/>
+                    <line x1="22" y1="26" x2="34" y2="26" stroke="#06B6D4" strokeWidth="1.5"/>
+                    <line x1="23" y1="36" x2="33" y2="36" stroke="#06B6D4" strokeWidth="1.5"/>
+                  </g>
+                ) : (
+                  <path 
+                    d={rootPath} 
+                    fill={getSurfaceFill('root')}
+                    stroke={getSurfaceStroke('root')}
+                    strokeWidth="1.3"
+                    onClick={handleRootAreaClick}
+                    className="root-path cursor-pointer transition-colors hover:brightness-110" 
+                  />
+                )
+              )}
+
+              <g transform="translate(0, 60)">
+                {isCoroa && <rect x="6" y="2" width="44" height="38" rx="6" fill="#EAB308" fillOpacity="0.35" stroke="#EAB308" strokeWidth="1.8"/>}
+                {isFaceta && <path d="M 8 4 Q 28 -2 48 4 L 44 38 Q 28 42 12 38 Z" fill="#A855F7" fillOpacity="0.35" stroke="#A855F7" strokeWidth="1.8"/>}
+
+                {showOcclusal && (
+                  <g transform="translate(6, 2)">
+                    {/* Face Oclusal / Incisal (Centro) */}
+                    <polygon 
+                      points="12,12 32,12 32,32 12,32" 
+                      fill={getSurfaceFill('O')} 
+                      fillOpacity={getSurfaceOpacity('O')}
+                      stroke={getSurfaceStroke('O')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'O')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Vestibular (Topo) */}
+                    <polygon 
+                      points="2,2 42,2 32,12 12,12" 
+                      fill={getSurfaceFill('V')} 
+                      fillOpacity={getSurfaceOpacity('V')}
+                      stroke={getSurfaceStroke('V')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'V')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Palatina/Lingual (Base) */}
+                    <polygon 
+                      points="12,32 32,32 42,42 2,42" 
+                      fill={getSurfaceFill('L')} 
+                      fillOpacity={getSurfaceOpacity('L')}
+                      stroke={getSurfaceStroke('L')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'L')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Mesial (Esquerda) */}
+                    <polygon 
+                      points="2,2 12,12 12,32 2,42" 
+                      fill={getSurfaceFill('M')} 
+                      fillOpacity={getSurfaceOpacity('M')}
+                      stroke={getSurfaceStroke('M')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'M')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Distal (Direita) */}
+                    <polygon 
+                      points="32,12 42,2 42,42 32,32" 
+                      fill={getSurfaceFill('D')} 
+                      fillOpacity={getSurfaceOpacity('D')}
+                      stroke={getSurfaceStroke('D')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'D')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+                  </g>
+                )}
+              </g>
             </g>
           ) : (
-            <g className={isUpper ? '' : 'rotate-180 transform origin-center'}>
-              {/* 1. RAÍZES (ANATOMIA VETORIAL) */}
-              <g id="root-group" onClick={(e) => handleFaceClick(e, 'root')}>
-                {isMolar ? (
-                  // Três/Duas Raízes para Molares
-                  <path 
-                    d="M 25 110 C 20 60, 10 30, 20 10 C 32 10, 38 40, 48 95 C 58 40, 68 10, 80 10 C 90 30, 80 60, 75 110 Z" 
-                    fill={getSurfaceFill('root')} 
-                    stroke={getSurfaceStroke('root')} 
-                    strokeWidth="2.5"
-                    className="transition-colors hover:brightness-125 cursor-pointer"
-                  />
-                ) : isPremolar ? (
-                  // Duas Raízes para Pré-Molares
-                  <path 
-                    d="M 30 110 C 25 65, 20 20, 35 10 C 45 25, 55 25, 65 10 C 80 20, 75 65, 70 110 Z" 
-                    fill={getSurfaceFill('root')} 
-                    stroke={getSurfaceStroke('root')} 
-                    strokeWidth="2.5"
-                    className="transition-colors hover:brightness-125 cursor-pointer"
-                  />
-                ) : (
-                  // Uma Raiz Anatômica para Canino/Incisivo
-                  <path 
-                    d="M 32 110 C 30 60, 35 10, 50 5 C 65 10, 70 60, 68 110 Z" 
-                    fill={getSurfaceFill('root')} 
-                    stroke={getSurfaceStroke('root')} 
-                    strokeWidth="2.5"
-                    className="transition-colors hover:brightness-125 cursor-pointer"
-                  />
-                )}
-                {/* Linha de Endodontia / Tratamento de Canal */}
-                {surfaces.root === 'endodontia' && (
-                  <path d="M 50 15 L 50 105" stroke="#22c55e" strokeWidth="5" strokeLinecap="round" />
+            /* DENTE INFERIOR (COROA/OCLUSAL NO TOPO, RAIZ EMBAIXO) */
+            <g>
+              <g transform="translate(0, 4)">
+                {isCoroa && <rect x="6" y="2" width="44" height="38" rx="6" fill="#EAB308" fillOpacity="0.35" stroke="#EAB308" strokeWidth="1.8"/>}
+                {isFaceta && <path d="M 8 4 Q 28 -2 48 4 L 44 38 Q 28 42 12 38 Z" fill="#A855F7" fillOpacity="0.35" stroke="#A855F7" strokeWidth="1.8"/>}
+
+                {showOcclusal && (
+                  <g transform="translate(6, 2)">
+                    {/* Face Oclusal / Incisal (Centro) */}
+                    <polygon 
+                      points="12,12 32,12 32,32 12,32" 
+                      fill={getSurfaceFill('O')} 
+                      fillOpacity={getSurfaceOpacity('O')}
+                      stroke={getSurfaceStroke('O')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'O')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Vestibular (Topo) */}
+                    <polygon 
+                      points="2,2 42,2 32,12 12,12" 
+                      fill={getSurfaceFill('V')} 
+                      fillOpacity={getSurfaceOpacity('V')}
+                      stroke={getSurfaceStroke('V')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'V')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Lingual (Base) */}
+                    <polygon 
+                      points="12,32 32,32 42,42 2,42" 
+                      fill={getSurfaceFill('L')} 
+                      fillOpacity={getSurfaceOpacity('L')}
+                      stroke={getSurfaceStroke('L')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'L')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Mesial (Esquerda) */}
+                    <polygon 
+                      points="2,2 12,12 12,32 2,42" 
+                      fill={getSurfaceFill('M')} 
+                      fillOpacity={getSurfaceOpacity('M')}
+                      stroke={getSurfaceStroke('M')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'M')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+
+                    {/* Face Distal (Direita) */}
+                    <polygon 
+                      points="32,12 42,2 42,42 32,32" 
+                      fill={getSurfaceFill('D')} 
+                      fillOpacity={getSurfaceOpacity('D')}
+                      stroke={getSurfaceStroke('D')} 
+                      strokeWidth="1" 
+                      onClick={(e) => handleFaceClick(e, 'D')}
+                      className="surface-poly cursor-pointer hover:brightness-110" 
+                    />
+                  </g>
                 )}
               </g>
 
-              {/* 2. COROA E FACES INTERATIVAS (Oclusal, Vestibular, Lingual, Mesial, Distal) */}
-              <g id="crown-faces-group" transform="translate(0, 110)">
-                {/* Contorno Geral da Coroa */}
-                <rect 
-                  x="12" y="5" width="76" height="75" rx="14" 
-                  fill="#151c2c" 
-                  stroke={isCoroa ? 'url(#crownGrad)' : isFaceta ? 'url(#facetaGrad)' : '#475569'} 
-                  strokeWidth={isCoroa || isFaceta ? "4" : "2"}
-                />
-
-                {/* Face VESTIBULAR (Topo) */}
-                <path 
-                  d="M 16 9 L 84 9 L 72 26 L 28 26 Z" 
-                  fill={getSurfaceFill('vestibular')} 
-                  stroke={viewMode === 'Vestibular' ? '#38bdf8' : getSurfaceStroke('vestibular')} 
-                  strokeWidth={viewMode === 'Vestibular' ? "3" : "1.5"}
-                  onClick={(e) => handleFaceClick(e, 'vestibular')}
-                  className={`transition-all hover:opacity-80 cursor-pointer ${viewMode === 'Vestibular' ? 'filter drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]' : ''}`}
-                />
-
-                {/* Face LINGUAL / PALATINA (Base) */}
-                <path 
-                  d="M 28 58 L 72 58 L 84 75 L 16 75 Z" 
-                  fill={getSurfaceFill('lingual')} 
-                  stroke={viewMode === 'Lingual' ? '#38bdf8' : getSurfaceStroke('lingual')} 
-                  strokeWidth={viewMode === 'Lingual' ? "3" : "1.5"}
-                  onClick={(e) => handleFaceClick(e, 'lingual')}
-                  className={`transition-all hover:opacity-80 cursor-pointer ${viewMode === 'Lingual' ? 'filter drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]' : ''}`}
-                />
-
-                {/* Face MESIAL (Esquerda) */}
-                <path 
-                  d="M 16 9 L 28 26 L 28 58 L 16 75 Z" 
-                  fill={getSurfaceFill('mesial')} 
-                  stroke={getSurfaceStroke('mesial')} 
-                  strokeWidth="1.5"
-                  onClick={(e) => handleFaceClick(e, 'mesial')}
-                  className="transition-all hover:opacity-80 cursor-pointer"
-                />
-
-                {/* Face DISTAL (Direita) */}
-                <path 
-                  d="M 84 9 L 84 75 L 72 58 L 72 26 Z" 
-                  fill={getSurfaceFill('distal')} 
-                  stroke={getSurfaceStroke('distal')} 
-                  strokeWidth="1.5"
-                  onClick={(e) => handleFaceClick(e, 'distal')}
-                  className="transition-all hover:opacity-80 cursor-pointer"
-                />
-
-                {/* Face OCLUSAL / INCISAL (Centro) */}
-                <polygon 
-                  points="28,26 72,26 72,58 28,58" 
-                  fill={getSurfaceFill('occlusal')} 
-                  stroke={viewMode === 'Oclusal' ? '#38bdf8' : getSurfaceStroke('occlusal')} 
-                  strokeWidth={viewMode === 'Oclusal' ? "3" : "1.5"}
-                  onClick={(e) => handleFaceClick(e, 'occlusal')}
-                  className={`transition-all hover:opacity-80 cursor-pointer ${viewMode === 'Oclusal' ? 'filter drop-shadow-[0_0_6px_rgba(56,189,248,0.8)]' : ''}`}
-                />
-
-              </g>
-
-              {/* OVERLAY DE EXTRAÇÃO (X Vermelho/Branco) */}
-              {isExtraido && (
-                <g>
-                  <line x1="15" y1="15" x2="85" y2="175" stroke="#ef4444" strokeWidth="7" strokeLinecap="round" />
-                  <line x1="85" y1="15" x2="15" y2="175" stroke="#ef4444" strokeWidth="7" strokeLinecap="round" />
+              {showRoot && (
+                <g transform="translate(0, 46)">
+                  {isImplante ? (
+                    <g className="implant-group" onClick={handleRootAreaClick}>
+                      <path d="M 20 6 L 36 6 L 32 56 L 24 56 Z" fill="#06B6D4" fillOpacity="0.3" stroke="#06B6D4" strokeWidth="1.8"/>
+                      <line x1="21" y1="16" x2="35" y2="16" stroke="#06B6D4" strokeWidth="1.5"/>
+                      <line x1="22" y1="26" x2="34" y2="26" stroke="#06B6D4" strokeWidth="1.5"/>
+                      <line x1="23" y1="36" x2="33" y2="36" stroke="#06B6D4" strokeWidth="1.5"/>
+                    </g>
+                  ) : (
+                    <path 
+                      d={rootPath} 
+                      fill={getSurfaceFill('root')}
+                      stroke={getSurfaceStroke('root')}
+                      strokeWidth="1.3"
+                      onClick={handleRootAreaClick}
+                      className="root-path cursor-pointer transition-colors hover:brightness-110" 
+                    />
+                  )}
                 </g>
               )}
-
-              {/* OVERLAY DE AUSENTE (Pontilhado Circular) */}
-              {isAusente && (
-                <circle cx="50" cy="100" r="45" fill="none" stroke="#64748b" strokeWidth="3" strokeDasharray="6 6" />
-              )}
             </g>
+          )}
+
+          {hasOrtho && !isExtraido && !isAusente && (
+            <BracketSVG isUpper={isUpper} bracketType={orthoBracketType} elasticColor={orthoElasticColor} />
+          )}
+
+          {isExtraido && (
+            <g className="extracted-mark">
+              <line x1="6" y1="8" x2="50" y2="112" stroke="#EF4444" strokeWidth="4" strokeLinecap="round"/>
+              <line x1="50" y1="8" x2="6" y2="112" stroke="#EF4444" strokeWidth="4" strokeLinecap="round"/>
+            </g>
+          )}
+
+          {isAusente && (
+            <circle cx="29" cy="60" r="22" fill="none" stroke="#64748B" strokeWidth="2" strokeDasharray="4 4" />
           )}
         </svg>
       </div>
 
-      {/* Número do dente abaixo (se for arcada inferior) */}
+      {/* Rótulo do Dente Inferior */}
       {!isUpper && (
-        <span className={`text-[11px] font-extrabold mt-1 px-1.5 py-0.5 rounded transition-colors ${
-          isSelected ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-        }`}>
+        <span className={`text-[10px] font-mono font-bold mt-1.5 px-1.5 py-0.5 rounded transition-colors z-40 ${
+          isSelected ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-blue-500'
+        } ${isPlanned ? 'border border-dashed border-amber-500/60 text-amber-500' : ''}`}>
           {toothNumber}
         </span>
       )}

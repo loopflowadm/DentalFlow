@@ -18,12 +18,48 @@ import WhatsApp from './whatsapp/WhatsApp';
 
 export default function ClinicApp() {
   const { currentTheme, themeMode } = useTheme();
-  const { user, clinic } = useAuth();
+  const { user, clinic, updateClinic } = useAuth();
 
-  const onboardingKey = `df_onboarding_done_${clinic?.id}_${user?.id}`;
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    return !localStorage.getItem(onboardingKey);
-  });
+  // Função para verificar se o onboarding já foi concluído pela clínica ou usuário
+  const checkIfOnboardingDone = () => {
+    if (clinic?.onboarding_completed || clinic?.has_completed_onboarding) return true;
+    if (user?.onboarding_completed || user?.user_metadata?.onboarding_completed) return true;
+
+    if (localStorage.getItem('df_onboarding_completed') === 'true') return true;
+    if (localStorage.getItem('df_onboarding_done') === 'true') return true;
+    if (user?.id && localStorage.getItem(`df_onboarding_done_${user.id}`) === 'true') return true;
+    if (clinic?.id && localStorage.getItem(`df_onboarding_done_${clinic.id}`) === 'true') return true;
+    if (clinic?.id && user?.id && localStorage.getItem(`df_onboarding_done_${clinic.id}_${user.id}`) === 'true') return true;
+
+    return false;
+  };
+
+  const [showOnboarding, setShowOnboarding] = useState(() => !checkIfOnboardingDone());
+
+  // Atualizar quando dados da clínica ou usuário forem carregados
+  useEffect(() => {
+    if (checkIfOnboardingDone()) {
+      setShowOnboarding(false);
+    }
+  }, [clinic, user]);
+
+  const handleOnboardingComplete = async () => {
+    localStorage.setItem('df_onboarding_completed', 'true');
+    localStorage.setItem('df_onboarding_done', 'true');
+    if (user?.id) localStorage.setItem(`df_onboarding_done_${user.id}`, 'true');
+    if (clinic?.id) localStorage.setItem(`df_onboarding_done_${clinic.id}`, 'true');
+    if (clinic?.id && user?.id) localStorage.setItem(`df_onboarding_done_${clinic.id}_${user.id}`, 'true');
+
+    if (clinic && updateClinic) {
+      try {
+        await updateClinic({ onboarding_completed: true });
+      } catch (err) {
+        console.warn('[ClinicApp] Erro ao persistir onboarding na clínica:', err);
+      }
+    }
+
+    setShowOnboarding(false);
+  };
 
   // Módulos: 'dashboard' | 'agenda' | 'pacientes' | 'crm' | 'financeiro' | 'configuracoes' | 'whatsapp'
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -139,10 +175,7 @@ export default function ClinicApp() {
   if (showOnboarding) {
     return (
       <Onboarding 
-        onComplete={() => {
-          localStorage.setItem(onboardingKey, 'true');
-          setShowOnboarding(false);
-        }} 
+        onComplete={handleOnboardingComplete} 
       />
     );
   }
