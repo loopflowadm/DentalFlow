@@ -154,9 +154,9 @@ export default function LandingPage({ onLogin, onRegister }) {
           <nav className="landing-header__nav">
             <button onClick={() => scrollToSection('recursos')}>Recursos</button>
             <button onClick={() => scrollToSection('funcionalidades')}>Funcionalidades</button>
+            <button onClick={() => scrollToSection('como-funciona')}>Como Funciona</button>
             <button onClick={() => scrollToSection('integracoes')}>Integrações</button>
             <button onClick={() => scrollToSection('precos')}>Preços</button>
-            <button onClick={() => scrollToSection('depoimentos')}>Depoimentos</button>
             <button onClick={() => scrollToSection('contato')}>Contato</button>
           </nav>
 
@@ -190,43 +190,49 @@ export default function LandingPage({ onLogin, onRegister }) {
           >
             <motion.div variants={fadeUp} className="landing-hero__badge">
               <Sparkles style={{ width: 14, height: 14 }} />
-              CRM Inteligente para Clínicas Odontológicas
+              Menos tempo no WhatsApp • Zero cadeiras vazias
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="landing-hero__title">
-              Organize sua clínica.{'\n'}
-              <span className="landing-hero__title-accent">Automatize</span> seu atendimento.{'\n'}
-              Cresça com <span className="landing-hero__title-accent">inteligência</span>.
+              Reduza faltas e organize sua clínica{' '}
+              <span className="landing-hero__title-accent">sem passar o dia</span> no WhatsApp.
             </motion.h1>
 
             <motion.p variants={fadeUp} className="landing-hero__subtitle">
-              O DentalFlow centraliza agenda, pacientes, financeiro, WhatsApp e
-              Inteligência Artificial em um único sistema para clínicas modernas.
+              Lembretes automáticos, agenda inteligente e controle financeiro simples.
+              Tudo em um único sistema feito para a rotina real do seu consultório.
             </motion.p>
 
             <motion.div variants={fadeUp} className="landing-hero__buttons">
-              <button onClick={onRegister} className="landing-btn--primary landing-btn--lg">
-                Começar Gratuitamente
-                <ArrowRight style={{ width: 18, height: 18 }} />
-              </button>
+              <div className="flex flex-col items-center sm:items-start gap-1.5">
+                <button onClick={onRegister} className="landing-btn--primary landing-btn--lg">
+                  Testar grátis por 14 dias
+                  <ArrowRight style={{ width: 18, height: 18 }} />
+                </button>
+                <span className="text-xs text-slate-400 font-medium pl-1">
+                  ✓ Sem cartão de crédito • Configuração em 2 minutos
+                </span>
+              </div>
               <button onClick={() => scrollToSection('contato')} className="landing-btn--outline landing-btn--lg">
-                <Play style={{ width: 16, height: 16 }} />
-                Agendar Demonstração
+                <MessageSquare style={{ width: 16, height: 16 }} />
+                Falar com especialista
               </button>
             </motion.div>
 
             <motion.div variants={fadeUp} className="landing-hero__social-proof">
-              <div className="landing-hero__avatars">
-                <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=100" alt="" />
-                <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=100" alt="" />
-                <img src="https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=100" alt="" />
-                <img src="https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=100" alt="" />
-              </div>
-              <div className="landing-hero__proof-text">
-                <div className="landing-hero__proof-stars">
-                  {[...Array(5)].map((_, i) => <Star key={i} style={{ width: 13, height: 13, fill: '#F59E0B', color: '#F59E0B' }} />)}
+              <div className="flex items-center gap-4 text-xs text-slate-300 font-medium pt-1">
+                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+                  <Shield className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Segurança LGPD</span>
                 </div>
-                <span>Mais de <strong>1.500 clínicas</strong> confiam no DentalFlow</span>
+                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Ativação em 2 min</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
+                  <Headphones className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Suporte no Brasil</span>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -432,15 +438,15 @@ export default function LandingPage({ onLogin, onRegister }) {
         <div className="landing-features__inner">
           {/* Left copy */}
           <AnimatedSection className="landing-features__copy">
-            <span className="landing-overline">ENQUANTO VOCÊ ATENDE PACIENTES...</span>
+            <span className="landing-overline">FEITO PARA O DIA A DIA DA CLÍNICA</span>
             <h2 className="landing-section-title">
-              O DentalFlow cuida<br />do resto.
+              Enquanto você atende,<br />o DentalFlow cuida do resto.
             </h2>
             <p className="landing-section-subtitle">
-              Automatize tarefas, organize informações e tenha mais tempo para o que realmente importa: seus pacientes.
+              Sua equipe ganha horas no dia sem precisar enviar mensagens manualmente nem decifrar planilhas complexas.
             </p>
             <button onClick={onRegister} className="landing-btn--primary landing-btn--lg" style={{ marginTop: 24 }}>
-              Quero automatizar minha clínica
+              Testar 14 dias grátis
               <ArrowRight style={{ width: 18, height: 18 }} />
             </button>
           </AnimatedSection>
@@ -448,12 +454,12 @@ export default function LandingPage({ onLogin, onRegister }) {
           {/* Right 2x3 grid */}
           <div className="landing-features__grid">
             {[
-              { icon: <Calendar style={{ width: 22, height: 22 }} />, title: 'Agenda Inteligente', desc: 'Organize consultas, encaixes e retornos automaticamente.', color: '#196BFB' },
-              { icon: <MessageSquare style={{ width: 22, height: 22 }} />, title: 'WhatsApp Automatizado', desc: 'Confirmações, lembretes e pós-atendimento enviados sem esforço.', color: '#25D366' },
-              { icon: <Users style={{ width: 22, height: 22 }} />, title: 'Gestão de Pacientes', desc: 'Todo histórico organizado em um único lugar.', color: '#6366F1' },
-              { icon: <DollarSign style={{ width: 22, height: 22 }} />, title: 'Financeiro', desc: 'Controle pagamentos, inadimplência e faturamento.', color: '#F59E0B' },
-              { icon: <Brain style={{ width: 22, height: 22 }} />, title: 'Inteligência Artificial', desc: 'Automatize tarefas repetitivas e economize horas todos os dias.', color: '#8B5CF6' },
-              { icon: <BarChart3 style={{ width: 22, height: 22 }} />, title: 'Relatórios', desc: 'Descubra exatamente onde sua clínica pode crescer.', color: '#06B6D4' },
+              { icon: <Calendar style={{ width: 22, height: 22 }} />, title: 'Agenda sem furos', desc: 'Consultas organizadas com confirmação automática pelo WhatsApp.', color: '#196BFB' },
+              { icon: <MessageSquare style={{ width: 22, height: 22 }} />, title: 'WhatsApp Direto e Nativo', desc: 'Envie lembretes e confirmações sem precisar escanear QR Code todo dia.', color: '#25D366' },
+              { icon: <Users style={{ width: 22, height: 22 }} />, title: 'Prontuário em 1 Clique', desc: 'Histórico de tratamentos e anamnese acessíveis no celular ou PC.', color: '#6366F1' },
+              { icon: <DollarSign style={{ width: 22, height: 22 }} />, title: 'Caixa e Orçamentos', desc: 'Saiba exatamente quanto tem a receber e quais orçamentos estão abertos.', color: '#F59E0B' },
+              { icon: <Brain style={{ width: 22, height: 22 }} />, title: 'Lembretes de Retorno', desc: 'O sistema avisa automaticamente quando o paciente precisa voltar.', color: '#8B5CF6' },
+              { icon: <BarChart3 style={{ width: 22, height: 22 }} />, title: 'Relatórios Claros', desc: 'Visão simples do faturamento mensal sem precisar ser contador.', color: '#06B6D4' },
             ].map((c, i) => (
               <AnimatedSection key={i} delay={i * 0.08} className="landing-features__card">
                 <div className="landing-features__card-icon" style={{ background: c.color + '12', color: c.color }}>
@@ -463,6 +469,46 @@ export default function LandingPage({ onLogin, onRegister }) {
                 <p className="landing-features__card-desc">{c.desc}</p>
               </AnimatedSection>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ COMPARATIVO INDIRETO ═══════════════ */}
+      <section className="landing-comparison-section bg-slate-900/60 py-16 border-y border-slate-800">
+        <div className="max-w-6xl mx-auto px-4">
+          <AnimatedSection className="text-center mb-12">
+            <span className="landing-overline">POR QUE ESCOLHER O DENTALFLOW</span>
+            <h2 className="landing-section-title text-white">Sistemas tradicionais vs O jeito DentalFlow</h2>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Outros sistemas */}
+            <AnimatedSection className="bg-slate-950/80 p-6 rounded-2xl border border-red-500/20">
+              <div className="flex items-center gap-2 mb-4 text-red-400 font-bold text-lg">
+                <X className="w-5 h-5" />
+                <span>Sistemas Tradicionais</span>
+              </div>
+              <ul className="space-y-3 text-slate-300 text-sm">
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Mensagens no WhatsApp precisam ser enviadas manualmente uma por uma</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Telas poluídas e lentas que exigem semanas de treinamento da recepção</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Cobram valores extras por cada usuário ou módulo adicional</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Suporte demorado via ticket com respostas genéricas</li>
+              </ul>
+            </AnimatedSection>
+
+            {/* DentalFlow */}
+            <AnimatedSection delay={0.1} className="bg-blue-950/40 p-6 rounded-2xl border border-blue-500/30">
+              <div className="flex items-center gap-2 mb-4 text-blue-400 font-bold text-lg">
+                <Check className="w-5 h-5" />
+                <span>O Jeito DentalFlow</span>
+              </div>
+              <ul className="space-y-3 text-slate-200 text-sm">
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Confirmações e lembretes totalmente automáticos no WhatsApp</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Visual moderno e limpo: sua secretária aprende em menos de 15 minutos</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Preço fixo e transparente sem surpresas no fim do mês</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Suporte humanizado rápido direto no WhatsApp</li>
+              </ul>
+            </AnimatedSection>
           </div>
         </div>
       </section>
@@ -485,10 +531,16 @@ export default function LandingPage({ onLogin, onRegister }) {
           {/* Pain points */}
           <AnimatedSection delay={0.15} className="landing-dark-section__problems">
             <h3 className="landing-dark-section__heading">
-              Chega de perder tempo com tarefas que não geram resultado.
+              Chega de perder tempo com tarefas que não geram receita.
             </h3>
             <ul className="landing-dark-section__list">
-              {['Confirmando consultas manualmente', 'Respondendo WhatsApp o dia inteiro', 'Procurando fichas de pacientes', 'Reagendamentos sem controle', 'Controle financeiro em planilhas'].map((t, i) => (
+              {[
+                'Enviar mensagens de confirmação uma a uma no WhatsApp',
+                'Chegar na clínica na segunda e encontrar furos na agenda',
+                'Perder orçamentos porque ninguém fez o acompanhamento',
+                'Não saber o valor exato a receber no fim do mês',
+                'Usar cadernos ou planilhas que somem'
+              ].map((t, i) => (
                 <li key={i} className="landing-dark-section__list-item landing-dark-section__list-item--problem">
                   <span className="landing-dark-section__list-marker landing-dark-section__list-marker--x">
                     <X style={{ width: 12, height: 12 }} />
@@ -502,10 +554,16 @@ export default function LandingPage({ onLogin, onRegister }) {
           {/* Benefits */}
           <AnimatedSection delay={0.3} className="landing-dark-section__benefits">
             <h3 className="landing-dark-section__heading landing-dark-section__heading--accent">
-              Com o DentalFlow tudo isso acontece automaticamente.
+              Com o DentalFlow, tudo roda sozinho em segundo plano.
             </h3>
             <ul className="landing-dark-section__list">
-              {['Mais organização', 'Menos faltas', 'Mais retornos', 'Mais faturamento', 'Mais tempo para você'].map((t, i) => (
+              {[
+                'O paciente confirma no WhatsApp e a agenda atualiza',
+                'Lembretes de consulta enviados no horário certo',
+                'Acompanhamento automático de orçamentos pendentes',
+                'Controle de fluxo de caixa simples e intuitivo',
+                'Mais tempo para focar no atendimento clínico'
+              ].map((t, i) => (
                 <li key={i} className="landing-dark-section__list-item landing-dark-section__list-item--benefit">
                   <span className="landing-dark-section__list-marker landing-dark-section__list-marker--check">
                     <Check style={{ width: 12, height: 12 }} />
@@ -521,15 +579,15 @@ export default function LandingPage({ onLogin, onRegister }) {
       {/* ═══════════════ RESULTS ═══════════════ */}
       <section className="landing-results">
         <AnimatedSection className="landing-results__header">
-          <span className="landing-overline">RESULTADOS QUE FAZEM A DIFERENÇA</span>
-          <h2 className="landing-section-title">Números que comprovam</h2>
+          <span className="landing-overline">MÉTRICAS DA SUA CLÍNICA</span>
+          <h2 className="landing-section-title">O impacto real na rotina do consultório</h2>
         </AnimatedSection>
         <div className="landing-results__grid">
           {[
-            { icon: <Users style={{ width: 28, height: 28 }} />, val: '-70%', label: 'Redução de faltas', desc: 'Com confirmações automáticas via WhatsApp', color: '#196BFB' },
-            { icon: <TrendingUp style={{ width: 28, height: 28 }} />, val: '+35%', label: 'Mais faturamento', desc: 'Retenção e retorno de pacientes otimizados', color: '#10B981' },
-            { icon: <Clock style={{ width: 28, height: 28 }} />, val: '10h', label: 'Tempo economizado', desc: 'Por semana em tarefas administrativas', color: '#F59E0B' },
-            { icon: <Heart style={{ width: 28, height: 28 }} />, val: '98%', label: 'Satisfação dos pacientes', desc: 'Avaliação média dos pacientes atendidos', color: '#EC4899' },
+            { icon: <Users style={{ width: 28, height: 28 }} />, val: '-70%', label: 'Menos faltas sem aviso', desc: 'Com confirmações automáticas no WhatsApp', color: '#196BFB' },
+            { icon: <TrendingUp style={{ width: 28, height: 28 }} />, val: '+35%', label: 'Mais retornos confirmados', desc: 'Reativação de pacientes antigos sem esforço', color: '#10B981' },
+            { icon: <Clock style={{ width: 28, height: 28 }} />, val: '2h/dia', label: 'Salvas na recepção', desc: 'Sua secretária foca no atendimento presencial', color: '#F59E0B' },
+            { icon: <Heart style={{ width: 28, height: 28 }} />, val: '98%', label: 'Aprovação da equipe', desc: 'Facilidade de uso desde o primeiro dia', color: '#EC4899' },
           ].map((s, i) => (
             <AnimatedSection key={i} delay={i * 0.1} className="landing-results__card">
               <div className="landing-results__card-icon" style={{ background: s.color + '10', color: s.color }}>
@@ -543,41 +601,51 @@ export default function LandingPage({ onLogin, onRegister }) {
         </div>
       </section>
 
-      {/* ═══════════════ TESTIMONIALS ═══════════════ */}
-      <section id="depoimentos" className="landing-testimonials">
-        <AnimatedSection className="landing-testimonials__header">
-          <span className="landing-overline">O QUE DIZEM NOSSOS CLIENTES</span>
-          <h2 className="landing-section-title">Histórias de sucesso reais</h2>
+      {/* ═══════════════ COMO FUNCIONA (3 PASSOS) ═══════════════ */}
+      <section id="como-funciona" className="landing-testimonials py-20 bg-slate-950/40">
+        <AnimatedSection className="landing-testimonials__header text-center mb-14">
+          <span className="landing-overline">PROCESSO SIMPLES E RÁPIDO</span>
+          <h2 className="landing-section-title">Comece a usar na sua clínica em 3 passos</h2>
+          <p className="landing-section-subtitle max-w-xl mx-auto mt-2">
+            Sem instalações demoradas, sem depender de técnico de TI e sem cadastrar cartão de crédito.
+          </p>
         </AnimatedSection>
-        <div className="landing-testimonials__grid">
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
           {[
             {
-              name: 'Dr. Rafael Mendes', clinic: 'Clínica Sorriso Perfeito',
-              text: 'O DentalFlow mudou a rotina da nossa clínica. Reduzimos faltas em 70%, organizamos processos e hoje temos mais tempo para focar no que realmente importa.',
-              img: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=150'
+              step: '01',
+              title: 'Crie sua conta em 2 minutos',
+              desc: 'Cadastre seu e-mail e o nome da clínica. Seu teste gratuito de 14 dias é liberado na hora com acesso total.',
+              icon: <UserPlus className="w-6 h-6 text-blue-400" />
             },
             {
-              name: 'Dra. Camila Santos', clinic: 'OdontoVida Premium',
-              text: 'A integração com WhatsApp é incrível. Nossos pacientes recebem confirmações automáticas e o índice de comparecimento subiu muito desde que começamos a usar.',
-              img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150'
+              step: '02',
+              title: 'Conecte seu WhatsApp e agenda',
+              desc: 'Vincule seu WhatsApp de atendimento e importe seus pacientes por planilha Excel ou cadastro rápido.',
+              icon: <Plug className="w-6 h-6 text-emerald-400" />
             },
             {
-              name: 'Dr. Pedro Oliveira', clinic: 'Instituto Dental Plus',
-              text: 'O controle financeiro ficou transparente e fácil. Consigo ver em tempo real o faturamento, inadimplência e fazer projeções com a IA integrada.',
-              img: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=150'
-            },
-          ].map((t, i) => (
-            <AnimatedSection key={i} delay={i * 0.12} className="landing-testimonials__card">
-              <div className="landing-testimonials__stars">
-                {[...Array(5)].map((_, j) => <Star key={j} style={{ width: 16, height: 16, fill: '#F59E0B', color: '#F59E0B' }} />)}
-              </div>
-              <p className="landing-testimonials__text">"{t.text}"</p>
-              <div className="landing-testimonials__author">
-                <img src={t.img} alt={t.name} className="landing-testimonials__avatar" />
-                <div>
-                  <span className="landing-testimonials__name">{t.name}</span>
-                  <span className="landing-testimonials__clinic">{t.clinic}</span>
+              step: '03',
+              title: 'Deixe o sistema rodar no automático',
+              desc: 'Pronto! Suas confirmações de consulta, lembretes de retorno e gestão financeira passam a rodar sozinhos.',
+              icon: <Zap className="w-6 h-6 text-purple-400" />
+            }
+          ].map((item, i) => (
+            <AnimatedSection key={i} delay={i * 0.12} className="bg-slate-900/90 border border-slate-800 p-8 rounded-2xl relative flex flex-col justify-between hover:border-blue-500/30 transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                  <span className="text-3xl font-extrabold text-slate-700">{item.step}</span>
                 </div>
+                <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center text-xs text-blue-400 font-semibold gap-1">
+                <span>Passo {item.step} de 03</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </AnimatedSection>
           ))}
@@ -676,28 +744,31 @@ export default function LandingPage({ onLogin, onRegister }) {
       {/* ═══════════════ PRICING ═══════════════ */}
       <section id="precos" className="landing-pricing">
         <AnimatedSection className="landing-pricing__header">
-          <span className="landing-overline">PLANOS E PREÇOS</span>
-          <h2 className="landing-section-title">Escolha o plano ideal para sua clínica</h2>
+          <span className="landing-overline">PLANOS E PREÇOS TRANSPARENTES</span>
+          <h2 className="landing-section-title">Sem fidelidade, sem letras miúdas</h2>
+          <p className="landing-section-subtitle" style={{ maxWidth: 540, margin: '8px auto 0' }}>
+            Teste qualquer plano grátis por 14 dias. Altere ou cancele quando quiser em 1 clique.
+          </p>
         </AnimatedSection>
 
         <div className="landing-pricing__grid">
           {[
             {
               name: 'Starter', price: 'R$ 197', period: '/mês',
-              desc: 'Para clínicas que estão começando a digitalizar.',
-              features: ['Até 500 pacientes', 'Agenda inteligente', 'WhatsApp básico', 'Prontuário digital', 'Suporte por email'],
+              desc: 'Para consultórios individuais e dentistas solo.',
+              features: ['Até 2 dentistas', 'Agenda inteligente', 'WhatsApp automático', 'Prontuário digital', 'Controle de caixa básico', 'Suporte no WhatsApp'],
               highlight: false
             },
             {
               name: 'Professional', price: 'R$ 397', period: '/mês',
-              desc: 'Para clínicas em crescimento que buscam automação.',
-              features: ['Pacientes ilimitados', 'WhatsApp completo', 'Financeiro integrado', 'Relatórios avançados', 'IA assistente', 'Integrações'],
-              highlight: true, badge: 'Mais popular'
+              desc: 'Para clínicas em crescimento que querem automatizar tudo.',
+              features: ['Dentistas ilimitados', 'WhatsApp ilimitado nativo', 'Financeiro & Orçamentos', 'Relatórios de faturamento', 'Lembretes de retorno', 'Sem taxa de setup'],
+              highlight: true, badge: 'Mais escolhido'
             },
             {
               name: 'Enterprise', price: 'Sob consulta', period: '',
-              desc: 'Para redes de clínicas e grandes operações.',
-              features: ['Multi-clínicas', 'API personalizada', 'SLA dedicado', 'Onboarding VIP', 'Customização completa', 'Gerente de sucesso'],
+              desc: 'Para redes de clínicas e franqueados.',
+              features: ['Multi-clínicas unificado', 'Integração de API customizada', 'Treinamento VIP da equipe', 'Gerente de conta dedicado', 'SLA de atendimento'],
               highlight: false
             },
           ].map((plan, i) => (
@@ -718,7 +789,7 @@ export default function LandingPage({ onLogin, onRegister }) {
                 onClick={onRegister}
                 className={plan.highlight ? 'landing-btn--primary landing-btn--lg landing-btn--full' : 'landing-btn--outline landing-btn--lg landing-btn--full'}
               >
-                {plan.price === 'Sob consulta' ? 'Falar com vendas' : 'Começar agora'}
+                {plan.price === 'Sob consulta' ? 'Falar com consultor' : 'Testar 14 dias grátis'}
               </button>
             </AnimatedSection>
           ))}
@@ -728,20 +799,18 @@ export default function LandingPage({ onLogin, onRegister }) {
       {/* ═══════════════ FAQ ═══════════════ */}
       <section id="faq" className="landing-faq">
         <AnimatedSection className="landing-faq__header">
-          <span className="landing-overline">PERGUNTAS FREQUENTES</span>
-          <h2 className="landing-section-title">Tudo o que você precisa saber</h2>
+          <span className="landing-overline">DÚVIDAS FREQUENTES</span>
+          <h2 className="landing-section-title">Respostas diretas, sem enrolação</h2>
         </AnimatedSection>
 
         <div className="landing-faq__list">
           {[
-            { q: 'Preciso instalar algo?', a: 'Não. O DentalFlow funciona diretamente no seu navegador, sem necessidade de downloads ou instalação de software adicional.' },
-            { q: 'Tem aplicativo para celular?', a: 'Sim. O DentalFlow é totalmente responsivo e funciona perfeitamente em qualquer celular, tablet ou computador.' },
-            { q: 'Posso importar meus pacientes?', a: 'Sim. Você pode importar seus pacientes via planilha Excel/CSV de forma rápida e segura. Nossa equipe auxilia no processo.' },
-            { q: 'Como funciona o suporte?', a: 'Oferecemos suporte humanizado via WhatsApp, email e chat. Nossa equipe de especialistas auxilia você em todo o processo.' },
-            { q: 'Meus dados estão seguros?', a: 'Absolutamente. Seus dados são criptografados em trânsito e em repouso, com backups diários e infraestrutura em nuvem de alta disponibilidade.' },
-            { q: 'Existe período de teste gratuito?', a: 'Sim! Você pode testar o DentalFlow gratuitamente por 14 dias, sem necessidade de cartão de crédito.' },
-            { q: 'Posso cancelar a qualquer momento?', a: 'Sim. Não há fidelidade ou multa de cancelamento. Você pode cancelar seu plano a qualquer momento diretamente pelo painel.' },
-            { q: 'A IA substitui o dentista?', a: 'De forma alguma. A IA do DentalFlow automatiza tarefas administrativas e repetitivas, liberando mais tempo para o atendimento clínico.' },
+            { q: 'Preciso instalar algum programa no computador?', a: 'Não. O DentalFlow funciona 100% na nuvem. Você abre no navegador do computador, tablet ou celular sem precisar instalar nada.' },
+            { q: 'Como funciona a integração com o WhatsApp?', a: 'O DentalFlow envia confirmações de consulta e lembretes direto no WhatsApp do paciente. O paciente responde "1" para confirmar e a sua agenda atualiza automaticamente.' },
+            { q: 'Preciso cadastrar meu cartão de crédito para testar?', a: 'Não! Você pode criar sua conta e usar todas as funcionalidades do plano Professional por 14 dias totalmente de graça.' },
+            { q: 'Posso trazer meus pacientes de outro sistema?', a: 'Sim. Nossa equipe ajuda você a importar sua lista de pacientes e cadastros via planilha Excel/CSV de forma rápida e segura.' },
+            { q: 'Minha secretária vai conseguir usar?', a: 'Sim! Desenhamos o DentalFlow para ser intuitivo e simples. Em 15 minutos sua recepção já estará usando a agenda e enviando confirmações.' },
+            { q: 'Existe contrato de fidelidade?', a: 'Nenhum. Você pode cancelar sua assinatura a qualquer momento com apenas 1 clique, sem multas nem burocracia.' },
           ].map((faq, idx) => (
             <AnimatedSection key={idx} delay={idx * 0.04} className="landing-faq__item">
               <button
@@ -772,57 +841,57 @@ export default function LandingPage({ onLogin, onRegister }) {
       <section id="contato" className="landing-contact">
         <AnimatedSection className="landing-contact__card">
           <div className="landing-contact__header">
-            <h2 className="landing-section-title">Fale com um especialista</h2>
-            <p className="landing-section-subtitle">Preencha o formulário para agendarmos uma demonstração guiada e ativar seu teste grátis.</p>
+            <h2 className="landing-section-title">Quer ver o DentalFlow funcionando na sua clínica?</h2>
+            <p className="landing-section-subtitle">Preencha abaixo para receber um contato direto pelo WhatsApp com uma demonstração personalizada.</p>
           </div>
           <AnimatePresence mode="wait">
             {formSuccess ? (
               <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                 className="landing-contact__success">
                 <CheckCircle2 style={{ width: 48, height: 48, color: '#10B981' }} />
-                <h3>Solicitação enviada com sucesso!</h3>
+                <h3>Recebemos seu contato!</h3>
                 <p>
-                  Seus dados foram cadastrados com sucesso. Faça login com as credenciais administrativas para gerenciar a jornada de seus pacientes!
+                  Nossa equipe enviará uma mensagem no seu WhatsApp em instantes para mostrar o sistema na prática.
                 </p>
-                <button onClick={() => setFormSuccess(false)} className="landing-btn--primary landing-btn--lg">Enviar outra mensagem</button>
+                <button onClick={() => setFormSuccess(false)} className="landing-btn--primary landing-btn--lg">Enviar outra dúvida</button>
               </motion.div>
             ) : (
               <motion.form key="form" onSubmit={handleFormSubmit} className="landing-contact__form">
                 <div className="landing-contact__form-row">
                   <div className="landing-contact__field">
-                    <label>Nome Completo</label>
+                    <label>Seu Nome</label>
                     <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Dr(a). Seu Nome" />
                   </div>
                   <div className="landing-contact__field">
-                    <label>E-mail Corporativo</label>
-                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="exemplo@clinica.com" />
+                    <label>Seu E-mail</label>
+                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="seuemail@clinica.com" />
                   </div>
                 </div>
                 <div className="landing-contact__form-row landing-contact__form-row--3">
                   <div className="landing-contact__field">
-                    <label>Telefone (WhatsApp)</label>
+                    <label>WhatsApp com DDD</label>
                     <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
                   </div>
                   <div className="landing-contact__field">
-                    <label>Interesse Principal</label>
+                    <label>Especialidade Principal</label>
                     <select value={procedure} onChange={e => setProcedure(e.target.value)}>
-                      <option value="Limpeza e Profilaxia">Clareamento e Estética</option>
-                      <option value="Tratamento de Canal">Procedimentos Clínicos</option>
-                      <option value="Implante Dentário">Implantes e Cirurgias</option>
+                      <option value="Limpeza e Profilaxia">Estética e Facetas</option>
+                      <option value="Tratamento de Canal">Clínica Geral</option>
+                      <option value="Implante Dentário">Implantes e Cirurgia</option>
                       <option value="Aparelho Ortodôntico (Manutenção)">Ortodontia</option>
                     </select>
                   </div>
                   <div className="landing-contact__field">
-                    <label>Faturamento Médio</label>
+                    <label>Tamanho da Clínica</label>
                     <select value={budget} onChange={e => setBudget(e.target.value)}>
-                      <option value="200">Até R$ 10.000,00</option>
-                      <option value="1200">De R$ 10k a R$ 50k</option>
-                      <option value="3500">Acima de R$ 50.000,00</option>
+                      <option value="200">1 a 2 consultórios</option>
+                      <option value="1200">3 a 5 consultórios</option>
+                      <option value="3500">Mais de 5 consultórios</option>
                     </select>
                   </div>
                 </div>
                 <button type="submit" disabled={formLoading} className="landing-btn--primary landing-btn--lg landing-btn--full">
-                  {formLoading ? 'Processando...' : 'Agendar demonstração gratuita'}
+                  {formLoading ? 'Enviando...' : 'Quero ver o sistema funcionando'}
                   <ArrowRight style={{ width: 18, height: 18 }} />
                 </button>
               </motion.form>
@@ -837,21 +906,21 @@ export default function LandingPage({ onLogin, onRegister }) {
           <div className="landing-cta-final__bg-decor" />
           <BrandIcon variant="light" className="landing-cta-final__brand-icon" />
           <h2 className="landing-cta-final__title">
-            Transforme a gestão da sua clínica hoje mesmo.
+            Pronto para reduzir faltas e ter a agenda sob controle?
           </h2>
           <p className="landing-cta-final__subtitle">
-            Automatize processos, reduza faltas e aumente seu faturamento.
+            Crie sua conta em 2 minutos. Teste grátis sem cartão de crédito.
           </p>
           <button onClick={onRegister} className="landing-cta-final__button">
-            Teste Gratuitamente
+            Começar teste grátis agora
             <ArrowRight style={{ width: 20, height: 20 }} />
           </button>
           <div className="landing-cta-final__trust">
             {[
               { icon: <DollarSign style={{ width: 16, height: 16 }} />, label: 'Sem cartão de crédito' },
-              { icon: <Zap style={{ width: 16, height: 16 }} />, label: 'Instalação rápida' },
-              { icon: <Headphones style={{ width: 16, height: 16 }} />, label: 'Suporte humanizado' },
-              { icon: <Lock style={{ width: 16, height: 16 }} />, label: 'Segurança de dados' },
+              { icon: <Zap style={{ width: 16, height: 16 }} />, label: 'Ativação imediata' },
+              { icon: <Headphones style={{ width: 16, height: 16 }} />, label: 'Suporte no WhatsApp' },
+              { icon: <Lock style={{ width: 16, height: 16 }} />, label: 'Dados seguros LGPD' },
             ].map((b, i) => (
               <div key={i} className="landing-cta-final__trust-item">
                 {b.icon}
@@ -892,6 +961,7 @@ export default function LandingPage({ onLogin, onRegister }) {
               <h4>Produto</h4>
               <a href="#recursos">Recursos</a>
               <a href="#funcionalidades">Funcionalidades</a>
+              <a href="#como-funciona">Como Funciona</a>
               <a href="#integracoes">Integrações</a>
               <a href="#precos">Preços</a>
             </div>

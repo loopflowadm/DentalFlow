@@ -27,11 +27,7 @@ export default function PatientTabsNav({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className={`w-full backdrop-blur-md rounded-2xl border px-2 py-1.5 mb-4 overflow-x-auto custom-scrollbar transition-all ${
-      isDarkMode 
-        ? 'bg-[#111726]/90 border-white/10 shadow-xl text-white' 
-        : 'bg-white border-slate-200 shadow-sm text-slate-800'
-    }`}>
+    <div className="w-full bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 px-6 py-2 overflow-x-auto custom-scrollbar transition-colors duration-300">
       <div className="flex items-center gap-1 min-w-max">
         {tabs.map((tab) => {
           const Icon = tab.icon;

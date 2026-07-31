@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
+import { mockDb } from '../lib/mockDatabase';
 
 const ClinicContext = createContext();
 
@@ -461,15 +462,18 @@ export function ClinicProvider({ children }) {
       });
       setInstallments(formattedInstallments);
 
-      if (waData) {
-        setAiConfig({
-          prompt: waData.agent_prompt || '',
-          personality: 'sofia_assistente',
-          operatingHours: '08:00 - 18:00',
-          isActive: waData.is_active || false,
-          knowledgeBase: []
-        });
-      }
+      const cachedAiConfig = mockDb.get('odonto_crm_ai_config_' + clinicId);
+
+      setAiConfig({
+        prompt: waData?.agent_prompt || cachedAiConfig?.prompt || '',
+        personality: cachedAiConfig?.personality || 'sofia_assistente',
+        operatingHours: cachedAiConfig?.operatingHours || '08:00 - 18:00',
+        isActive: waData?.is_active !== undefined ? waData.is_active : (cachedAiConfig?.isActive ?? true),
+        flowData: cachedAiConfig?.flowData || null,
+        knowledgeBase: cachedAiConfig?.knowledgeBase || [],
+        aiProvider: cachedAiConfig?.aiProvider || 'openai',
+        apiKey: cachedAiConfig?.apiKey || ''
+      });
 
       // Inicializar chats do WhatsApp
       loadChatsState(finalPatients, leadData);
@@ -1143,18 +1147,33 @@ export function ClinicProvider({ children }) {
     }
   };
 
-  const saveAiConfig = async (config) => {
-    const clinicId = clinic.id;
+  const saveAiConfig = async (newConfig) => {
+    const clinicId = clinic?.id;
+    if (!clinicId) return;
 
     try {
-      await supabase
+      const mergedConfig = {
+        ...aiConfig,
+        ...newConfig
+      };
+
+      const { error } = await supabase
         .from('whatsapp_config')
-        .upsert({
-          clinic_id: clinicId,
-          agent_prompt: config.prompt,
-          is_active: config.isActive
-        });
-      setAiConfig(config);
+        .upsert(
+          {
+            clinic_id: clinicId,
+            agent_prompt: mergedConfig.prompt || '',
+            is_active: mergedConfig.isActive !== undefined ? mergedConfig.isActive : true
+          },
+          { onConflict: 'clinic_id' }
+        );
+
+      if (error) {
+        console.warn('[ClinicContext] Aviso ao salvar config de IA em whatsapp_config:', error.message);
+      }
+
+      mockDb.set('odonto_crm_ai_config_' + clinicId, mergedConfig);
+      setAiConfig(mergedConfig);
     } catch (err) {
       console.error('Erro ao salvar config de IA no Supabase:', err);
     }

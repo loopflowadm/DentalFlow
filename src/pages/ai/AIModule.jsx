@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useClinic, DEFAULT_DENTAL_AI_PROMPT, expandAiPrompt } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import VisualFlowBuilder from './flow-builder/VisualFlowBuilder';
+import FlowInspectorModal from './flow-builder/FlowInspectorModal';
 import { 
   Bot, Send, ShieldAlert, Sparkles, Sliders, BookOpen, 
   Clock, Plus, Trash2, CheckCircle2, User, HelpCircle, AlertTriangle,
@@ -54,7 +56,8 @@ export default function AIModule({ onClose }) {
     saveAiConfig, 
     procedures, 
     insurancePlans, 
-    dentists 
+    dentists,
+    addAppointment 
   } = useClinic();
   const { currentTheme, themeMode } = useTheme();
   const { clinic } = useAuth();
@@ -74,8 +77,12 @@ export default function AIModule({ onClose }) {
     return () => observer.disconnect();
   }, [themeMode]);
 
-  // Abas do Módulo de IA: 'prompt' | 'faq' | 'rules' | 'simulator'
-  const [activeTab, setActiveTab] = useState('prompt');
+  // Abas do Módulo de Automação WhatsApp: 'flow_builder' | 'simulator' | 'faq' | 'prompt'
+  const [activeTab, setActiveTab] = useState('flow_builder');
+
+  // Integração de IA Opcional (Provedor + API Key)
+  const [aiProvider, setAiProvider] = useState(aiConfig?.aiProvider || 'openai');
+  const [apiKey, setApiKey] = useState(aiConfig?.apiKey || '');
 
   // Variáveis Dinâmicas da Clínica (Garantindo que são SEMPRE Strings puras)
   const [varClinicName, setVarClinicName] = useState(() => safeString(clinic?.name || clinic?.clinic_name, 'DentalFlow Odontologia'));
@@ -122,6 +129,7 @@ export default function AIModule({ onClose }) {
     { id: 'kb-2', question: 'Quais as formas de pagamento aceitas?', answer: 'Aceitamos PIX com desconto, cartões de crédito em até 12x e convênios parceiros.' }
   ]);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showInspectorModal, setShowInspectorModal] = useState(false);
   const [expandedCard, setExpandedCard] = useState('persona'); // 'persona' | 'clinic_data' | 'crm_data' | 'rules'
   const [copiedPrompt, setCopiedPrompt] = useState(false);
 
@@ -184,11 +192,13 @@ export default function AIModule({ onClose }) {
         operatingHours: operatingHoursMode,
         isActive,
         autoSilence,
-        knowledgeBase: kb
+        knowledgeBase: kb,
+        aiProvider,
+        apiKey
       });
-      alert('Configurações salvas com sucesso!');
+      alert('Configurações da automação salvas com sucesso!');
     } catch (err) {
-      console.error('Erro ao salvar configurações de IA:', err);
+      console.error('Erro ao salvar configurações:', err);
     } finally {
       setIsSaving(false);
     }
@@ -246,67 +256,165 @@ export default function AIModule({ onClose }) {
   };
 
   // Simular Respostas da IA e Detecção de Intenções no Chat Interno
-  const handleSimSend = (e) => {
-    e.preventDefault();
-    if (!simInput.trim()) return;
+  const handleSimSend = (e, customText = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const queryText = customText || simInput;
+    if (!queryText.trim()) return;
 
+    const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const userMsg = {
       sender: 'USER',
-      text: simInput,
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      text: queryText,
+      time: timeStr
     };
 
     setSimMessages(prev => [...prev, userMsg]);
-    const queryText = simInput;
-    setSimInput('');
+    if (!customText) setSimInput('');
     setIsTyping(true);
 
     setTimeout(() => {
       let responseText;
       let intent = 'Dúvida Geral';
-      let confidence = '90%';
+      let confidence = '92%';
       let action = 'Responder conforme instruções do prompt.';
+      let activeNode = 'Bot Decision';
+      let options = null;
 
       const lower = queryText.toLowerCase();
 
       // Busca na Base de Conhecimento
-      const kbMatch = kb.find(item => lower.includes(item.question.toLowerCase().slice(0, 15)) || item.question.toLowerCase().split(' ').some(w => w.length > 4 && lower.includes(w)));
+      const kbMatch = kb.find(item => 
+        lower.includes(item.question.toLowerCase().slice(0, 15)) || 
+        item.question.toLowerCase().split(' ').some(w => w.length > 4 && lower.includes(w))
+      );
 
-      if (kbMatch) {
+      // 1. Confirmação de Agendamento (Resolução Real)
+      if (lower.includes('confirmar amanhã') || lower.includes('confirmar sexta') || (lower.includes('confirmar') && (lower.includes('14:30') || lower.includes('10:00')))) {
+        intent = 'Confirmação de Agendamento';
+        confidence = '100%';
+        const slotName = lower.includes('sexta') ? 'Sexta-feira às 10:00 (Dra. Juliana)' : 'Amanhã às 14:30 (Dr. Lucas)';
+        
+        // Criar agendamento real na Agenda do CRM
+        try {
+          if (addAppointment) {
+            const today = new Date();
+            const targetDate = new Date(today);
+            if (lower.includes('sexta')) {
+              targetDate.setDate(today.getDate() + ((5 - today.getDay() + 7) % 7 || 7));
+            } else {
+              targetDate.setDate(today.getDate() + 1);
+            }
+            const dateStr = targetDate.toISOString().split('T')[0];
+            const timeStr = lower.includes('sexta') ? '10:00' : '14:30';
+
+            addAppointment({
+              patientName: 'Paciente WhatsApp (Teste)',
+              patientPhone: '(83) 99988-7766',
+              procedureName: 'Avaliação Inicial',
+              date: dateStr,
+              time: timeStr,
+              doctorId: dentists?.[0]?.id || null,
+              status: 'CONFIRMED',
+              observations: 'Agendado automaticamente pelo Simulador da Sofia IA'
+            });
+          }
+        } catch (e) {
+          console.warn('Erro ao inserir agendamento simulado:', e);
+        }
+
+        responseText = `✅ Consulta agendada e confirmada com sucesso!\n\n📅 Horário: ${slotName}\n📍 Clínica: ${clinic?.name || 'OdontoFace'}\n👤 Paciente: Paciente WhatsApp (Teste)\n\nO agendamento já foi inserido automaticamente na Agenda do seu CRM! Se precisar alterar ou cancelar, mande uma mensagem a qualquer momento.`;
+        action = 'Novo agendamento confirmado e gravado na tabela de agendamentos do CRM.';
+        activeNode = 'Agendamento Confirmado';
+        options = ['Ver endereço da clínica', 'Falar com recepção', 'Voltar ao início'];
+      } 
+      // 2. Busca na Base de Conhecimento FAQ
+      else if (kbMatch) {
         intent = 'Base FAQ';
         confidence = '98%';
         responseText = kbMatch.answer;
-        action = `Resposta FAQ ID: ${kbMatch.id}`;
-      } else if (lower.includes('agendar') || lower.includes('marcar') || lower.includes('consulta') || lower.includes('horario')) {
-        intent = 'Agendamento';
+        action = `Resposta automática da Base FAQ (ID: ${kbMatch.id})`;
+        activeNode = 'FAQ Match Node';
+      } 
+      // 3. Solicitação de Agendamento (Seleção de Horário)
+      else if (lower.includes('agendar') || lower.includes('marcar') || lower.includes('consulta') || lower.includes('horario') || lower.includes('1.')) {
+        intent = 'Agendamento de Consulta';
         confidence = '99%';
-        responseText = `Perfeito! Tenho horários disponíveis amanhã às 14:00 ou na sexta-feira às 10:00. Qual horário prefere?`;
-        action = 'Oferecer horários vagos na agenda.';
-      } else if (lower.includes('preco') || lower.includes('valor') || lower.includes('quanto custa')) {
-        intent = 'Consulta de Valores';
-        confidence = '95%';
-        const pStr = procedures.length > 0 ? procedures.slice(0, 2).map(p => `${p.name}: R$ ${p.price}`).join(', ') : 'avaliação a partir de R$ 150,00';
-        responseText = `Na ${clinic?.name || 'nossa clínica'}, os procedimentos iniciam em valores acessíveis (${pStr}). Deseja agendar uma avaliação?`;
-        action = 'Informar estimativa e convidar para avaliação.';
-      } else if (lower.includes('humano') || lower.includes('atendente') || lower.includes('pessoa') || lower.includes('recepcao')) {
+        responseText = `Perfeito! Tenho horários livres na agenda da clínica ${clinic?.name || 'OdontoCRM'}:\n\n1. Amanhã às 14:30 (Dr. Lucas)\n2. Sexta-feira às 10:00 (Dra. Juliana)\n\nQual desses horários prefere para a sua consulta?`;
+        action = 'Oferecer horários disponíveis e aguardar confirmação.';
+        activeNode = 'Agenda Node';
+        options = ['Confirmar amanhã 14:30', 'Confirmar sexta 10:00', 'Ver outros horários'];
+      } 
+      // 4. Consulta de Preços e Valores
+      else if (lower.includes('preco') || lower.includes('valor') || lower.includes('quanto custa') || lower.includes('2.') || lower.includes('tabela')) {
+        intent = 'Consulta de Valores & Tratamentos';
+        confidence = '96%';
+        const pStr = procedures.length > 0 ? procedures.slice(0, 3).map(p => `• ${p.name}: R$ ${p.price}`).join('\n') : '• Limpeza & Profilaxia: R$ 250,00\n• Clareamento a Laser: R$ 800,00';
+        responseText = `Nossos procedimentos principais na ${clinic?.name || 'nossa clínica'}:\n\n${pStr}\n\nAceitamos cartões em até 12x e convênios parceiros. Deseja agendar uma avaliação?`;
+        action = 'Apresentar tabela de procedimentos e convidar p/ avaliação.';
+        activeNode = 'Preços & Tratamentos';
+        options = ['Quero agendar avaliação', 'Ver convênios aceitos', 'Falar com recepção'];
+      } 
+      // 5. Endereço e Localização
+      else if (lower.includes('endereco') || lower.includes('localizacao') || lower.includes('onde fica') || lower.includes('3.')) {
+        intent = 'Endereço & Localização';
+        confidence = '97%';
+        responseText = `Nossa clínica fica em:\n📍 ${formatAddressString(clinic?.address)}\n📞 Contato: ${clinic?.phone || '(83) 99999-9999'}\n⏰ Expediente: ${clinic?.operating_hours || 'Segunda a Sexta das 08h às 18h'}`;
+        action = 'Informar localização e horário de funcionamento.';
+        activeNode = 'Endereço Node';
+        options = ['Agendar consulta', 'Falar com recepção'];
+      } 
+      // 6. Urgência / Dor Forte
+      else if (lower.includes('urgencia') || lower.includes('dor') || lower.includes('socorro') || lower.includes('4.')) {
+        intent = 'Urgência / Dor Forte';
+        confidence = '100%';
+        responseText = '🚨 Entendo que está com dor/urgência! Notifiquei imediatamente nossa recepção. Um atendente humano vai assumir este chat agora mesmo!';
+        action = 'Silenciar robô (AutoSilence) e emitir alerta de dor forte p/ recepção.';
+        activeNode = 'Transferência Humana (Urgência)';
+      } 
+      // 7. Falar com Humano
+      else if (lower.includes('humano') || lower.includes('atendente') || lower.includes('pessoa') || lower.includes('recepcao') || lower.includes('5.')) {
         intent = 'Transição Humana';
         confidence = '100%';
-        responseText = 'Transferindo seu atendimento para nossa recepção. Aguarde um momento!';
-        action = 'Silenciar IA e notificar equipe.';
-      } else {
-        responseText = `Como posso ajudar com seu sorriso hoje? Posso agendar uma avaliação se desejar.`;
+        responseText = 'Transferindo seu atendimento para a recepção presencial da clínica. Por favor, aguarde um momento!';
+        action = 'Silenciar IA e criar atendimento pendente no painel.';
+        activeNode = 'Handoff Node';
+      } 
+      // 8. Resposta Padrão / Reexibição do Menu Principal (Modo Automação Pura)
+      else {
+        responseText = `Sou o assistente virtual da clínica ${clinic?.name || 'OdontoFace'}. Para que eu possa te ajudar da melhor forma, por favor escolha uma das opções do menu abaixo:`;
+        action = 'Texto livre não reconhecido em modo automação: reexibindo o Menu Principal.';
+        activeNode = 'Menu Principal (Fallback)';
+        options = ['1. Agendar ou remarcar consulta', '2. Tabela de procedimentos e valores', '3. Endereço e horários', '4. Urgência ou dor forte', '5. Falar com a recepção'];
       }
 
       const botMsg = {
         sender: 'BOT',
         text: responseText,
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        options: options
       };
 
       setSimMessages(prev => [...prev, botMsg]);
-      setAiAnalysis({ intent, confidence, action });
+      setAiAnalysis({ intent, confidence, action, activeNode });
       setIsTyping(false);
-    }, 900);
+    }, 700);
+  };
+
+  const handleResetSim = () => {
+    setSimMessages([
+      { 
+        sender: 'BOT', 
+        text: `Olá! Sou a Sofia, assistente virtual da clínica ${clinic?.name || 'OdontoCRM'}. Como posso ajudar?`, 
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        options: ['1. Agendar consulta', '2. Preços e tratamentos', '3. Endereço da clínica', '4. Urgência / Dor forte', '5. Falar com atendente']
+      }
+    ]);
+    setAiAnalysis({
+      intent: 'Boas-vindas',
+      confidence: '100%',
+      action: 'Iniciar atendimento e propor suporte.',
+      activeNode: 'Boas-Vindas (Início)'
+    });
   };
 
   const expandedPromptPreview = expandAiPrompt(prompt, { clinic, dentists, procedures, insurancePlans });
@@ -345,12 +453,12 @@ export default function AIModule({ onClose }) {
             </button>
           )}
           <div className="w-8 h-8 rounded-xl bg-[#008069] text-white flex items-center justify-center shadow-md">
-            <Bot className="w-4 h-4" />
+            <Zap className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className={`text-xs font-extrabold font-title tracking-tight ${isDarkMode ? 'text-white' : 'text-[#111b21]'}`}>
-                Agente IA (Sofia)
+                Automação WhatsApp
               </h2>
               <span className={`px-2 py-0.2 rounded-full text-[9px] font-bold flex items-center gap-1 border ${
                 isActive 
@@ -358,11 +466,11 @@ export default function AIModule({ onClose }) {
                   : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#00a884] animate-ping' : 'bg-slate-500'}`} />
-                {isActive ? 'Ativo' : 'Pausado'}
+                {isActive ? 'Automação Ativa' : 'Pausado'}
               </span>
             </div>
             <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-[#667781]'}`}>
-              Atendimento automático e agendamentos no WhatsApp.
+              Fluxo visual de atendimento, robô de mensagens e menus interativos.
             </p>
           </div>
         </div>
@@ -371,7 +479,7 @@ export default function AIModule({ onClose }) {
           <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-xl border transition-all ${
             isDarkMode ? 'bg-[#182730] border-[#1f2c34] text-slate-300' : 'bg-slate-100 border-slate-200 text-[#111b21]'
           }`}>
-            <span className="text-[11px] font-bold">Agente Ativo</span>
+            <span className="text-[11px] font-bold">Automação Ativa</span>
             <input 
               type="checkbox" 
               checked={isActive} 
@@ -380,90 +488,163 @@ export default function AIModule({ onClose }) {
             />
           </label>
 
-          <button 
-            onClick={handleSaveConfigs}
-            disabled={isSaving}
-            className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
-          </button>
+          {activeTab !== 'flow_builder' && (
+            <button 
+              onClick={handleSaveConfigs}
+              disabled={isSaving}
+              className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* NAVEGAÇÃO DE ABAS MINIMALISTA - CORES DO WHATSAPP */}
-      <div className={`px-5 py-2.5 border-b grid grid-cols-2 sm:grid-cols-4 gap-2 flex-shrink-0 transition-colors ${
-        isDarkMode ? 'border-[#1f2c34] bg-[#080d11]' : 'border-slate-200 bg-[#f0f2f5]'
-      }`}>
-        <button
-          onClick={() => setActiveTab('prompt')}
-          className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'prompt'
-              ? 'bg-[#00a884] text-white shadow-sm'
-              : isDarkMode 
-                ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34]' 
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">Prompt Mestre</span>
-        </button>
+      {/* CORPO PRINCIPAL COM SIDEBAR LATERAL E ÁREA DE CONTEÚDO */}
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* NAVEGAÇÃO LATERAL (SIDEBAR DE ABAS DE AUTOMAÇÃO) */}
+        <div className={`w-56 md:w-60 border-r p-3 flex flex-col gap-1.5 flex-shrink-0 overflow-y-auto transition-colors ${
+          isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-slate-200 bg-[#f0f2f5]'
+        }`}>
+          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 text-left ${
+            isDarkMode ? 'text-slate-400' : 'text-slate-500'
+          }`}>
+            Módulo de Automação
+          </span>
 
-        <button
-          onClick={() => setActiveTab('faq')}
-          className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'faq'
-              ? 'bg-[#00a884] text-white shadow-sm'
-              : isDarkMode 
-                ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34]' 
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">Base FAQ ({kb.length})</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('flow_builder')}
+            className={`w-full h-10 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer text-left ${
+              activeTab === 'flow_builder'
+                ? 'bg-[#00a884] text-white shadow-md'
+                : isDarkMode 
+                  ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34] hover:bg-[#182730]' 
+                  : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Zap className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <span className="truncate flex-1">Editor Visual (Flow)</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('rules')}
-          className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'rules'
-              ? 'bg-[#00a884] text-white shadow-sm'
-              : isDarkMode 
-                ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34]' 
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-          }`}
-        >
-          <Sliders className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">Regras & Transição</span>
-        </button>
+          <button
+            onClick={() => setActiveTab('simulator')}
+            className={`w-full h-10 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer text-left ${
+              activeTab === 'simulator'
+                ? 'bg-[#00a884] text-white shadow-md'
+                : isDarkMode 
+                  ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34] hover:bg-[#182730]' 
+                  : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Play className="w-4 h-4 flex-shrink-0 text-teal-400" />
+            <span className="truncate flex-1">Simulador WhatsApp</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('simulator')}
-          className={`h-9 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'simulator'
-              ? 'bg-[#00a884] text-white shadow-sm'
-              : isDarkMode 
-                ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34]' 
-                : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-          }`}
-        >
-          <Play className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">Simulador</span>
-        </button>
-      </div>
+          <button
+            onClick={() => setActiveTab('faq')}
+            className={`w-full h-10 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer text-left ${
+              activeTab === 'faq'
+                ? 'bg-[#00a884] text-white shadow-md'
+                : isDarkMode 
+                  ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34] hover:bg-[#182730]' 
+                  : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 flex-shrink-0 text-blue-400" />
+            <span className="truncate flex-1">Base FAQ ({kb.length})</span>
+          </button>
 
-      {/* CONTEÚDO MINIMALISTA DAS ABAS */}
-      <div className="flex-1 overflow-y-auto p-5 scrollbar-thin space-y-5">
+          <button
+            onClick={() => setActiveTab('prompt')}
+            className={`w-full h-10 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer text-left ${
+              activeTab === 'prompt'
+                ? 'bg-[#00a884] text-white shadow-md'
+                : isDarkMode 
+                  ? 'bg-[#111c24] text-slate-400 hover:text-white border border-[#1f2c34] hover:bg-[#182730]' 
+                  : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            <span className="truncate flex-1">Integração de IA (API)</span>
+          </button>
+        </div>
+
+        {/* ÁREA DE CONTEÚDO PRINCIPAL DA ABA SELECIONADA */}
+        <div className={`flex-1 ${activeTab === 'flow_builder' || activeTab === 'simulator' ? 'h-full overflow-hidden' : 'overflow-y-auto p-5 pb-12 scrollbar-thin space-y-5 text-left'}`}>
         
         {/* ========================================================================= */}
-        {/* ABA 1: PROMPT MESTRE (PAINEL DIVIDIDO: CARDS MODULARES + PREVIEW AO VIVO)   */}
+        {/* ABA: INTEGRAÇÃO DE IA (OPCIONAL - API KEY PRÓPRIA & PROMPT)               */}
         {/* ========================================================================= */}
         {activeTab === 'prompt' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-left items-start">
             
-            {/* LADO ESQUERDO: CARDS EXPANSÍVEIS (ACCORDION) DE EDIÇÃO DE BLOCOS */}
-            <div className="lg:col-span-7 space-y-3">
+            {/* LADO ESQUERDO: CONFIGURAÇÃO DE API KEY + PROMPT MESTRE */}
+            <div className="lg:col-span-7 space-y-4">
               
+              {/* CARD DE CONFIGURAÇÃO DE API KEY PRÓPRIA */}
+              <div className={`p-4 rounded-2xl border shadow-xs space-y-3 transition-all ${
+                isDarkMode ? 'bg-[#111c24] border-[#1f2c34]' : 'bg-white border-slate-200'
+              }`}>
+                <div className="flex items-center justify-between border-b pb-2.5 border-slate-500/20">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center font-bold">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                        Chave de API de IA (Opcional)
+                      </h4>
+                      <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Cadastre sua própria API Key para habilitar o nó 'Agente IA' no fluxo visual.
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded border ${
+                    apiKey 
+                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' 
+                      : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                  }`}>
+                    {apiKey ? 'API KEY CONECTADA' : 'MODO AUTOMAÇÃO PURA'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Provedor de IA:
+                    </label>
+                    <select
+                      value={aiProvider}
+                      onChange={(e) => setAiProvider(e.target.value)}
+                      className={`w-full rounded-xl py-2 px-3 text-xs font-medium border focus:outline-none focus:border-[#00a884] transition-all ${
+                        isDarkMode ? 'bg-[#080d11] border-[#1f2c34] text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <option value="openai">OpenAI (GPT-4o / GPT-4o-mini)</option>
+                      <option value="anthropic">Anthropic (Claude 3.5 Sonnet)</option>
+                      <option value="gemini">Google Gemini 1.5 Pro</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Chave de API (API Key Própria):
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="sk-proj-..."
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className={`w-full rounded-xl py-2 px-3 text-xs font-mono border focus:outline-none focus:border-[#00a884] transition-all ${
+                        isDarkMode ? 'bg-[#080d11] border-[#1f2c34] text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* HEADER DO EDITOR */}
               <div className="flex items-center justify-between px-1">
                 <span className={`text-xs font-extrabold flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -553,7 +734,7 @@ export default function AIModule({ onClose }) {
               </div>
 
               {/* CARD DE DISPLAY DO PROMPT COMPILADO COM DADOS REAIS */}
-              <div className={`p-4 rounded-2xl border transition-all space-y-3 font-mono text-[11px] leading-relaxed max-h-[520px] overflow-y-auto select-text shadow-xs scrollbar-thin ${
+              <div className={`p-4 rounded-2xl border transition-all space-y-3 font-mono text-[11px] leading-relaxed max-h-[calc(100vh-260px)] overflow-y-auto select-text shadow-xs scrollbar-thin ${
                 isDarkMode ? 'bg-[#080d11] border-[#1f2c34] text-[#e9edef]' : 'bg-[#f8f9fa] border-slate-200 text-slate-800'
               }`}>
                 <div className="flex items-center justify-between pb-2 border-b border-slate-500/20 text-[10px] font-sans">
@@ -750,113 +931,170 @@ export default function AIModule({ onClose }) {
         )}
 
         {/* ========================================================================= */}
-        {/* ABA 4: SIMULADOR                                                          */}
+        {/* ABA 4: SIMULADOR DE TESTE INTERATIVO (LARGURA TOTAL 100%)                */}
         {/* ========================================================================= */}
         {activeTab === 'simulator' && (
-          <div className="max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-5 text-left mx-auto h-[480px]">
+          <div className="w-full h-full p-4 text-left flex flex-col items-stretch overflow-hidden">
             
-            {/* Chat Simulador */}
-            <div className={`md:col-span-2 rounded-2xl border flex flex-col overflow-hidden transition-all shadow-xs ${
-              isDarkMode ? 'bg-[#111c24] border-[#1f2c34]' : 'bg-white border-slate-200'
+            {/* CHAT INTERATIVO SIMULADOR DO WHATSAPP - 100% LARGURA */}
+            <div className={`w-full h-full rounded-2xl border flex flex-col overflow-hidden transition-all shadow-sm ${
+              isDarkMode ? 'bg-[#0b141a] border-[#1f2c34]' : 'bg-white border-slate-200'
             }`}>
-              <div className={`p-3 border-b flex items-center justify-between transition-colors ${
-                isDarkMode ? 'border-[#1f2c34] bg-[#182730]' : 'border-slate-200 bg-slate-100'
+              {/* Header do Chat WhatsApp Simulador */}
+              <div className={`p-3 px-4 border-b flex items-center justify-between transition-colors ${
+                isDarkMode ? 'border-[#1f2c34] bg-[#111c24]' : 'border-slate-200 bg-slate-100'
               }`}>
-                <span className={`text-xs font-extrabold flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-[#111b21]'}`}>
-                  <MessageSquare className="w-3.5 h-3.5 text-[#00a884]" />
-                  Simulador de Teste
-                </span>
-                <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Teste em tempo real</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#00a884] text-white flex items-center justify-center font-bold text-xs shadow">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-[#111b21]'}`}>
+                      Simulador WhatsApp — Sofia IA
+                    </h3>
+                    <span className="text-[10px] text-[#00a884] font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00a884] animate-ping" />
+                      Sessão ativa de teste
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleResetSim}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isDarkMode ? 'bg-[#182730] hover:bg-[#20323e] text-slate-300 border-[#1f2c34]' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
+                  title="Reiniciar conversa de teste"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 opacity-70" />
+                  <span>Reiniciar Chat</span>
+                </button>
               </div>
 
-              {/* Mensagens */}
-              <div className="flex-1 p-3.5 overflow-y-auto space-y-3 scrollbar-thin">
+              {/* Atalhos Rápidos de Teste (Presets) */}
+              <div className={`px-3 py-2 border-b flex items-center gap-1.5 overflow-x-auto scrollbar-none transition-colors ${
+                isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-slate-200 bg-slate-50'
+              }`}>
+                <span className={`text-[10px] font-bold uppercase tracking-wider flex-shrink-0 mr-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Atalhos Rápidos:
+                </span>
+                <button
+                  onClick={() => handleSimSend(null, 'Quero agendar uma consulta')}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#00a884]/15 hover:bg-[#00a884]/25 text-[#00a884] transition-all cursor-pointer flex-shrink-0"
+                >
+                  📅 Agendar
+                </button>
+                <button
+                  onClick={() => handleSimSend(null, 'Quais os preços dos tratamentos?')}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 transition-all cursor-pointer flex-shrink-0"
+                >
+                  💰 Preços
+                </button>
+                <button
+                  onClick={() => handleSimSend(null, 'Onde fica a clínica e qual o endereço?')}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-purple-500/15 hover:bg-purple-500/25 text-purple-400 transition-all cursor-pointer flex-shrink-0"
+                >
+                  📍 Endereço
+                </button>
+                <button
+                  onClick={() => handleSimSend(null, 'Estou com muita dor de dente!')}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-red-500/15 hover:bg-red-500/25 text-red-400 transition-all cursor-pointer flex-shrink-0"
+                >
+                  🚨 Urgência
+                </button>
+                <button
+                  onClick={() => handleSimSend(null, 'Quero falar com a recepção')}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 transition-all cursor-pointer flex-shrink-0"
+                >
+                  👨‍💼 Falar com Humano
+                </button>
+              </div>
+
+              {/* Área de Mensagens do Chat */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
                 {simMessages.map((m, idx) => (
                   <div 
                     key={idx} 
-                    className={`flex flex-col max-w-[85%] ${m.sender === 'BOT' ? 'mr-auto items-start' : 'ml-auto items-end'}`}
+                    className={`flex flex-col max-w-[80%] ${m.sender === 'BOT' ? 'mr-auto items-start' : 'ml-auto items-end'}`}
                   >
-                    <span className={`text-[9px] font-bold mb-0.5 px-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className={`text-[10px] font-bold mb-1 px-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                       {m.sender === 'BOT' ? 'Sofia IA' : 'Você'} • {m.time}
                     </span>
-                    <div className={`p-3 rounded-2xl text-xs font-medium ${
+                    <div className={`p-3.5 rounded-2xl text-xs font-medium whitespace-pre-wrap leading-relaxed ${
                       m.sender === 'BOT'
                         ? isDarkMode 
                           ? 'bg-[#182730] text-slate-100 rounded-tl-none border border-[#1f2c34]' 
                           : 'bg-slate-100 text-slate-900 rounded-tl-none border border-slate-200'
-                        : 'bg-[#00a884] text-white rounded-tr-none shadow-xs'
+                        : 'bg-[#00a884] text-white rounded-tr-none shadow-sm'
                     }`}>
                       {m.text}
                     </div>
+
+                    {/* Botões Clicáveis de Opções (Quick Replies) do WhatsApp */}
+                    {m.sender === 'BOT' && m.options && m.options.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-left">
+                        {m.options.map((optText, optIdx) => (
+                          <button
+                            key={optIdx}
+                            onClick={() => handleSimSend(null, optText)}
+                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#00a884]/15 hover:bg-[#00a884] text-[#00a884] hover:text-white border border-[#00a884]/30 transition-all active:scale-95 cursor-pointer shadow-xs"
+                          >
+                            {optText}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 {isTyping && (
-                  <div className={`text-[10px] italic animate-pulse ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Sofia IA está digitando...
+                  <div className={`flex items-center gap-2 text-xs italic ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className="w-2 h-2 rounded-full bg-[#00a884] animate-bounce" />
+                    <span>Sofia IA está analisando a mensagem e digitando...</span>
                   </div>
                 )}
               </div>
 
-              {/* Envio */}
-              <form onSubmit={handleSimSend} className={`p-2.5 border-t flex gap-2 transition-colors ${
+              {/* Form de Envio */}
+              <form onSubmit={(e) => handleSimSend(e)} className={`p-3 border-t flex gap-2 transition-colors ${
                 isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-slate-200 bg-slate-50'
               }`}>
                 <input
                   type="text"
-                  placeholder="Digite uma mensagem de teste..."
+                  placeholder="Digite uma pergunta para testar o comportamento do robô..."
                   value={simInput}
                   onChange={(e) => setSimInput(e.target.value)}
-                  className={`flex-1 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-[#00a884] border transition-all ${
+                  className={`flex-1 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:border-[#00a884] border transition-all ${
                     isDarkMode ? 'bg-[#111c24] border-[#1f2c34] text-white' : 'bg-white border-slate-200 text-[#111b21]'
                   }`}
                 />
                 <button
                   type="submit"
-                  className="px-3.5 py-2 bg-[#00a884] hover:bg-[#008069] text-white font-bold text-xs rounded-xl shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                  disabled={!simInput.trim()}
+                  className="px-4 py-2.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold text-xs rounded-xl shadow active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <Send className="w-3.5 h-3.5" />
+                  <Send className="w-4 h-4" />
+                  <span>Enviar</span>
                 </button>
               </form>
             </div>
-
-            {/* Diagnóstico */}
-            <div className={`rounded-2xl border p-4 space-y-3 shadow-xs flex flex-col transition-all ${
-              isDarkMode ? 'bg-[#111c24] border-[#1f2c34]' : 'bg-white border-slate-200'
-            }`}>
-              <h4 className={`text-xs font-bold uppercase tracking-wider border-b pb-2 flex items-center gap-1.5 ${
-                isDarkMode ? 'text-white border-[#1f2c34]' : 'text-[#111b21] border-slate-200'
-              }`}>
-                <Zap className="w-3.5 h-3.5 text-[#00a884]" />
-                Diagnóstico
-              </h4>
-
-              <div className="space-y-2.5 flex-1 text-xs">
-                <div className={`p-2.5 rounded-xl border ${
-                  isDarkMode ? 'bg-[#080d11] border-[#1f2c34]' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className={`text-[9px] font-bold uppercase block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Intenção</span>
-                  <span className="font-extrabold text-[#00a884] text-xs mt-0.5 block">{aiAnalysis.intent}</span>
-                </div>
-
-                <div className={`p-2.5 rounded-xl border ${
-                  isDarkMode ? 'bg-[#080d11] border-[#1f2c34]' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className={`text-[9px] font-bold uppercase block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Confiança</span>
-                  <span className={`font-bold text-xs mt-0.5 block ${isDarkMode ? 'text-white' : 'text-[#111b21]'}`}>{aiAnalysis.confidence}</span>
-                </div>
-
-                <div className={`p-2.5 rounded-xl border ${
-                  isDarkMode ? 'bg-[#080d11] border-[#1f2c34]' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <span className={`text-[9px] font-bold uppercase block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Ação</span>
-                  <span className={`font-normal text-[11px] mt-0.5 block ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{aiAnalysis.action}</span>
-                </div>
-              </div>
-            </div>
           </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* ABA NOVA: EDITOR VISUAL DE FLUXO (REACT FLOW)                           */}
+        {/* ========================================================================= */}
+        {activeTab === 'flow_builder' && (
+          <VisualFlowBuilder onOpenInspector={() => setShowInspectorModal(true)} />
+        )}
       </div>
+    </div>
+
+      {/* MODAL DE INSPETOR E LOGS DE TRACE DA IA */}
+      <FlowInspectorModal 
+        isOpen={showInspectorModal} 
+        onClose={() => setShowInspectorModal(false)} 
+      />
 
       {/* MODAL DE PRÉ-VISUALIZAÇÃO */}
       {showPreviewModal && (

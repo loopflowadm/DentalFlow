@@ -266,10 +266,14 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                   notifications.map(n => (
                     <div 
                       key={n.id} 
-                      className={`p-2.5 rounded-xl transition-all border text-xs text-left relative ${
+                      onClick={() => {
+                        if (onOpenWhatsApp) onOpenWhatsApp();
+                        setShowNotifications(false);
+                      }}
+                      className={`p-2.5 rounded-xl transition-all border text-xs text-left relative cursor-pointer hover:border-[#00a884]/50 active:scale-[0.99] ${
                         n.read 
                           ? 'bg-transparent border-transparent text-slate-500 dark:text-slate-400' 
-                          : 'bg-blue-500/10 border-blue-500/20 text-slate-800 dark:text-slate-200'
+                          : 'bg-emerald-500/10 border-emerald-500/20 text-slate-800 dark:text-slate-200'
                       }`}
                     >
                       {!n.read && (

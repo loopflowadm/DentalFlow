@@ -57,6 +57,15 @@ export default function Sidebar({
   const { patients, appointments, crmLeads, whatsappChats, addCrmLead, chairs, dentists, addChair, addDentist } = useClinic();
   const totalUnreadWhatsApp = (whatsappChats || []).reduce((acc, chat) => acc + (chat.unreadCount || 0), 0);
 
+  // Consultas de hoje para badge da Agenda
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayAppointmentsCount = (appointments || []).filter(app => {
+    const rawDate = app.start_time || app.date || app.appointment_date;
+    if (!rawDate) return false;
+    const appDateStr = rawDate.split('T')[0];
+    return appDateStr === todayStr && app.status !== 'completed' && app.status !== 'Concluído' && app.status !== 'CANCELLED';
+  }).length;
+
   // Estados dos filtros da segunda sidebar
   const [crmSearch, setCrmSearch] = useState('');
   const [crmPriority, setCrmPriority] = useState('');
@@ -272,6 +281,14 @@ export default function Sidebar({
                     </span>
                   )}
 
+                  {item.id === 'agenda' && todayAppointmentsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center z-20">
+                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-[10px] rounded-full border-2 border-white dark:border-[#0B1220] shadow-md shadow-blue-500/40 leading-none">
+                        {todayAppointmentsCount}
+                      </span>
+                    </span>
+                  )}
+
                   {/* Tooltip Lateral */}
                   <div className="absolute left-20 bg-slate-900 dark:bg-slate-950 text-white text-xs font-semibold px-3 py-2 rounded-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-xl whitespace-nowrap z-50">
                     {item.label}
@@ -306,14 +323,14 @@ export default function Sidebar({
             onClick={() => setCollapsed(true)}
           />
           <aside 
-            className={`border border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0D0D0D] flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 transition-colors duration-300 ${
-              collapsed ? 'hidden' : 'fixed inset-4 w-[calc(100vw-32px)] md:relative md:inset-auto md:w-64'
+            className={`border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-[#080808] flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 transition-colors duration-300 ${
+              collapsed ? 'hidden' : 'fixed inset-4 w-[calc(100vw-32px)] md:relative md:inset-auto md:w-64 xl:w-72'
             }`} 
             style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_2 } : undefined}
           >
           
           {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
-          <div className="h-16 px-4 border-b border-slate-200/80 dark:border-slate-900/40 flex items-center justify-between flex-shrink-0 bg-slate-100/50 dark:bg-slate-950/5 transition-colors duration-300">
+          <div className="h-16 px-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#0D0D0D] transition-colors duration-300">
             <span className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider font-title pl-1">
               {activeTab === 'crm' && "Jornada do Paciente"}
               {activeTab === 'pacientes' && "Pacientes"}
@@ -339,50 +356,50 @@ export default function Sidebar({
                 <div className="grid grid-cols-2 gap-2 text-slate-800 dark:text-white">
                   <button 
                     onClick={() => setCrmStageFilter('all')}
-                    className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
+                    className={`p-2.5 rounded-xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'all'
-                        ? 'bg-[#196BFB]/10 border-[#196BFB] shadow-sm ring-1 ring-[#196BFB]/30'
-                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/40 text-blue-600 dark:text-blue-400 font-extrabold shadow-xs'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-2xs'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total</span>
-                    <span className="text-xl font-bold font-title mt-1 text-slate-800 dark:text-white">{totalLeadsCount}</span>
+                    <span className="text-lg font-black font-title mt-1 text-slate-800 dark:text-white">{totalLeadsCount}</span>
                   </button>
 
                   <button 
                     onClick={() => setCrmStageFilter('new')}
-                    className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
+                    className={`p-2.5 rounded-xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'new'
-                        ? 'bg-sky-500/10 border-sky-500 shadow-sm ring-1 ring-sky-400/30'
-                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        ? 'bg-sky-500/10 dark:bg-sky-500/20 border-sky-500/40 text-sky-600 dark:text-sky-400 font-extrabold shadow-xs'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-2xs'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Novos</span>
-                    <span className="text-xl font-bold font-title mt-1 text-sky-600 dark:text-sky-400">{newLeadsCount}</span>
+                    <span className="text-lg font-black font-title mt-1 text-sky-600 dark:text-sky-400">{newLeadsCount}</span>
                   </button>
 
                   <button 
                     onClick={() => setCrmStageFilter('negotiating')}
-                    className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
+                    className={`p-2.5 rounded-xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'negotiating'
-                        ? 'bg-purple-500/10 border-purple-500 shadow-sm ring-1 ring-purple-400/30'
-                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        ? 'bg-purple-500/10 dark:bg-purple-500/20 border-purple-500/40 text-purple-600 dark:text-purple-400 font-extrabold shadow-xs'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-2xs'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Negociando</span>
-                    <span className="text-xl font-bold font-title mt-1 text-purple-600 dark:text-violet-400">{inNegotiationCount}</span>
+                    <span className="text-lg font-black font-title mt-1 text-purple-600 dark:text-violet-400">{inNegotiationCount}</span>
                   </button>
 
                   <button 
                     onClick={() => setCrmStageFilter('closed')}
-                    className={`p-3 rounded-2xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
+                    className={`p-2.5 rounded-xl flex flex-col justify-between transition-all text-left border cursor-pointer ${
                       crmStageFilter === 'closed'
-                        ? 'bg-emerald-500/10 border-emerald-500 shadow-sm ring-1 ring-emerald-400/30'
-                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
+                        ? 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-extrabold shadow-xs'
+                        : 'bg-white dark:bg-[#0D0D0D] border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-2xs'
                     }`}
                   >
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Fechados</span>
-                    <span className="text-xl font-bold font-title mt-1 text-emerald-600 dark:text-emerald-400">{closedCount}</span>
+                    <span className="text-lg font-black font-title mt-1 text-emerald-600 dark:text-emerald-400">{closedCount}</span>
                   </button>
                 </div>
 
@@ -395,7 +412,7 @@ export default function Sidebar({
                       placeholder="Buscar paciente por nome..."
                       value={crmSearch}
                       onChange={(e) => setCrmSearch(e.target.value)}
-                      className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm dark:shadow-none"
+                      className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-800 dark:text-white focus:outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-2xs dark:shadow-none"
                     />
                   </div>
 
@@ -403,7 +420,7 @@ export default function Sidebar({
                     <select
                       value={crmPriority}
                       onChange={(e) => setCrmPriority(e.target.value)}
-                      className="flex-1 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs text-slate-700 dark:text-slate-400 focus:outline-none cursor-pointer shadow-sm dark:shadow-none font-bold"
+                      className="flex-1 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs text-slate-700 dark:text-slate-400 focus:outline-none cursor-pointer shadow-2xs dark:shadow-none font-bold"
                     >
                       <option value="">Todas prioridades</option>
                       <option value="high">Alta</option>
@@ -435,54 +452,51 @@ export default function Sidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-3 rounded-2xl cursor-pointer relative transition-all border group ${
+                        className={`p-3 rounded-xl cursor-pointer relative transition-all border group text-left ${
                           isActive 
-                            ? 'bg-blue-50/90 dark:bg-[#18181B] border-[#196BFB]/50 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-md ring-2 ring-[#196BFB]/20 dark:ring-blue-500/20 scale-[1.01]' 
-                            : 'bg-white hover:bg-slate-100 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 shadow-sm dark:shadow-none hover:-translate-y-0.5'
+                            ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/40 text-blue-600 dark:text-blue-400 shadow-xs font-extrabold ring-1 ring-blue-500/20' 
+                            : 'bg-white dark:bg-[#0D0D0D] hover:bg-slate-100 dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-2xs hover:border-slate-300 dark:hover:border-white/20'
                         }`}
                       >
-                        {/* Indicador de Prioridade */}
-                        <span className={`absolute left-0 top-3 bottom-3 w-1.5 rounded-r-lg ${
-                          lead.priority === 'high' ? 'bg-[#FF5B60]' : lead.priority === 'medium' ? 'bg-amber-400' : 'bg-emerald-400'
-                        }`} />
-
-                        {/* Seta no topo direito se ativo */}
-                        {isActive && (
-                          <IconArrowUpRight className="w-3.5 h-3.5 absolute right-3 top-3 text-[#196BFB] dark:text-blue-400 font-bold" />
-                        )}
-
-                        <div className="flex items-center gap-2.5 pl-1.5">
-                          <span className={`text-xl flex-shrink-0 flex items-center justify-center ${isActive ? 'text-[#196BFB] dark:text-blue-400' : 'text-slate-400'}`}>
-                            {lead.avatar && lead.avatar !== '👤' ? lead.avatar : <IconUser className="w-5 h-5" />}
-                          </span>
-                          <div className="overflow-hidden flex-1">
-                            <h4 className={`text-xs font-bold truncate ${isActive ? 'text-[#196BFB] dark:text-white font-black' : 'text-slate-800 dark:text-white'}`}>
-                              {lead.name}
-                            </h4>
-                            <p className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-slate-600 dark:text-slate-300 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
-                              {lead.procedure_name || 'Consulta Geral'}
-                            </p>
+                        {/* Header do Card (Nome, Procedimento, Seta) */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold ${
+                              isActive ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'bg-slate-200/60 dark:bg-white/10 text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {lead.avatar && lead.avatar !== '👤' ? lead.avatar : <IconUser className="w-4 h-4" />}
+                            </div>
+                            <div className="overflow-hidden">
+                              <h4 className={`text-xs font-bold truncate ${isActive ? 'text-blue-700 dark:text-white font-black' : 'text-slate-800 dark:text-white'}`}>
+                                {lead.name}
+                              </h4>
+                              <p className="text-[10px] truncate text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+                                {lead.procedure_name || 'Consulta Geral'}
+                              </p>
+                            </div>
                           </div>
+
+                          {isActive && (
+                            <IconArrowUpRight className="w-4 h-4 text-blue-600 dark:text-blue-400 font-bold shrink-0" />
+                          )}
                         </div>
 
-                        {/* Rodapé do Card (Design Minimalista) */}
-                        <div className={`mt-3 pt-2.5 border-t flex justify-between items-center text-[10px] pl-1.5 gap-1 ${
-                          isActive ? 'border-blue-200/80 dark:border-slate-700/80' : 'border-slate-200/80 dark:border-slate-800/80'
-                        }`}>
-                          {/* Badge do Estágio do Funil */}
-                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold truncate max-w-[110px] ${
-                            isActive 
-                              ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-slate-200 border border-blue-200/80 dark:border-white/10 font-bold shadow-2xs' 
-                              : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300'
+                        {/* Badges do Estágio e Prioridade */}
+                        <div className="mt-2.5 flex items-center justify-between gap-1 text-[9px] font-bold">
+                          <span className={`px-2 py-0.5 rounded-md truncate max-w-[120px] ${
+                            isActive
+                              ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/30'
+                              : 'bg-slate-200/60 dark:bg-white/10 text-slate-600 dark:text-slate-400'
                           }`}>
                             {columnsList[lead.stage || 0]}
                           </span>
 
-                          {/* Badge de Prioridade */}
-                          <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold ${
-                            isActive 
-                              ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-slate-200 border border-blue-200/80 dark:border-white/10 font-bold shadow-2xs' 
-                              : lead.priority === 'high' ? 'bg-[#FF5B60]/10 text-[#FF5B60]' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                          <span className={`px-2 py-0.5 rounded-md ${
+                            lead.priority === 'high' 
+                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20' 
+                              : lead.priority === 'medium'
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
                           }`}>
                             {lead.priority === 'high' ? 'Alta' : lead.priority === 'medium' ? 'Média' : 'Baixa'}
                           </span>
@@ -540,10 +554,10 @@ export default function Sidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-2.5 rounded-xl cursor-pointer transition-all border flex items-center gap-3 text-left relative overflow-hidden ${
+                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-3 text-left relative overflow-hidden ${
                           isActive 
-                            ? 'bg-white dark:bg-[#151c2c] border-blue-500/40 dark:border-blue-500/40 text-slate-900 dark:text-white shadow-sm ring-1 ring-blue-500/20 border-l-4 border-l-blue-600 dark:border-l-blue-500' 
-                            : 'bg-white/80 hover:bg-slate-100/90 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/10'
+                            ? 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold border border-blue-500/30 shadow-xs' 
+                            : 'bg-slate-50/60 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-200/60 dark:hover:border-white/10'
                         }`}
                       >
                         {/* Foto do Paciente ou Avatar Vetorial */}

@@ -15,6 +15,8 @@ const initialClinics = [
     logo_url: '/logo-brand.png',
     primary_color: '#03269A', // Deep Blue
     secondary_color: '#1855FD', // Bright Electric Blue
+    plan: 'Enterprise',
+    status: 'active',
     created_at: new Date().toISOString()
   },
   {
@@ -24,6 +26,8 @@ const initialClinics = [
     logo_url: '✨',
     primary_color: '#1e3a8a', // Azul Marinho
     secondary_color: '#2563eb', // Azul Royal
+    plan: 'Pro',
+    status: 'active',
     created_at: new Date().toISOString()
   },
   {
@@ -33,6 +37,8 @@ const initialClinics = [
     logo_url: '💎',
     primary_color: '#881337', // Vinho/Rose
     secondary_color: '#be123c', // Rosa Prime
+    plan: 'Starter',
+    status: 'suspended',
     created_at: new Date().toISOString()
   }
 ];
@@ -123,8 +129,16 @@ const get = (key, fallback) => {
       changed = true;
     }
     
-    // Corrigir mojibake de emojis salvos no localStorage
+    // Corrigir mojibake de emojis e garantir plan e status salvos no localStorage
     parsed.forEach(c => {
+      if (!c.plan) {
+        c.plan = c.id === 'clinic-sorriso-perfeito' ? 'Enterprise' : c.id === 'clinic-odonto-prime' ? 'Starter' : 'Pro';
+        changed = true;
+      }
+      if (!c.status) {
+        c.status = c.id === 'clinic-odonto-prime' ? 'suspended' : 'active';
+        changed = true;
+      }
       if (c.logo_url === 'ðŸ’Ž' || c.logo_url === '💎' || c.logo_url?.includes('ðŸ')) {
         if (c.logo_url === 'ðŸ’Ž') {
           c.logo_url = '💎';
@@ -151,6 +165,35 @@ const set = (key, data) => {
 };
 
 export const mockDb = {
+  get,
+  set,
+  getFeatureFlags: () => get('odonto_crm_feature_flags', {
+    'odontograma-3d-v2': true,
+    'receita-digital-assina-pf': false,
+    'ai-diagnostico-assistido': true,
+    'whatsapp-evolution-v2': false,
+  }),
+  saveFeatureFlags: (flags) => {
+    set('odonto_crm_feature_flags', flags);
+    return flags;
+  },
+  getAuditLogs: () => get('odonto_crm_audit_logs', [
+    { id: '1', action: 'Autenticação SUPER_ADMIN concedida', details: 'Sessão ativa (admin@saas.com)', created_at: new Date().toISOString() },
+    { id: '2', action: 'Isolamento Multi-tenant verificado', details: 'Políticas RLS ativas no banco', created_at: new Date(Date.now() - 180000).toISOString() },
+    { id: '3', action: 'Verificação de Rate Limit', details: 'Supabase Security Engine OK', created_at: new Date(Date.now() - 600000).toISOString() },
+  ]),
+  addAuditLog: (action, details) => {
+    const logs = mockDb.getAuditLogs();
+    const newLog = {
+      id: 'log-' + Math.random().toString(36).substring(2, 9),
+      action,
+      details,
+      created_at: new Date().toISOString()
+    };
+    const updated = [newLog, ...logs].slice(0, 25);
+    set('odonto_crm_audit_logs', updated);
+    return newLog;
+  },
   getClinics: () => get(STORAGE_KEYS.CLINICS, initialClinics),
   saveClinic: (clinic) => {
     const clinics = mockDb.getClinics();

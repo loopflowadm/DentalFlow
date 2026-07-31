@@ -642,86 +642,75 @@ export default function Agenda({
   });
 
   return (
-    <div className="h-full flex flex-col space-y-4 overflow-hidden text-slate-800 dark:text-slate-100">
+    <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-100">
       
       {/* ========================================================================= */}
-      {/* CONTROLES SUPERIORES DA GRADE                                            */}
+      {/* PAINEL UNIFICADO DA AGENDA (CONTROLES + GRADE DE HORÁRIOS)                */}
       {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/80 dark:border-white/5 p-4 rounded-2xl shadow-sm dark:shadow-2xl flex-shrink-0 transition-colors duration-300">
+      <div className="flex-1 bg-white dark:bg-[#0D0D0D] overflow-hidden flex flex-col transition-colors duration-300">
         
-        {/* Date Navigator */}
-        <div className="flex items-center gap-3">
-          <CalIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 hidden sm:block" />
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => navigateDate(-1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <h3 className="text-xs font-bold text-slate-800 dark:text-white w-44 text-center font-title">
-              {(view === 'day' || view === 'chair') && activeDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              {view === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}`}
-              {view === 'month' && activeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </h3>
-            <button 
-              onClick={() => navigateDate(1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        {/* CONTROLES SUPERIORES (BARRA DE NAVEGAÇÃO DA AGENDA) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#0D0D0D] px-4 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
+          
+          {/* Date Navigator */}
+          <div className="flex items-center gap-3">
+            <CalIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 hidden sm:block" />
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => navigateDate(-1)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white w-44 text-center font-title">
+                {(view === 'day' || view === 'chair') && activeDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                {view === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}`}
+                {view === 'month' && activeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </h3>
+              <button 
+                onClick={() => navigateDate(1)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* View Toggle */}
+            <div className="bg-slate-100 dark:bg-[#0D0D0D] p-1 rounded-xl flex border border-slate-200/80 dark:border-white/5">
+              {['day', 'week', 'month', 'chair'].map(v => {
+                if (window.innerWidth < 640 && (v === 'week' || v === 'chair')) return null;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                      view === v 
+                        ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                    }`}
+                  >
+                    {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* View Toggle */}
-          <div className="bg-slate-100 dark:bg-[#0D0D0D] p-1 rounded-xl flex border border-slate-200/80 dark:border-white/5">
-            {['day', 'week', 'month', 'chair'].map(v => {
-              if (window.innerWidth < 640 && (v === 'week' || v === 'chair')) return null;
-              return (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                    view === v 
-                      ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                  }`}
-                >
-                  {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
-                </button>
-              );
-            })}
+          {/* Ações */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                setActiveModalTab('consulta');
+                setShowAddApp(true);
+              }}
+              className="w-full sm:w-auto px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] hover:opacity-95 flex items-center justify-center gap-1.5 border border-white/10"
+              style={{ backgroundColor: currentTheme.secondary_color }}
+            >
+              <Plus className="w-4 h-4" />
+              Agendar
+            </button>
           </div>
         </div>
-
-        {/* Ações */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          {/* Extensão WhatsApp Button (Mock) */}
-          <button
-            onClick={() => alert('Extensão instalada e ativa no seu WhatsApp Web!')}
-            className="hidden md:flex px-3 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl text-xs font-bold items-center gap-1.5 transition-colors"
-          >
-            <Phone className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Extensão para WhatsApp</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveModalTab('consulta');
-              setShowAddApp(true);
-            }}
-            className="w-full sm:w-auto px-4 py-2.5 bg-secondary text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] hover:opacity-95 flex items-center justify-center gap-1.5 border border-white/10"
-            style={{ backgroundColor: currentTheme.secondary_color }}
-          >
-            <Plus className="w-4 h-4" />
-            Agendar
-          </button>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* CONTEÚDO PRINCIPAL (GRADE DE HORÁRIOS)                                   */}
-      {/* ========================================================================= */}
-      <div className="flex-1 bg-white dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/80 dark:border-white/5 rounded-2xl shadow-sm dark:shadow-2xl overflow-hidden flex flex-col transition-colors duration-300">
         
         {/* VIEW: SEMANA */}
         {view === 'week' && (

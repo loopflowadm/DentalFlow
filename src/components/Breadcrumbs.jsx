@@ -23,11 +23,11 @@ export default function Breadcrumbs({ activeTab }) {
     <nav className="flex items-center gap-2.5 text-xs font-semibold text-slate-500 select-none">
       <div className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer">
         {clinic?.logo_url ? (
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center border border-white/10 flex-shrink-0 select-none shadow-[0_2px_8px_rgba(25,107,251,0.2)]">
+          <div className="w-11 h-11 rounded-xl overflow-hidden bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none relative p-0.5">
             {clinic.logo_url.startsWith('http') || clinic.logo_url.startsWith('/') || clinic.logo_url.startsWith('data:image/') || clinic.logo_url.includes('.') ? (
-              <img src={clinic.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
+              <img src={clinic.logo_url} alt="Logo" className="w-full h-full object-cover rounded-lg" />
             ) : clinic.logo_url === '🦷' ? (
-              <Logo collapsed={true} className="w-7 h-7" />
+              <Logo collapsed={true} className="w-8 h-8" />
             ) : (
               (() => {
                 const logoMap = {
@@ -38,13 +38,13 @@ export default function Breadcrumbs({ activeTab }) {
                   '⚕️': Activity
                 };
                 const IconComponent = logoMap[clinic.logo_url] || Activity;
-                return <IconComponent className="w-5 h-5 text-secondary" style={{ color: clinic.secondary_color }} />;
+                return <IconComponent className="w-6 h-6 text-secondary" style={{ color: clinic.secondary_color }} />;
               })()
             )}
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center border border-white/10 flex-shrink-0 select-none shadow-[0_2px_8px_rgba(25,107,251,0.2)]">
-            <Logo collapsed={true} className="w-7 h-7" />
+          <div className="w-11 h-11 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none p-0.5">
+            <Logo collapsed={true} className="w-8 h-8" />
           </div>
         )}
         <span className="text-[15px] font-black text-slate-800 dark:text-white leading-none tracking-wide">{clinic?.name || 'DentalFlow'}</span>

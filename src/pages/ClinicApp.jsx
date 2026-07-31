@@ -68,6 +68,7 @@ export default function ClinicApp() {
   // Modais e seleções compartilhadas
   const [selectedLead, setSelectedLead] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
 
@@ -152,7 +153,10 @@ export default function ClinicApp() {
             setSelectedLead={setSelectedLead} 
             setActiveTab={setActiveTab} 
             setPrefilledLeadData={setPrefilledLeadData} 
-            onOpenWhatsApp={() => setActiveTab('whatsapp')}
+            onOpenWhatsApp={(patId) => {
+              if (patId) setSelectedPatientId(patId);
+              setActiveTab('whatsapp');
+            }}
           />
         );
       case 'whatsapp':
@@ -161,6 +165,7 @@ export default function ClinicApp() {
             onNavigateTab={setActiveTab}
             setSelectedPatient={setSelectedPatient}
             setPrefilledLeadData={setPrefilledLeadData}
+            selectedPatientId={selectedPatientId}
           />
         );
       case 'financeiro':
@@ -171,6 +176,72 @@ export default function ClinicApp() {
         return <Dashboard onNavigateTab={setActiveTab} />;
     }
   };
+
+  const { logout, selectClinic } = useAuth();
+
+  // Se a clínica estiver inativa por motivo financeiro ou bloqueio
+  if (clinic?.status === 'INACTIVE' || clinic?.status === 'SUSPENDED') {
+    return (
+      <div className="h-screen w-screen bg-[#090D16] flex items-center justify-center p-4 relative overflow-hidden font-sans">
+        {/* Glow de fundo vermelho sutil */}
+        <div className="absolute w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none bg-red-600/10 -top-20 -left-20" />
+        <div className="absolute w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none bg-amber-600/10 -bottom-20 -right-20" />
+
+        <div className="max-w-md w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl relative z-10 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center mx-auto shadow-inner">
+            <span className="text-3xl">⚠️</span>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] uppercase tracking-widest font-extrabold text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+              Acesso Temporariamente Suspenso
+            </span>
+            <h2 className="text-xl font-bold font-title text-white pt-1">
+              {clinic.name || 'Sua Clínica'} está inativa
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              O acesso aos módulos operacionais foi pausado devido a uma pendência na assinatura do OdontoCRM.
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-left text-xs text-slate-300 space-y-2 font-mono">
+            <div className="flex justify-between border-b border-slate-800 pb-2">
+              <span className="text-slate-500">Motivo:</span>
+              <span className="text-red-400 font-bold">Pendência Financeira</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Subdomínio:</span>
+              <span className="text-slate-200">{clinic.subdomain}.crm.com</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <a
+              href="https://wa.me/5511999999999?text=Olá,%20gostaria%20de%20regularizar%20a%20assinatura%20da%20minha%20clínica%20no%20OdontoCRM"
+              target="_blank"
+              rel="noreferrer"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs"
+            >
+              Falar com o Suporte Financeiro
+            </a>
+
+            <button
+              onClick={() => {
+                if (user?.role === 'SUPER_ADMIN') {
+                  selectClinic(null);
+                } else {
+                  logout();
+                }
+              }}
+              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl border border-slate-700 transition-all text-xs flex items-center justify-center gap-2"
+            >
+              {user?.role === 'SUPER_ADMIN' ? 'Voltar ao SuperAdmin' : 'Sair da Conta'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     return (
@@ -205,7 +276,10 @@ export default function ClinicApp() {
         setSelectedDentists={setSelectedDentists}
         agendaViewMode={agendaViewMode}
         setAgendaViewMode={setAgendaViewMode}
-        onOpenWhatsApp={() => setActiveTab('whatsapp')}
+        onOpenWhatsApp={(patId) => {
+          if (patId) setSelectedPatientId(patId);
+          setActiveTab('whatsapp');
+        }}
       />
 
       {/* Conteúdo Principal + Cabeçalho Superior */}
@@ -213,12 +287,15 @@ export default function ClinicApp() {
         <Header 
           activeTab={activeTab}
           onSearchChange={(q) => console.log('Search query:', q)}
-          onOpenWhatsApp={() => setActiveTab('whatsapp')}
+          onOpenWhatsApp={(patId) => {
+            if (patId) setSelectedPatientId(patId);
+            setActiveTab('whatsapp');
+          }}
           onQuickAction={handleQuickAction}
           onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
         />
         
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-[#080808] transition-colors duration-300">
+        <main className="flex-1 overflow-hidden p-0 bg-transparent transition-colors duration-300">
           {renderContent()}
         </main>
       </div>

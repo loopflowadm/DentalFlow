@@ -13,7 +13,7 @@ import {
 
 import AIModule from '../ai/AIModule';
 
-export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefilledLeadData }) {
+export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefilledLeadData, selectedPatientId: initialPatientId }) {
   const { 
     whatsappChats: contextChats, 
     sendWhatsAppMessage, 
@@ -87,10 +87,12 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   const [selectedPatientId, setSelectedPatientId] = useState('');
 
   useEffect(() => {
-    if (allChats.length > 0 && (!selectedPatientId || !allChats.some(c => c.patientId === selectedPatientId))) {
+    if (initialPatientId && allChats.some(c => c.patientId === initialPatientId)) {
+      setSelectedPatientId(initialPatientId);
+    } else if (allChats.length > 0 && (!selectedPatientId || !allChats.some(c => c.patientId === selectedPatientId))) {
       setSelectedPatientId(allChats[0].patientId);
     }
-  }, [allChats, selectedPatientId]);
+  }, [allChats, initialPatientId, selectedPatientId]);
   const [typedMessage, setTypedMessage] = useState('');
   const [search, setSearch] = useState('');
   const [activeFilterTab, setActiveFilterTab] = useState('all');
@@ -562,16 +564,16 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   const unreadTotal = allChats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
   return (
-    <div className={`h-full flex border rounded-2xl overflow-hidden shadow-2xl font-sans select-none relative transition-colors duration-300 ${
-      isDarkMode ? 'border-slate-800/80 bg-[#080d11] text-[#e9edef]' : 'border-slate-200/80 bg-[#f0f2f5] text-[#111b21]'
+    <div className={`h-full flex font-sans select-none relative transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#080d11] text-[#e9edef]' : 'bg-[#f0f2f5] text-[#111b21]'
     }`}>
       
       {/* ========================================================================= */}
-      {/* 1. LISTA DE CONVERSAS (ESQUERDA - 320px)                                   */}
+      {/* 1. LISTA DE CONVERSAS (ESQUERDA - 320px, ESCONDIDA EM MÓDULOS DE CONFIGURAÇÃO) */}
       {/* ========================================================================= */}
       <div className={`w-full md:w-80 border-r flex flex-col flex-shrink-0 transition-colors ${
         isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-[#e9edef] bg-[#ffffff]'
-      } ${showMobileList ? 'flex' : 'hidden md:flex'}`}>
+      } ${showAiSettings || showEvolutionSettings ? 'hidden' : (showMobileList ? 'flex' : 'hidden md:flex')}`}>
         
         {/* Cabeçalho Limpo "Conversas" */}
         <div className={`h-[57px] px-3.5 flex items-center justify-between border-b flex-shrink-0 transition-colors ${
@@ -924,22 +926,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Deseja realmente excluir "${activeChat.name}" e todas as suas mensagens do banco de dados?`)) {
-                      deletePatient(activeChat.patientId);
-                      deleteCrmLead(activeChat.patientId);
-                    }
-                  }}
-                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                    isDarkMode 
-                      ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border-rose-500/30' 
-                      : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
-                  }`}
-                  title="Excluir paciente e conversa do banco"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* Botão de excluir removido conforme solicitação de segurança */}
               </div>
             </div>
 
@@ -1077,54 +1064,56 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
       {/* 3. PAINEL DIREITO: BARRA DE AÇÕES + INFORMAÇÕES DO PACIENTE                 */}
       {/* ========================================================================= */}
       {!showEvolutionSettings && !showAiSettings && (
-        <div className={`w-80 border-l flex flex-col flex-shrink-0 text-left transition-colors ${
+        <div className={`w-80 xl:w-[350px] border-l flex flex-col flex-shrink-0 text-left transition-colors ${
           isDarkMode ? 'border-[#1f2c34] bg-[#0c141a] text-[#e9edef]' : 'border-[#e9edef] bg-[#ffffff] text-[#111b21]'
         }`}>
           
           {/* CABEÇALHO SUPERIOR ALINHADO DO PAINEL DIREITO (h-[57px]) */}
-          <div className={`h-[57px] px-3.5 border-b flex items-center gap-2 flex-shrink-0 transition-colors ${
+          <div className={`h-[57px] px-3 border-b flex items-center gap-1.5 flex-shrink-0 transition-colors ${
             isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-[#e9edef] bg-[#f0f2f5]'
           }`}>
-            {/* BOTÃO AGENTE IA */}
+            {/* BOTÃO FLUXO DE AUTOMAÇÃO */}
             <button 
               onClick={() => {
                 setShowAiSettings(prev => !prev);
                 setShowEvolutionSettings(false);
               }}
-              className={`h-9 flex-1 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-sm cursor-pointer ${
+              className={`h-9 flex-1 px-2 overflow-hidden whitespace-nowrap rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer ${
                 showAiSettings
-                  ? 'bg-[#00a884] text-white border-[#00a884]'
+                  ? 'bg-[#00a884] text-white border-[#00a884] shadow-md'
                   : isDarkMode 
-                    ? 'bg-[#111c24] hover:bg-[#182730] text-[#00a884] border-[#00a884]/30' 
-                    : 'bg-white hover:bg-slate-100 text-[#008069] border-[#00a884]/40'
+                    ? 'bg-[#111c24] hover:bg-[#182730] text-[#00a884] border-[#00a884]/30 hover:border-[#00a884]/60' 
+                    : 'bg-white hover:bg-slate-50 text-[#008069] border-[#00a884]/40 hover:border-[#00a884]'
               }`}
-              title="Configurações & Prompt do Agente IA (Sofia)"
+              title="Editor Visual de Fluxo & Automação do WhatsApp"
             >
-              <Bot className="w-3.5 h-3.5 flex-shrink-0 text-[#00a884]" />
-              <span className="text-[11px] font-extrabold truncate">Agente IA</span>
+              <Zap className={`w-3.5 h-3.5 flex-shrink-0 ${showAiSettings ? 'text-white' : 'text-[#00a884]'}`} />
+              <span className="text-[11px] font-extrabold truncate">Automação (Flow)</span>
             </button>
 
-            {/* BOTÃO CONECTAR WHATSAPP */}
+            {/* BOTÃO STATUS DA CONEXÃO WHATSAPP */}
             <button 
               onClick={() => {
                 setShowEvolutionSettings(prev => !prev);
                 setShowAiSettings(false);
               }}
-              className={`h-9 flex-1 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-sm cursor-pointer ${
+              className={`h-9 flex-1 px-2 overflow-hidden whitespace-nowrap rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 border shadow-xs cursor-pointer ${
                 evolutionStatus === 'CONNECTED'
-                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                  ? isDarkMode
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
                   : isDarkMode
                     ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30 animate-pulse'
                     : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 animate-pulse'
               }`}
-              title={evolutionStatus === 'CONNECTED' ? "WhatsApp Conectado (Clique para ver detalhes)" : "WhatsApp Desconectado! Clique para conectar"}
+              title={evolutionStatus === 'CONNECTED' ? "WhatsApp Conectado (Clique para ver detalhes do QR Code)" : "WhatsApp Desconectado! Clique para conectar"}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 evolutionStatus === 'CONNECTED' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'
               }`} />
               <Smartphone className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="text-[11px] font-extrabold truncate">
-                {evolutionStatus === 'CONNECTED' ? 'Conectado' : 'Conectar'}
+                {evolutionStatus === 'CONNECTED' ? 'Conectado' : 'Conectar WA'}
               </span>
             </button>
           </div>

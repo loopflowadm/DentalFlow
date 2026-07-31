@@ -6,7 +6,7 @@ import {
   Users, UserPlus, Calendar, Award, TrendingUp, AlertTriangle, 
   MessageSquare, MessagesSquare, CheckSquare, FileText, ArrowUpRight, 
   ArrowDownRight, Star, ChevronRight, Phone, Clock, Sparkles,
-  User, Check, Bot, Zap, BarChart3
+  User, Check, Bot, Zap, BarChart3, LayoutDashboard
 } from 'lucide-react';
 import Relatorios from '../relatorios/Relatorios';
 import { 
@@ -218,43 +218,41 @@ export default function Dashboard({ onNavigateTab }) {
   };
 
   return (
-    <div className="h-full flex flex-col space-y-6 overflow-y-auto pr-1 pb-10 scrollbar-thin">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black font-body">
       
       {/* Seletor de Abas do Dashboard (Visão Geral vs BI) */}
-      <div className="flex items-center justify-between bg-white dark:bg-[#0D0D0D] p-2 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-sm flex-shrink-0">
-        <div className="flex items-center gap-2 pl-2">
-          <span className="text-xs font-bold text-slate-800 dark:text-white font-title">Painel Inteligente</span>
-        </div>
-
+      <div className="flex items-center justify-start bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
         <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
           <button
             onClick={() => setDashboardTab('geral')}
-            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
               dashboardTab === 'geral'
                 ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            Visão Geral do Dia
+            <LayoutDashboard className="w-3.5 h-3.5 text-secondary" />
+            <span>Visão Geral do Dia</span>
           </button>
           <button
             onClick={() => setDashboardTab('bi')}
-            className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
               dashboardTab === 'bi'
                 ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5 text-secondary" />
-            Análise de BI & Desempenho
+            <span>Análise de BI & Desempenho</span>
           </button>
         </div>
       </div>
 
-      {dashboardTab === 'bi' ? (
-        <Relatorios onNavigateTab={onNavigateTab} />
-      ) : (
-        <div className="flex flex-col xl:flex-row gap-6">
+      <div className="p-6 space-y-6 pb-12">
+        {dashboardTab === 'bi' ? (
+          <Relatorios onNavigateTab={onNavigateTab} />
+        ) : (
+          <div className="flex flex-col xl:flex-row gap-6">
           {/* 1. ÁREA ESQUERDA (Métricas e Painéis Analíticos) - ColSpan 3 */}
           <div className="flex-1 xl:flex-[3] space-y-6">
             
@@ -625,6 +623,7 @@ export default function Dashboard({ onNavigateTab }) {
       </div>
     </div>
   )}
+</div>
 </div>
   );
 }

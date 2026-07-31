@@ -875,17 +875,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   };
 
   return (
-    <div className="h-full flex bg-slate-50 dark:bg-black font-body overflow-hidden transition-colors duration-300">
+    <div className="h-full flex bg-white dark:bg-black font-body overflow-hidden transition-colors duration-300">
       
 
       {/* ========================================================================= */}
       {/* PAINEL DIREITO: DETALHES / PRONTUÁRIO                                    */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-black transition-colors duration-300">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-black transition-colors duration-300">
         {selectedPatient ? (
           <>
             {/* 1. Header do Prontuário */}
-            <div className="p-5 sm:p-6 bg-white dark:bg-gradient-to-r dark:from-[#151c2c] dark:via-[#0b0f19] dark:to-[#111726] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-300 shadow-md">
+            <div className="px-6 py-4 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-300">
               <div className="flex items-center gap-4">
                 {/* Avatar Minimalista de Profundidade do Paciente */}
                 <div 
@@ -990,7 +990,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
             </div>
 
             {/* 2. Barra de Navegação das Abas do Prontuário */}
-            <div className="px-6 bg-white dark:bg-[#0b0f19] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
+            <div className="px-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
               <div className="flex gap-4">
                 {[
                   { id: 'visao_geral', label: 'Visão Geral' },

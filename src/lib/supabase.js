@@ -3,10 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Valida se as credenciais do Supabase são reais (chave JWT válida com prefixo eyJ)
-const isValidJwtKey = (key) => typeof key === 'string' && (key.startsWith('eyJ') || key.length > 50);
+// Valida se as credenciais do Supabase são válidas (JWT tradicional eyJ... ou Publishable Key sb_publishable_...)
+const isValidSupabaseKey = (key) => typeof key === 'string' && (
+  key.startsWith('eyJ') || 
+  key.startsWith('sb_publishable_') || 
+  key.startsWith('sbp_') || 
+  key.trim().length >= 30
+);
 
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && isValidJwtKey(supabaseAnonKey));
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && isValidSupabaseKey(supabaseAnonKey));
 
 const createDummySupabase = () => {
   const dummyHandler = {

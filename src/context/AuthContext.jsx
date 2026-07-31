@@ -335,14 +335,47 @@ export function AuthProvider({ children }) {
           localStorage.removeItem('df_session_clinic');
         }
       } else {
-        // Limpar se não há sessão ativa no Supabase
-        setUser(null);
-        setClinic(null);
-        localStorage.removeItem('df_session_user');
-        localStorage.removeItem('df_session_clinic');
+        // Recuperar a sessão salva no localStorage (suporte a contas de teste e SuperAdmin)
+        const savedUserStr = localStorage.getItem('df_session_user');
+        if (savedUserStr) {
+          try {
+            const savedUser = JSON.parse(savedUserStr);
+            if (savedUser && savedUser.id) {
+              setUser(savedUser);
+              const savedClinicStr = localStorage.getItem('df_session_clinic');
+              if (savedClinicStr) {
+                const savedClinic = JSON.parse(savedClinicStr);
+                setClinic(savedClinic);
+                applyTheme(savedClinic);
+              }
+            } else {
+              setUser(null);
+              setClinic(null);
+            }
+          } catch (err) {
+            setUser(null);
+            setClinic(null);
+          }
+        } else {
+          setUser(null);
+          setClinic(null);
+          localStorage.removeItem('df_session_user');
+          localStorage.removeItem('df_session_clinic');
+        }
       }
     } catch (e) {
       console.error('Erro ao verificar sessão Supabase:', e);
+      const savedUserStr = localStorage.getItem('df_session_user');
+      if (savedUserStr) {
+        try {
+          const savedUser = JSON.parse(savedUserStr);
+          if (savedUser && savedUser.id) {
+            setUser(savedUser);
+          }
+        } catch (err) {
+          setUser(null);
+        }
+      }
     }
     setLoading(false);
   };
@@ -350,8 +383,10 @@ export function AuthProvider({ children }) {
   const selectClinic = (clinicData) => {
     setClinic(clinicData);
     if (clinicData) {
+      localStorage.setItem('df_session_clinic', JSON.stringify(clinicData));
       applyTheme(clinicData);
     } else {
+      localStorage.removeItem('df_session_clinic');
       resetTheme();
     }
   };

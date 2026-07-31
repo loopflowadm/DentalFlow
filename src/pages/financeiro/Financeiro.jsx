@@ -165,15 +165,10 @@ export default function Financeiro() {
   const netBalance = totalIncome - totalExpense;
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black font-body">
       
-      {/* Header & Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white/80 dark:bg-[#0D0D0D] backdrop-blur border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.01)] flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <DollarSign className="w-5 h-5 text-violet-500" />
-          <h2 className="text-sm font-bold font-title">Gestão Financeira & Comissões</h2>
-        </div>
-
+      {/* Header Slim & Sub-Tabs */}
+      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
         <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl flex border border-slate-200/30 dark:border-white/10">
           {[
             { id: 'fluxo', label: 'Fluxo de Caixa' },
@@ -196,8 +191,9 @@ export default function Financeiro() {
         </div>
       </div>
 
-      {/* SUB-ABA: FLUXO DE CAIXA */}
-      {activeSubTab === 'fluxo' && (
+      <div className="p-6 space-y-6 pb-12">
+        {/* SUB-ABA: FLUXO DE CAIXA */}
+        {activeSubTab === 'fluxo' && (
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -843,6 +839,7 @@ export default function Financeiro() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

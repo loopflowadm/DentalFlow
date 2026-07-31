@@ -316,32 +316,32 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
       {/* ========================================================================= */}
       {/* COLUNA 2: DETALHES DO LEAD (CENTRO - FLEX-1)                               */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-[#0D0D0D] rounded-[28px] border border-slate-200/80 dark:border-white/5 shadow-sm dark:shadow-2xl overflow-hidden transition-colors duration-300 text-left">
+      <div className="flex-1 flex flex-col bg-white dark:bg-[#0D0D0D] overflow-hidden transition-colors duration-300 text-left">
         
         {/* BARRA SUPERIOR DE MODO DE VISÃO & CONTROLE DA JORNADA */}
-        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
-          <div className="flex items-center gap-2">
+        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
+          <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
             <button
               onClick={() => setCrmViewMode('kanban')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
                 crmViewMode === 'kanban'
-                  ? 'bg-[#196BFB] text-white shadow-sm'
-                  : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/5'
+                  ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
+              <LayoutGrid className="w-3.5 h-3.5 text-secondary" />
               <span>Quadro Kanban</span>
             </button>
 
             <button
               onClick={() => setCrmViewMode('details')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
                 crmViewMode === 'details'
-                  ? 'bg-[#196BFB] text-white shadow-sm'
-                  : 'bg-white dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-white/5'
+                  ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              <User className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5 text-secondary" />
               <span>Ficha do Paciente</span>
             </button>
           </div>
@@ -653,7 +653,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
         </div>
 
         {/* BARRA VISUAL DE ESTÁGIOS DA JORNADA (FUNNEL STEPPER DIVIDIDO IGUALMENTE 6x2) */}
-        <div className="px-6 py-3.5 bg-slate-50/90 dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 space-y-3 transition-colors duration-300">
+        <div className="px-6 py-3.5 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 space-y-3 transition-colors duration-300">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[#196BFB] animate-pulse" />
