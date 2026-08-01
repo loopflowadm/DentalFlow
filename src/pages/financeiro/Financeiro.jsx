@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeModuleSync } from '../../hooks/useRealtimeModuleSync';
 import { 
   DollarSign, Plus, ArrowUpRight, ArrowDownRight, CreditCard, 
   Award, FileText, Check, Calendar, User, Trash2, X,
@@ -19,10 +20,16 @@ export default function Financeiro() {
     approveAccountsPayable,
     payAccountsPayable,
     payInstallment,
-    installments: ctxInstallments
+    installments: ctxInstallments,
+    fetchClinicData
   } = useClinic();
   const { currentTheme } = useTheme();
   const { user } = useAuth();
+
+  // Escutar pré-lançamentos e transações financeiras em tempo real (Cascata Zero-UI)
+  const { isHighlighted } = useRealtimeModuleSync('financial_transactions', user?.clinic_id, () => {
+    if (fetchClinicData) fetchClinicData();
+  });
 
   // Estados locais
   const [activeSubTab, setActiveSubTab] = useState('fluxo'); // 'fluxo' | 'pagar' | 'comissoes' | 'parcelas'
@@ -73,6 +80,7 @@ export default function Financeiro() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handlePrintTable = () => {
@@ -169,7 +177,7 @@ export default function Financeiro() {
       
       {/* Header Slim & Sub-Tabs */}
       <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
-        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl flex border border-slate-200/30 dark:border-white/10">
+        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/30 dark:border-white/10 overflow-x-auto scrollbar-none max-w-full">
           {[
             { id: 'fluxo', label: 'Fluxo de Caixa' },
             { id: 'pagar', label: 'Contas a Pagar' },

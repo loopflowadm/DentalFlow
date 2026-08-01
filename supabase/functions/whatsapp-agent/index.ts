@@ -292,43 +292,33 @@ Instruções base personalizadas da clínica:
         const startTime = new Date(`${date}T${hour}:00`);
         const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hora
 
-        // Buscar o primeiro profissional/dentista cadastrado na clínica
-        const { data: profiles, error: profError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("clinic_id", clinic.id)
-          .limit(1);
+        // Executar a RPC de orquestração autônoma no banco de dados (Cascata Zero-UI)
+        const { data: cascadeResult, error: cascadeErr } = await supabase.rpc(
+          "fn_process_whatsapp_incoming_event",
+          {
+            p_clinic_id: clinic.id,
+            p_phone: senderPhone,
+            p_name: patient.name,
+            p_intent: {
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              complaint: messageText,
+              procedure: "Consulta Odontológica Agendada",
+              estimated_amount: 150.00,
+              is_ambiguous: false
+            }
+          }
+        );
 
-        if (profError || !profiles || profiles.length === 0) {
-          console.error("Nenhum profissional cadastrado na clínica:", profError);
-          return { error: "Nenhum dentista/profissional cadastrado na clínica para realizar o agendamento." };
-        }
-
-        const doctorId = profiles[0].id;
-
-        // Criar registro na tabela appointments
-        const { data: newApp, error } = await supabase
-          .from("appointments")
-          .insert({
-            clinic_id: clinic.id,
-            patient_id: patient.id,
-            doctor_id: doctorId,
-            start_time: startTime.toISOString(),
-            end_time: endTime.toISOString(),
-            status: "CONFIRMED" // Confirmado automaticamente pela IA
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Erro ao inserir consulta:", error);
-          return { error: "Não foi possível realizar o agendamento no momento." };
+        if (cascadeErr) {
+          console.error("Erro na RPC de cascata autônoma:", cascadeErr);
+          return { error: "Não foi possível registrar o agendamento nos módulos no momento." };
         }
 
         return {
           success: true,
-          appointment_id: newApp.id,
-          message: `Agendamento efetuado com sucesso no CRM para o paciente ${patient.name} no dia ${date} às ${hour}.`
+          cascade_result: cascadeResult,
+          message: `Agendamento efetuado com sucesso em todos os módulos (CRM, Agenda, Prontuário, Financeiro) para ${patient.name} em ${date} às ${hour}.`
         };
       }
 

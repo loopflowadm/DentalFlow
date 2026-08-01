@@ -502,10 +502,20 @@ export function ClinicProvider({ children }) {
 
   // PACIENTES & LEADS CRM
   const addPatient = async (newPat) => {
-    const clinicId = newPat.clinic_id || clinic.id;
+    const clinicId = newPat.clinic_id || clinic?.id;
+
+    // Sincronizar foto de perfil automática do WhatsApp ou Lead do CRM pelo telefone
+    const cleanPhone = (newPat.phone || '').replace(/\D/g, '');
+    const matchedChat = whatsappChats.find(c => c.phone && c.phone.replace(/\D/g, '') === cleanPhone);
+    const matchedLead = crmLeads.find(l => l.phone && l.phone.replace(/\D/g, '') === cleanPhone);
+    const resolvedAvatar = newPat.avatar_url || newPat.photoUrl || matchedChat?.avatar || matchedLead?.avatar_url || null;
+
     const fresh = {
       name: newPat.name,
       phone: newPat.phone || '',
+      email: newPat.email || null,
+      avatar_url: resolvedAvatar,
+      medical_history: newPat.medical_history || null,
       clinic_id: isValidUUID(clinicId) ? clinicId : null,
       created_at: new Date().toISOString()
     };
@@ -520,16 +530,30 @@ export function ClinicProvider({ children }) {
           .select()
           .single();
         if (!error && data) {
-          createdPat = { ...data, cpf: newPat.cpf, notes: newPat.notes || '' };
+          createdPat = { 
+            ...data, 
+            cpf: newPat.cpf, 
+            notes: newPat.notes || '',
+            photoUrl: data.avatar_url || newPat.avatar_url || newPat.photoUrl || null,
+            avatar_url: data.avatar_url || newPat.avatar_url || newPat.photoUrl || null 
+          };
           setPatients(prev => [...prev, createdPat]);
+        } else if (error) {
+          console.warn('[Supabase] Aviso ao cadastrar paciente no Supabase:', error.message || error);
         }
       } catch (err) {
-        console.warn('[Supabase] Aviso ao cadastrar paciente:', err);
+        console.warn('[Supabase] Erro ao cadastrar paciente:', err.message || err);
       }
     }
 
     if (!createdPat) {
-      createdPat = { id: `p-${Date.now()}`, ...newPat, clinic_id: clinicId };
+      createdPat = { 
+        id: `p-${Date.now()}`, 
+        ...newPat, 
+        photoUrl: newPat.avatar_url || newPat.photoUrl || null,
+        avatar_url: newPat.avatar_url || newPat.photoUrl || null,
+        clinic_id: clinicId 
+      };
       setPatients(prev => [...prev, createdPat]);
     }
 
@@ -555,7 +579,7 @@ export function ClinicProvider({ children }) {
         });
       }
     } catch (crmErr) {
-      console.warn('[CRM Sync] Erro ao sincronizar novo paciente com CRM:', crmErr);
+      console.warn('[CRM Sync] Aviso na sincronização do novo paciente com o CRM:', crmErr);
     }
 
     return createdPat;
@@ -564,7 +588,7 @@ export function ClinicProvider({ children }) {
   const updatePatient = async (updatedPat) => {
     if (isValidUUID(updatedPat.id)) {
       // Sanitização estrita: enviar apenas colunas válidas da tabela 'patients' no Supabase
-      const allowedKeys = ['name', 'phone', 'cpf', 'email', 'birth_date', 'address', 'medical_history', 'notes', 'clinic_id'];
+      const allowedKeys = ['name', 'phone', 'cpf', 'email', 'avatar_url', 'birth_date', 'address', 'medical_history', 'notes', 'clinic_id'];
       const dbPayload = {};
 
       allowedKeys.forEach(key => {
@@ -591,11 +615,11 @@ export function ClinicProvider({ children }) {
 
   // CRM LEADS (Tabela crm_leads)
   const addCrmLead = async (lead) => {
-    const clinicId = clinic.id;
+    const clinicId = lead.clinic_id || clinic?.id;
     const fresh = {
-      clinic_id: clinicId,
+      clinic_id: isValidUUID(clinicId) ? clinicId : null,
       name: lead.name,
-      phone: lead.phone,
+      phone: lead.phone || '',
       avatar: lead.avatar || '👤',
       stage: lead.stage !== undefined ? lead.stage : 0, // Novo Lead
       priority: lead.priority || 'medium',
@@ -608,14 +632,57 @@ export function ClinicProvider({ children }) {
       created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from('crm_leads')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setCrmLeads(prev => [...prev, data]);
-    return data;
+    let createdLead = null;
+
+    if (fresh.clinic_id) {
+      try {
+        const { data, error } = await supabase
+          .from('crm_leads')
+          .insert([fresh])
+          .select()
+          .single();
+        if (!error && data) {
+          createdLead = { ...data, is_patient: lead.is_patient, patient_id: lead.patient_id };
+        } else if (error) {
+          console.warn('[Supabase] Aviso ao cadastrar crm_lead no Supabase:', error.message || error);
+        }
+      } catch (err) {
+        console.warn('[Supabase] Erro ao cadastrar crm_lead:', err.message || err);
+      }
+    }
+
+    if (!createdLead) {
+      createdLead = {
+        id: 'lead-' + Date.now(),
+        ...fresh,
+        clinic_id: clinicId,
+        is_patient: lead.is_patient || false,
+        patient_id: lead.patient_id || null
+      };
+    }
+
+    setCrmLeads(prev => [...prev, createdLead]);
+
+    // Atualizar chats do WhatsApp para a nova conversa aparecer instantaneamente
+    setWhatsappChats(prev => {
+      const exists = prev.some(c => c.patientId === createdLead.id || c.patientId === createdLead.patient_id);
+      if (exists) return prev;
+      return [
+        ...prev,
+        {
+          patientId: createdLead.patient_id || createdLead.id,
+          name: createdLead.name,
+          unreadCount: 0,
+          status: 'online',
+          tags: createdLead.is_patient ? ['Paciente'] : ['Lead'],
+          notes: '',
+          isBotPaused: false,
+          messages: []
+        }
+      ];
+    });
+
+    return createdLead;
   };
 
   const updateCrmLead = async (updatedLead) => {
@@ -708,6 +775,7 @@ export function ClinicProvider({ children }) {
     const newPat = {
       name: lead.name,
       phone: lead.phone,
+      avatar_url: lead.avatar_url || lead.photoUrl || (whatsappChats.find(c => c.phone === lead.phone)?.avatar),
       medical_history: JSON.stringify(historyObj)
     };
 
@@ -823,7 +891,7 @@ export function ClinicProvider({ children }) {
       procedureName: proc ? proc.name : (app.procedureName || 'Consulta Geral'),
       color: proc ? proc.color : '#3b82f6',
       date: app.date || calculatedStartTime.split('T')[0],
-      time: app.time || calculatedStartTime.split('T')[1].substring(0, 5)
+      time: app.time || (calculatedStartTime.includes('T') ? calculatedStartTime.split('T')[1].substring(0, 5) : '09:00')
     };
 
     setAppointments(prev => [...prev, fullApp]);

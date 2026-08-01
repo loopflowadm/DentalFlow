@@ -140,7 +140,6 @@ export function AuthProvider({ children }) {
               localStorage.removeItem('df_session_clinic');
               resetTheme();
             }
-            setLoading(false);
             return { success: true, user: sessionUser };
           }
         }
@@ -177,7 +176,6 @@ export function AuthProvider({ children }) {
           resetTheme();
         }
 
-        setLoading(false);
         return { success: true, user: sessionUser };
       }
 
@@ -214,11 +212,9 @@ export function AuthProvider({ children }) {
           applyTheme(clinicData);
         }
 
-        setLoading(false);
         return { success: true, user: sessionUser };
       }
 
-      setLoading(false);
       return { success: false, error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
     } catch (err) {
       console.warn('Falha de login no Supabase, tentando Modo Demo (mockDb):', err.message);
@@ -251,12 +247,12 @@ export function AuthProvider({ children }) {
           }
         }
 
-        setLoading(false);
         return { success: true, user: sessionUser };
       }
 
-      setLoading(false);
       return { success: false, error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -266,39 +262,39 @@ export function AuthProvider({ children }) {
       await supabase.auth.signOut();
     } catch (e) {
       console.error('Erro ao deslogar no Supabase:', e);
+    } finally {
+      setUser(null);
+      setClinic(null);
+      resetTheme();
+      localStorage.removeItem('df_session_user');
+      localStorage.removeItem('df_session_clinic');
+      setLoading(false);
     }
-    setUser(null);
-    setClinic(null);
-    resetTheme();
-    localStorage.removeItem('df_session_user');
-    localStorage.removeItem('df_session_clinic');
-    setLoading(false);
   };
 
   const checkSession = async () => {
     setLoading(true);
-
-    // Detectar e aplicar tema por subdomínio antes de carregar sessão, para ter o Whitelabel imediato
-    const hostname = window.location.hostname;
-    const parts = hostname.split('.');
-    let subdomain = null;
-    if (parts.length > 1) {
-      const sub = parts[0].toLowerCase();
-      if (sub !== 'www' && sub !== 'localhost') {
-        subdomain = sub;
-      }
-    }
-
-    if (subdomain) {
-      const clinicData = await fetchClinicBySubdomain(subdomain);
-      if (clinicData) {
-        setClinic(clinicData);
-        applyTheme(clinicData);
-      }
-    }
-
-    // Verificar se há uma sessão válida no Supabase
     try {
+      // Detectar e aplicar tema por subdomínio antes de carregar sessão, para ter o Whitelabel imediato
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      let subdomain = null;
+      if (parts.length > 1) {
+        const sub = parts[0].toLowerCase();
+        if (sub !== 'www' && sub !== 'localhost') {
+          subdomain = sub;
+        }
+      }
+
+      if (subdomain) {
+        const clinicData = await fetchClinicBySubdomain(subdomain);
+        if (clinicData) {
+          setClinic(clinicData);
+          applyTheme(clinicData);
+        }
+      }
+
+      // Verificar se há uma sessão válida no Supabase
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: profile } = await supabase
@@ -376,8 +372,9 @@ export function AuthProvider({ children }) {
           setUser(null);
         }
       }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const selectClinic = (clinicData) => {

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useRealtimeModuleSync } from '../../hooks/useRealtimeModuleSync';
+import { formatPhone } from '../../lib/formatters';
 import { 
   Plus, Search, CheckSquare, MessageSquare, Paperclip, 
   Clock, X, Phone, Calendar, Send, Sparkles, Download, 
@@ -10,9 +12,14 @@ import {
 } from 'lucide-react';
 
 export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPrefilledLeadData, onOpenWhatsApp }) {
-  const { crmLeads, updateCrmLead, convertLeadToPatient, patients, sendWhatsAppMessage } = useClinic();
+  const { crmLeads, updateCrmLead, convertLeadToPatient, patients, sendWhatsAppMessage, fetchClinicData } = useClinic();
   const { user } = useAuth();
   const { currentTheme, themeMode } = useTheme();
+
+  // Escutar eventos em tempo real do CRM com animação sutil
+  const { isHighlighted } = useRealtimeModuleSync('crm_leads', user?.clinic_id, () => {
+    if (fetchClinicData) fetchClinicData();
+  });
   
   // Lista de Colunas (Etapas)
   const columns = [
@@ -319,7 +326,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
       <div className="flex-1 flex flex-col bg-white dark:bg-[#0D0D0D] overflow-hidden transition-colors duration-300 text-left">
         
         {/* BARRA SUPERIOR DE MODO DE VISÃO & CONTROLE DA JORNADA */}
-        <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
+        <div className="h-14 px-6 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] flex items-center justify-between flex-shrink-0 transition-colors duration-300">
           <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
             <button
               onClick={() => setCrmViewMode('kanban')}
@@ -388,23 +395,50 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
         {crmViewMode === 'kanban' ? (
           /* ========================================================================= */
-          /* MODO KANBAN: BOARD PIPELINE DE ESTÁGIOS (MINIMALISTA)                    */
+          /* MODO KANBAN: BOARD PIPELINE DE ESTÁGIOS (MINIMALISTA E RESPONSIVO)       */
           /* ========================================================================= */
-          <div 
-            ref={kanbanContainerRef}
-            onMouseDown={handleMouseDownBoard}
-            onMouseLeave={handleMouseLeaveBoard}
-            onMouseUp={handleMouseUpBoard}
-            onMouseMove={handleMouseMoveBoard}
-            onWheel={(e) => {
-              if (e.deltaY !== 0) {
-                e.currentTarget.scrollLeft += e.deltaY;
-              }
-            }}
-            className={`flex-1 p-4 overflow-x-auto scrollbar-thin flex gap-4 bg-slate-100/60 dark:bg-black min-w-0 transition-colors ${
-              isDraggingBoard ? 'cursor-grabbing select-none' : 'cursor-grab'
-            }`}
-          >
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+            {/* Carousel / Seletor Rápido de Etapas para Mobile (< md) */}
+            <div className="flex md:hidden items-center gap-1.5 p-2 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 overflow-x-auto scrollbar-none flex-shrink-0">
+              {columns.map((colName, idx) => {
+                const count = crmLeads.filter(l => (l.stage || 0) === idx).length;
+                return (
+                  <button
+                    key={colName}
+                    onClick={() => {
+                      if (kanbanContainerRef.current) {
+                        const targetCol = kanbanContainerRef.current.children[idx];
+                        if (targetCol) {
+                          targetCol.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+                        }
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 text-[10px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap flex items-center gap-1.5 active:scale-95 transition-all flex-shrink-0"
+                  >
+                    <span>{colName}</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-[#196BFB] text-white text-[9px] font-extrabold">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div 
+              ref={kanbanContainerRef}
+              onMouseDown={handleMouseDownBoard}
+              onMouseLeave={handleMouseLeaveBoard}
+              onMouseUp={handleMouseUpBoard}
+              onMouseMove={handleMouseMoveBoard}
+              onWheel={(e) => {
+                if (e.deltaY !== 0) {
+                  e.currentTarget.scrollLeft += e.deltaY;
+                }
+              }}
+              className={`flex-1 p-3 sm:p-4 overflow-x-auto scrollbar-thin flex gap-3 sm:gap-4 bg-slate-100/60 dark:bg-black min-w-0 transition-colors ${
+                isDraggingBoard ? 'cursor-grabbing select-none' : 'cursor-grab'
+              }`}
+            >
             {columns.map((colName, colIdx) => {
               const columnLeads = crmLeads.filter(l => (l.stage || 0) === colIdx);
               const columnTotal = columnLeads.reduce((acc, l) => acc + (l.budget_amount || 0), 0);
@@ -462,6 +496,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     {columnLeads.map(lead => {
                       const isSelected = selectedLead?.id === lead.id;
                       const isBeingDragged = draggedLeadId === lead.id;
+                      const highlighted = isHighlighted(lead.id);
 
                       return (
                         <div
@@ -481,11 +516,13 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                             setCrmViewMode('details');
                           }}
                           className={`p-3.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing relative group ${
-                            isBeingDragged
-                              ? 'opacity-40 scale-95 border-dashed border-[#196BFB] bg-blue-500/10'
-                              : isSelected
-                                ? 'border-[#196BFB] bg-blue-50/40 dark:bg-blue-900/20 shadow-md'
-                                : 'border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md'
+                            highlighted
+                              ? 'ring-2 ring-emerald-500/60 shadow-lg shadow-emerald-500/20 bg-emerald-500/10 border-emerald-500/40 animate-pulse'
+                              : isBeingDragged
+                                ? 'opacity-40 scale-95 border-dashed border-[#196BFB] bg-blue-500/10'
+                                : isSelected
+                                  ? 'border-[#196BFB] bg-blue-50/40 dark:bg-blue-900/20 shadow-md'
+                                  : 'border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -553,6 +590,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
               );
             })}
           </div>
+        </div>
         ) : (
           /* ========================================================================= */
           /* MODO DETALHES DO LEAD                                                     */
@@ -952,8 +990,10 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                   <input
                     type="text"
                     required
+                    maxLength={16}
+                    placeholder="(83) 99999-8888"
                     value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
+                    onChange={(e) => setEditPhone(formatPhone(e.target.value))}
                     className="w-full bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>

@@ -45,14 +45,64 @@ export default function DentalArch({
     return fixedBridges.find(b => Number(b.fromTooth) === Number(toothNum) || Number(b.toTooth) === Number(toothNum));
   };
 
+  const [quadrantFilter, setQuadrantFilter] = React.useState('all'); // 'all' | 'upper' | 'lower'
+  const [zoomScale, setZoomScale] = React.useState(1); // 1 | 1.25
+
   return (
     <div className={`flex-1 min-w-0 rounded-2xl border p-3.5 flex flex-col justify-between overflow-x-auto custom-scrollbar transition-all relative ${
       isDarkMode 
         ? 'bg-[#0b0f19]/95 border-white/10 shadow-2xl text-white' 
         : 'bg-white border-slate-200 shadow-xs text-slate-800'
     }`}>
+      {/* BARRA DE FERRAMENTAS TOUCH / QUADRANTES PARA MOBILE */}
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/80 dark:border-white/5 gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-black p-0.5 rounded-xl border border-slate-200/60 dark:border-white/10">
+          <button
+            onClick={() => setQuadrantFilter('all')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase transition-all ${
+              quadrantFilter === 'all'
+                ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            Todas Arcadas
+          </button>
+          <button
+            onClick={() => setQuadrantFilter('upper')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase transition-all ${
+              quadrantFilter === 'upper'
+                ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            Sup (Q1/Q2)
+          </button>
+          <button
+            onClick={() => setQuadrantFilter('lower')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-extrabold uppercase transition-all ${
+              quadrantFilter === 'lower'
+                ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            Inf (Q3/Q4)
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setZoomScale(prev => prev === 1 ? 1.25 : 1)}
+            className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[9px] font-extrabold uppercase active:scale-95 transition-all"
+            title="Alternar Zoom para facilidade de toque"
+          >
+            {zoomScale === 1 ? 'Zoom 1.25x' : 'Zoom 1x'}
+          </button>
+        </div>
+      </div>
+
       {/* ARCADA SUPERIOR */}
-      <div className="flex flex-col items-center relative space-y-1">
+      {(quadrantFilter === 'all' || quadrantFilter === 'upper') && (
+      <div className="flex flex-col items-center relative space-y-1 mb-4" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center' }}>
         <div className="flex items-center justify-between w-full text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
           <span>Arcada Superior</span>
           <span className="text-[9px] text-slate-500">Vestibular / Oclusal / Palatina</span>
@@ -144,20 +194,24 @@ export default function DentalArch({
           </div>
         </div>
       </div>
+      )}
 
       {/* Divisor da Linha Média Central */}
-      <div className={`w-full my-2 border-b relative ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`px-3 text-[9px] uppercase font-bold tracking-widest font-mono ${
-            isDarkMode ? 'bg-[#0b0f19] text-slate-500' : 'bg-white text-slate-400'
-          }`}>
-            Linha Oclusal Central • Dir | Linha Média | Esq
-          </span>
+      {quadrantFilter === 'all' && (
+        <div className={`w-full my-2 border-b relative ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className={`px-3 text-[9px] uppercase font-bold tracking-widest font-mono ${
+              isDarkMode ? 'bg-[#0b0f19] text-slate-500' : 'bg-white text-slate-400'
+            }`}>
+              Linha Oclusal Central • Dir | Linha Média | Esq
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ARCADA INFERIOR */}
-      <div className="flex flex-col items-center relative space-y-1">
+      {(quadrantFilter === 'all' || quadrantFilter === 'lower') && (
+      <div className="flex flex-col items-center relative space-y-1" style={{ transform: `scale(${zoomScale})`, transformOrigin: 'top center' }}>
         <div className="flex items-center justify-between w-full text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
           <span>Arcada Inferior</span>
           <span className="text-[9px] text-slate-500">Lingual / Oclusal / Vestibular</span>
@@ -248,6 +302,7 @@ export default function DentalArch({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

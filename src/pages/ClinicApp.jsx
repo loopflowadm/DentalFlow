@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar';
+import Sidebar, { SubSidebar } from '../components/Sidebar';
 import Header from '../components/Header';
 import CommandPalette from '../components/ui/CommandPalette';
 
@@ -63,7 +63,7 @@ export default function ClinicApp() {
 
   // Módulos: 'dashboard' | 'agenda' | 'pacientes' | 'crm' | 'financeiro' | 'configuracoes' | 'whatsapp'
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   
   // Modais e seleções compartilhadas
   const [selectedLead, setSelectedLead] = useState(null);
@@ -282,10 +282,12 @@ export default function ClinicApp() {
         }}
       />
 
-      {/* Conteúdo Principal + Cabeçalho Superior */}
+      {/* Conteúdo Principal + Cabeçalho Superior (Unificados em 1 Card!) */}
       <div className="flex-1 flex flex-col h-full overflow-hidden rounded-[24px] border border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] shadow-xl transition-colors duration-300">
         <Header 
           activeTab={activeTab}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
           onSearchChange={(q) => console.log('Search query:', q)}
           onOpenWhatsApp={(patId) => {
             if (patId) setSelectedPatientId(patId);
@@ -295,9 +297,35 @@ export default function ClinicApp() {
           onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
         />
         
-        <main className="flex-1 overflow-hidden p-0 bg-transparent transition-colors duration-300">
-          {renderContent()}
-        </main>
+        <div className="flex-1 flex overflow-hidden p-0 bg-transparent">
+          <SubSidebar 
+            activeTab={activeTab} 
+            collapsed={collapsed} 
+            setCollapsed={setCollapsed}
+            selectedLead={selectedLead}
+            setSelectedLead={setSelectedLead}
+            selectedPatient={selectedPatient}
+            setSelectedPatient={setSelectedPatient}
+            selectedAppointment={selectedAppointment}
+            setSelectedAppointment={setSelectedAppointment}
+            agendaDate={agendaDate}
+            setAgendaDate={setAgendaDate}
+            selectedChairs={selectedChairs}
+            setSelectedChairs={setSelectedChairs}
+            selectedDentists={selectedDentists}
+            setSelectedDentists={setSelectedDentists}
+            agendaViewMode={agendaViewMode}
+            setAgendaViewMode={setAgendaViewMode}
+            onOpenWhatsApp={(patId) => {
+              if (patId) setSelectedPatientId(patId);
+              setActiveTab('whatsapp');
+            }}
+          />
+
+          <main className="flex-1 overflow-hidden p-0 bg-transparent transition-colors duration-300">
+            {renderContent()}
+          </main>
+        </div>
       </div>
 
       {/* Paleta de Comandos (⌘K) */}

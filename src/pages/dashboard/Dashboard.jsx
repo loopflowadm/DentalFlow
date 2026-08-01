@@ -14,17 +14,17 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Cell 
 } from 'recharts';
 
-// Tooltip Personalizado nos Padrões Obsidian Midnight (#111827)
+// Tooltip Personalizado Adaptativo (Light / Dark)
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#111827]/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-md text-left text-xs font-sans">
-        <p className="font-bold text-slate-200 mb-1.5 border-b border-white/10 pb-1 font-title">{label}</p>
+      <div className="bg-white/95 dark:bg-[#111827]/95 border border-slate-200/90 dark:border-white/10 rounded-xl p-3 shadow-xl dark:shadow-2xl backdrop-blur-md text-left text-xs font-sans text-slate-800 dark:text-white transition-colors duration-200">
+        <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5 border-b border-slate-200 dark:border-white/10 pb-1 font-title">{label}</p>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2 text-[11px] font-semibold my-0.5">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
-            <span className="text-slate-400">{entry.name}:</span>
-            <span className="text-white font-bold font-mono">
+            <span className="text-slate-500 dark:text-slate-400">{entry.name}:</span>
+            <span className="text-slate-900 dark:text-white font-bold font-mono">
               {entry.dataKey === 'revenue' ? `R$ ${entry.value.toLocaleString('pt-BR')}` : entry.value}
             </span>
           </div>
@@ -66,6 +66,7 @@ export default function Dashboard({ onNavigateTab }) {
 
   // Carregar lista real de dentistas da clínica
   useEffect(() => {
+    let mounted = true;
     async function loadDoctors() {
       if (!user?.clinic_id) return;
       try {
@@ -74,7 +75,7 @@ export default function Dashboard({ onNavigateTab }) {
           .select('*')
           .eq('clinic_id', user.clinic_id)
           .eq('role', 'DOCTOR');
-        if (!error && data) {
+        if (!error && data && mounted) {
           const formatted = data.map(doc => ({
             name: doc.full_name,
             specialty: 'Cirurgião-Dentista',
@@ -89,6 +90,9 @@ export default function Dashboard({ onNavigateTab }) {
       }
     }
     loadDoctors();
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   // Calendário Dinâmico Local
@@ -164,23 +168,20 @@ export default function Dashboard({ onNavigateTab }) {
   });
 
   const activePatientsCount = patients.length;
-  const completedAppointmentsCount = appointments.filter(app => app.status === 'completed' || app.status === 'Concluído').length;
-
-  const todayRevenue = todayAppointments
-    .filter(app => app.status === 'completed' || app.status === 'Concluído')
-    .reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
+  const todayAppointmentsCount = todayAppointments.length;
+  const waitingPatientsCount = todayAppointments.filter(a => a.status === 'aguardando' || a.status === 'em_atendimento').length;
 
   const executiveStats = [
-    { label: 'Faturamento de Hoje', value: `R$ ${todayRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, detail: 'tempo real', isPositive: true },
-    { label: 'Consultas Realizadas', value: completedAppointmentsCount.toString(), detail: 'acumulado', isPositive: true },
-    { label: 'Pacientes Ativos', value: activePatientsCount.toString(), detail: 'no sistema', isPositive: true },
-    { label: 'Leads no CRM', value: crmLeads.length.toString(), detail: 'em captação', isPositive: true }
+    { label: 'Consultas Hoje', value: todayAppointmentsCount.toString(), detail: 'Para Hoje', isPositive: true },
+    { label: 'Pacientes na Espera', value: waitingPatientsCount.toString(), detail: 'Sala de Espera', isPositive: true },
+    { label: 'Leads no CRM', value: crmLeads.length.toString(), detail: 'Em Captação', isPositive: true },
+    { label: 'Pacientes Ativos', value: activePatientsCount.toString(), detail: 'Base Total', isPositive: true }
   ];
 
-  // Gerar dados do gráfico dinamicamente com base nas consultas dos últimos 6 meses
+  // Gerar dados do gráfico dinamicamente com base nas consultas dos últimos 6 meses (Volume de Consultas - Sem R$)
   const monthsAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   
-  const revenueChartData = Array.from({ length: 6 }).map((_, idx) => {
+  const appointmentVolumeChartData = Array.from({ length: 6 }).map((_, idx) => {
     const targetMonthIdx = (currentMonthIdx - 5 + idx + 12) % 12;
     const monthName = monthsAbbr[targetMonthIdx];
     
@@ -190,17 +191,15 @@ export default function Dashboard({ onNavigateTab }) {
       return appDate.getMonth() === targetMonthIdx && appDate.getFullYear() === currentYear;
     });
 
-    const appointmentsCount = monthApps.length;
-    const surgeriesCount = monthApps.filter(app => app.procedure_name?.toLowerCase().includes('cirurgia') || app.procedure_name?.toLowerCase().includes('implante')).length;
-    const revenue = monthApps
-      .filter(app => app.status === 'completed' || app.status === 'Concluído')
-      .reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
+    const completed = monthApps.filter(app => app.status === 'completed' || app.status === 'Concluído').length;
+    const confirmed = monthApps.filter(app => app.status === 'confirmed' || app.status === 'Confirmado' || app.status === 'scheduled').length;
+    const canceled = monthApps.filter(app => app.status === 'canceled' || app.status === 'Cancelado').length;
 
     return {
       month: monthName,
-      appointments: appointmentsCount,
-      surgeries: surgeriesCount,
-      revenue: revenue
+      realizadas: completed,
+      confirmadas: confirmed,
+      faltas: canceled
     };
   });
 
@@ -218,14 +217,14 @@ export default function Dashboard({ onNavigateTab }) {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black font-body">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
       
-      {/* Seletor de Abas do Dashboard (Visão Geral vs BI) */}
-      <div className="flex items-center justify-start bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
+      {/* SELETOR DE ABA DO DASHBOARD (VISÃO GERAL DO DIA / ANÁLISE DE BI) */}
+      <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
         <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
           <button
             onClick={() => setDashboardTab('geral')}
-            className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
               dashboardTab === 'geral'
                 ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -236,7 +235,7 @@ export default function Dashboard({ onNavigateTab }) {
           </button>
           <button
             onClick={() => setDashboardTab('bi')}
-            className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
               dashboardTab === 'bi'
                 ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -262,63 +261,70 @@ export default function Dashboard({ onNavigateTab }) {
                 <h2 className="text-md font-black text-slate-800 dark:text-white font-title flex items-center gap-1.5">
                   Olá, {getGreetingName()}!
                 </h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Aqui está o resumo analítico de performance e automação da sua clínica.</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Aqui está o resumo analítico da rotina clínica e acompanhamento de pacientes.</p>
               </div>
             </div>
 
 
         {/* Executivos Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {executiveStats.map((stat, idx) => (
-            <div key={idx} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-white/10 rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex flex-col justify-between hover:border-secondary/30 transition-all duration-300">
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight max-w-[80%]">
+            <div key={idx} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 shadow-sm dark:shadow-none flex flex-col justify-between hover:border-secondary/30 transition-all duration-300">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight">
                   {stat.label}
                 </span>
-                <span className="text-[10px] font-extrabold text-secondary dark:text-secondary bg-secondary/5 dark:bg-secondary/10 px-2 py-0.5 rounded-md">
-                  {stat.detail.split(' ')[0]}
+                <span className="text-[9px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md shrink-0 uppercase tracking-wide">
+                  {stat.detail}
                 </span>
               </div>
               <div className="mt-4 flex items-baseline justify-between">
                 <span className="text-xl font-black text-slate-800 dark:text-white font-title">{stat.value}</span>
-                <span className="text-[9px] text-slate-400 dark:text-slate-500">{stat.detail.replace(stat.detail.split(' ')[0], '')}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Gráfico Principal de Receita e Consultas */}
+        {/* Gráfico Principal de Volume de Consultas (Sem R$) */}
         <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-2xl p-5 shadow-sm dark:shadow-2xl backdrop-blur-md text-left transition-colors duration-300">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider font-title">Faturamento & Volume de Consultas</h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Histórico mensal de receita e consultas realizadas</p>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider font-title">Volume & Frequência de Consultas</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Histórico mensal de consultas realizadas, confirmadas e faltas/cancelamentos</p>
             </div>
             <div className="flex items-center gap-3 text-[10px] font-bold">
-              <span className="flex items-center gap-1.5 text-blue-400">
-                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Faturamento (R$)
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Realizadas
               </span>
-              <span className="flex items-center gap-1.5 text-cyan-400">
-                <span className="w-2.5 h-2.5 bg-cyan-400 rounded-full" /> Volume Consultas
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Confirmadas
+              </span>
+              <span className="flex items-center gap-1.5 text-rose-500 dark:text-rose-400">
+                <span className="w-2.5 h-2.5 bg-rose-500 rounded-full" /> Faltas
               </span>
             </div>
           </div>
 
           <div className="h-64 pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <AreaChart data={appointmentVolumeChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorRevenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#196BFB" stopOpacity={0.45}/>
+                  <linearGradient id="colorRealizadasGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="colorConfirmadasGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#196BFB" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#196BFB" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
                 <XAxis dataKey="month" stroke="#64748b" fontSize={10} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(val) => `R$${val/1000}k`} />
+                <YAxis stroke="#64748b" fontSize={10} tickLine={false} allowDecimals={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="revenue" stroke="#196BFB" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenueGrad)" name="Faturamento" />
-                <Bar dataKey="appointments" fill="#06B6D4" radius={[4, 4, 0, 0]} barSize={10} name="Consultas" />
+                <Area type="monotone" dataKey="realizadas" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorRealizadasGrad)" name="Consultas Realizadas" />
+                <Area type="monotone" dataKey="confirmadas" stroke="#196BFB" strokeWidth={2} fillOpacity={1} fill="url(#colorConfirmadasGrad)" name="Consultas Confirmadas" />
+                <Bar dataKey="faltas" fill="#F43F5E" radius={[4, 4, 0, 0]} barSize={10} name="Faltas / Cancelamentos" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -558,10 +564,10 @@ export default function Dashboard({ onNavigateTab }) {
         </div>
 
         {/* Controle de Próteses & Laboratórios */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800/80 pt-4">
-            <h4 className="text-xs font-bold text-slate-850 dark:text-white">Trabalhos de Protético</h4>
-            <span className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold px-2 py-0.5 rounded-full">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center border-t border-slate-200/80 dark:border-white/10 pt-4">
+            <h4 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider font-title">Trabalhos de Protético</h4>
+            <span className="text-[9px] bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 font-extrabold px-2 py-0.5 rounded-md">
               {labWorks.length} pend.
             </span>
           </div>
@@ -569,56 +575,52 @@ export default function Dashboard({ onNavigateTab }) {
           <div className="space-y-2">
             {labWorks.length > 0 ? (
               labWorks.map((work) => (
-                <div key={work.id} className="p-3 border border-slate-150/40 dark:border-slate-800/80 rounded-2xl bg-slate-50/20 dark:bg-slate-900/10 space-y-1.5 hover:-translate-y-0.5 transition-all text-left">
+                <div key={work.id} className="p-3 border border-slate-200/80 dark:border-white/10 rounded-xl bg-white dark:bg-[#0D0D0D] space-y-2 hover:border-slate-300 dark:hover:border-white/20 transition-all text-left shadow-2xs">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h5 className="text-[11px] font-extrabold text-slate-800 dark:text-white truncate max-w-[130px]">{work.patient}</h5>
-                      <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{work.work}</span>
+                      <h5 className="text-[11px] font-extrabold text-slate-800 dark:text-white truncate max-w-[140px]">{work.patient}</h5>
+                      <span className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold block mt-0.5">{work.work}</span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full font-extrabold text-[8px] uppercase tracking-wider ${
+                    <span className={`px-2 py-0.5 rounded-md font-extrabold text-[8px] uppercase tracking-wider ${
                       work.status === 'entregue' 
-                        ? 'bg-emerald-500/10 text-emerald-500' 
-                        : 'bg-amber-500/10 text-amber-500 animate-pulse'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                     }`}>
-                      {work.status === 'entregue' ? 'Entregue' : 'Aguardando'}
+                      {work.status === 'entregue' ? 'Entregue' : 'Em Produção'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center text-[9px] text-slate-400 font-bold pt-1.5 border-t border-slate-100/50 dark:border-slate-800/50">
+                  <div className="flex justify-between items-center text-[9px] font-bold pt-1.5 border-t border-slate-100 dark:border-white/5 text-slate-400">
                     <span>{work.lab}</span>
-                    <span className={work.due === 'Hoje' ? 'text-rose-500' : ''}>Prazo: {work.due}</span>
+                    <span className={work.status === 'entregue' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
+                      {work.status === 'entregue' ? 'Concluído' : `Prazo: ${work.due}`}
+                    </span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-bold text-slate-450 uppercase tracking-wider">
+              <div className="p-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Nenhum trabalho de prótese pendente
               </div>
             )}
           </div>
         </div>
 
-        {/* Plantão do Dia / Médico de Plantão */}
-        {doctorsList.length > 0 ? (
-          <div className="bg-secondary border border-secondary/10 text-white rounded-2xl p-4 shadow-md shadow-secondary/10">
-            <div className="flex items-center gap-3">
-              <span className="bg-white/20 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10">
-                <User className="w-5 h-5 text-white" />
-              </span>
-              <div>
-                <h5 className="text-xs font-bold">{doctorsList[0].name}</h5>
-                <span className="text-[10px] text-white/80 block mt-0.5">Médico Responsável Hoje</span>
-              </div>
+        {/* Dentista Responsável do Dia */}
+        <div className="p-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-xs text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center border border-white/20 shrink-0 font-bold">
+              <User className="w-5 h-5 text-white" />
             </div>
-            <div className="mt-3 flex items-center gap-1.5 text-[10px] bg-black/10 px-2.5 py-1 rounded-xl w-fit">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Plantão Ativo</span>
+            <div className="overflow-hidden">
+              <h5 className="text-xs font-black truncate">{doctorsList.length > 0 ? doctorsList[0].name : (user?.full_name || 'Dr. Responsável')}</h5>
+              <span className="text-[9px] text-blue-100 font-semibold block mt-0.5">Dentista Responsável Técnico</span>
             </div>
           </div>
-        ) : (
-          <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            Nenhum plantonista ativo hoje
+          <div className="mt-2.5 flex items-center gap-1.5 text-[9px] font-extrabold bg-white/10 px-2 py-0.5 rounded-md w-fit text-blue-50">
+            <Clock className="w-3 h-3" />
+            <span>Atendimento Clínico Ativo</span>
           </div>
-        )}
+        </div>
 
       </div>
     </div>

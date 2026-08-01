@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeModuleSync } from '../../hooks/useRealtimeModuleSync';
 import { 
   Plus, Search, User, Phone, Mail, FileText, Calendar, 
   DollarSign, Activity, Image, MessageSquare, ShieldAlert, 
@@ -38,11 +39,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     updateToothRecord,
     installments: globalInstallments,
     payInstallment: globalPayInstallment,
-    dentists
+    dentists,
+    fetchClinicData
   } = useClinic();
   
   const { currentTheme } = useTheme();
   const { user, clinic } = useAuth();
+
+  // Escutar cadastros de pacientes em tempo real (Cascata Zero-UI)
+  const { isHighlighted } = useRealtimeModuleSync('patients', user?.clinic_id, () => {
+    if (fetchClinicData) fetchClinicData();
+  });
 
   // Estados locais
   const [search, setSearch] = useState('');
@@ -308,6 +315,21 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     return `${years} anos`;
   };
 
+  // Handler de Upload de Foto Local (Base64)
+  const handlePhotoFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A foto deve ter no máximo 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPPhotoUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Cadastrar Paciente Geral
   const handleAddPatientSubmit = async (e) => {
     e.preventDefault();
@@ -317,6 +339,8 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       name: pName,
       phone: pPhone,
       email: pEmail || null,
+      photoUrl: pPhotoUrl || null,
+      avatar_url: pPhotoUrl || null,
       medical_history: JSON.stringify({
         notes: pNotes,
         cpf: pCPF,
@@ -333,6 +357,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     setPName('');
     setPPhone('');
     setPEmail('');
+    setPPhotoUrl('');
     setPCPF('');
     setPRG('');
     setPBirthDate('');
@@ -594,7 +619,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     };
     
     // Salva estado para Desfazer
-    setHistoryUndoStack(prev => [...prev, JSON.parse(JSON.stringify(currentOdontogram))]);
+    setHistoryUndoStack(prev => [...prev, structuredClone(currentOdontogram)]);
 
     const tool = activeTool;
     const updatedFaces = { ...toothData.faces };
@@ -660,7 +685,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       return; 
     }
 
-    setHistoryUndoStack(prev => [...prev, JSON.parse(JSON.stringify(currentOdontogram))]);
+    setHistoryUndoStack(prev => [...prev, structuredClone(currentOdontogram)]);
 
     let newConditions = [...(toothData.conditions || [])];
     
@@ -884,104 +909,75 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-black transition-colors duration-300">
         {selectedPatient ? (
           <>
-            {/* 1. Header do Prontuário */}
-            <div className="px-6 py-4 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-300">
-              <div className="flex items-center gap-4">
+            {/* 1. Header do Prontuário (Alinhado em h-14 com SubSidebar) */}
+            <div className="h-14 px-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 flex items-center justify-between gap-4 transition-colors duration-300">
+              <div className="flex items-center gap-3 overflow-hidden">
                 {/* Avatar Minimalista de Profundidade do Paciente */}
                 <div 
                   onClick={openEditModal}
-                  className="relative group w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200/90 dark:border-white/10 shadow-xs shrink-0 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:border-blue-500 hover:shadow-md"
+                  className="relative group w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200/90 dark:border-white/10 shadow-xs shrink-0 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:border-blue-500"
                   title="Clique para alterar a foto do paciente"
                 >
                   {selectedPatient.photoUrl || selectedPatient.avatar_url ? (
                     <img 
                       src={selectedPatient.photoUrl || selectedPatient.avatar_url} 
                       alt={selectedPatient.name} 
-                      className="w-full h-full object-cover rounded-2xl" 
+                      className="w-full h-full object-cover rounded-xl" 
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center w-full h-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-                      <User className="w-7 h-7 stroke-[2]" />
+                      <User className="w-4 h-4 stroke-[2.5]" />
                     </div>
                   )}
 
                   {/* Overlay interativo com Câmera */}
-                  <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-0.5 text-white backdrop-blur-[2px]">
-                    <Camera className="w-5 h-5 text-blue-300 drop-shadow-md" />
-                    <span className="text-[9px] font-extrabold uppercase tracking-wider text-blue-200">Foto</span>
+                  <div className="absolute inset-0 bg-slate-900/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center text-white backdrop-blur-[2px]">
+                    <Camera className="w-3.5 h-3.5 text-blue-300 drop-shadow-md" />
                   </div>
                 </div>
                 
-                <div className="text-left space-y-1">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-xl font-black text-slate-800 dark:text-white font-title leading-tight">
-                      {selectedPatient.name}
-                    </h2>
-                    
-                    {/* Alertas Médicos */}
-                    {criticalConditions.map((cond, idx) => (
-                      <span key={idx} className="px-2.5 py-0.5 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 leading-none shadow-xs">
-                        <AlertTriangle className="w-3 h-3" /> {cond}
-                      </span>
-                    ))}
+                <div className="text-left flex items-center gap-2.5 overflow-hidden">
+                  <h2 className="text-sm font-black text-slate-800 dark:text-white font-title leading-tight truncate">
+                    {selectedPatient.name}
+                  </h2>
+                  
+                  {/* Detalhes rápidos de contato */}
+                  {selectedPatient.phone && (
+                    <a 
+                      href={`https://wa.me/${selectedPatient.phone.replace(/\D/g, '')}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="hidden sm:flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-md text-[10px] hover:underline transition-all shrink-0"
+                    >
+                      <MessageSquare className="w-3 h-3 fill-emerald-500/20" /> {formatPhone(selectedPatient.phone)}
+                    </a>
+                  )}
 
-                    {isBirthdayTomorrow(selectedHistory.birth_date) && (
-                      <span className="px-2.5 py-0.5 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 leading-none shadow-xs">
-                        <Gift className="w-3 h-3" /> Aniversário amanhã
-                      </span>
-                    )}
-                  </div>
+                  <span className="hidden md:inline-block bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded-md font-mono text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
+                    ID: {selectedPatient.id ? (typeof selectedPatient.id === 'string' && selectedPatient.id.startsWith('p-') ? selectedPatient.id.replace('p-', '') : selectedPatient.id.substring(0, 8).toUpperCase()) : 'C16A3F1B'}
+                  </span>
 
-                  {/* Detalhes de contato, idade e documentos */}
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-semibold flex-wrap pt-0.5">
-                    {selectedPatient.phone && (
-                      <a 
-                        href={`https://wa.me/${selectedPatient.phone.replace(/\D/g, '')}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg hover:underline transition-all shadow-xs"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5 fill-emerald-500/20" /> {formatPhone(selectedPatient.phone)}
-                      </a>
-                    )}
-
-                    {calculateAge(selectedHistory.birth_date) && (
-                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono">
-                        {calculateAge(selectedHistory.birth_date)}
-                      </span>
-                    )}
-
-                    {selectedHistory.cpf && (
-                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono">
-                        CPF: {formatCPF(selectedHistory.cpf)}
-                      </span>
-                    )}
-
-                    {selectedHistory.gender && (
-                      <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg text-slate-600 dark:text-slate-300">
-                        {selectedHistory.gender}
-                      </span>
-                    )}
-
-                    <span className="bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2.5 py-0.5 rounded-lg font-mono text-slate-500 dark:text-slate-400">
-                      ID: {selectedPatient.id ? (typeof selectedPatient.id === 'string' && selectedPatient.id.startsWith('p-') ? selectedPatient.id.replace('p-', '') : selectedPatient.id.substring(0, 8).toUpperCase()) : 'C16A3F1B'}
+                  {/* Alertas Médicos */}
+                  {criticalConditions.map((cond, idx) => (
+                    <span key={idx} className="hidden lg:flex px-2 py-0.5 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-md text-[9px] font-extrabold uppercase items-center gap-1 leading-none shrink-0">
+                      <AlertTriangle className="w-3 h-3" /> {cond}
                     </span>
-                  </div>
+                  ))}
                 </div>
               </div>
 
               {/* Botões de Edição e Ações */}
-              <div className="flex items-center gap-2 self-end md:self-center">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => alert('Categorizar paciente em desenvolvimento.')}
-                  className="px-3.5 py-2 bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-2xs cursor-pointer active:scale-95"
                 >
                   <Tag className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> Categorizar
                 </button>
 
                 <button
                   onClick={openEditModal}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/30 cursor-pointer active:scale-95"
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 border border-blue-400/40 text-white font-bold text-[11px] rounded-xl flex items-center gap-1.5 transition-all shadow-sm shadow-blue-600/30 cursor-pointer active:scale-95"
                 >
                   <Edit className="w-3.5 h-3.5" />
                   Editar Perfil
@@ -2138,6 +2134,72 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               </div>
 
               <form onSubmit={handleAddPatientSubmit} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                {/* Seletor & Upload de Foto do Paciente */}
+                <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Foto de Perfil do Paciente</label>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
+                      {pPhotoUrl ? (
+                        <img src={pPhotoUrl} alt="Preview Foto" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-slate-400" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-sm transition-all">
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>Carregar foto do PC</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handlePhotoFileUpload} 
+                            className="hidden" 
+                          />
+                        </label>
+                        {pPhotoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPPhotoUrl('')}
+                            className="text-[10px] text-rose-500 hover:underline font-bold"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="url"
+                        placeholder="ou cole o link da foto (http...)"
+                        value={pPhotoUrl}
+                        onChange={(e) => setPPhotoUrl(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <span className="text-[9px] text-slate-400 font-bold">Avatares rápidos:</span>
+                    {[
+                      { label: 'Homem', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Mulher', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Idoso', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Criança', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80' },
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPPhotoUrl(preset.url)}
+                        className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Nome Completo *</label>
@@ -2155,10 +2217,11 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <input
                       type="text"
                       required
-                      placeholder="ex: 88999699232"
+                      maxLength={16}
+                      placeholder="(88) 99969-9232"
                       value={pPhone}
-                      onChange={(e) => setPPhone(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      onChange={(e) => setPPhone(formatPhone(e.target.value))}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -2326,15 +2389,70 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Foto do Paciente (Link / URL da Imagem)</label>
-                  <input
-                    type="url"
-                    placeholder="https://exemplo.com/foto-do-paciente.jpg"
-                    value={pPhotoUrl}
-                    onChange={(e) => setPPhotoUrl(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
-                  />
+                {/* Seletor & Upload de Foto do Paciente */}
+                <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Foto de Perfil do Paciente</label>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
+                      {pPhotoUrl ? (
+                        <img src={pPhotoUrl} alt="Preview Foto" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-slate-400" />
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl cursor-pointer flex items-center gap-1.5 shadow-sm transition-all">
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>Alterar foto do PC</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handlePhotoFileUpload} 
+                            className="hidden" 
+                          />
+                        </label>
+                        {pPhotoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPPhotoUrl('')}
+                            className="text-[10px] text-rose-500 hover:underline font-bold"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="url"
+                        placeholder="ou cole o link da foto (http...)"
+                        value={pPhotoUrl}
+                        onChange={(e) => setPPhotoUrl(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <span className="text-[9px] text-slate-400 font-bold">Avatares rápidos:</span>
+                    {[
+                      { label: 'Homem', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Mulher', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Idoso', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
+                      { label: 'Criança', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80' },
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setPPhotoUrl(preset.url)}
+                        className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { 
@@ -18,21 +18,75 @@ import {
   IconUserPlus,
   IconLayoutKanban,
   IconCurrencyDollar,
-  IconBrandWhatsapp
+  IconBrandWhatsapp,
+  IconFilter
 } from '@tabler/icons-react';
 import Breadcrumbs from './Breadcrumbs';
 import { mockDb } from '../lib/mockDatabase';
 import { isSupabaseConfigured } from '../lib/supabase';
 
-export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette }) {
+export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette, collapsed, setCollapsed }) {
   const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
   const { currentTheme, themeMode, setThemeMode } = useTheme();
   
+  const headerRef = useRef(null);
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showClinicSelector, setShowClinicSelector] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+
+  // Fecha todos os menus abertos
+  const closeAllDropdowns = () => {
+    setShowQuickMenu(false);
+    setShowThemeMenu(false);
+    setShowNotifications(false);
+    setShowUserDropdown(false);
+    setShowClinicSelector(false);
+  };
+
+  // Alternadores exclusivos (abre o clicado e fecha todos os outros)
+  const toggleQuickMenu = (e) => {
+    if (e) e.stopPropagation();
+    const nextState = !showQuickMenu;
+    closeAllDropdowns();
+    setShowQuickMenu(nextState);
+  };
+
+  const toggleThemeMenu = (e) => {
+    if (e) e.stopPropagation();
+    const nextState = !showThemeMenu;
+    closeAllDropdowns();
+    setShowThemeMenu(nextState);
+  };
+
+  const toggleNotifications = (e) => {
+    if (e) e.stopPropagation();
+    const nextState = !showNotifications;
+    closeAllDropdowns();
+    setShowNotifications(nextState);
+  };
+
+  const toggleUserDropdown = (e) => {
+    if (e) e.stopPropagation();
+    const nextState = !showUserDropdown;
+    closeAllDropdowns();
+    setShowUserDropdown(nextState);
+  };
+
+  // Listener para fechar os menus ao clicar fora do Header
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (headerRef.current && !headerRef.current.contains(event.target)) {
+        closeAllDropdowns();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Estado da busca expansível
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -50,13 +104,24 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
   const clinics = mockDb.getClinics();
 
   return (
-    <header className="h-16 border-b border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#0D0D0D]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-300">
-      {/* Esquerda: Breadcrumbs */}
-      <div className="flex items-center gap-4">
+    <header ref={headerRef} className="h-16 border-b border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#0D0D0D]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-300">
+      {/* Esquerda: Breadcrumbs e Botão de Filtro SubSidebar */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        {['crm', 'pacientes', 'agenda'].includes(activeTab) && setCollapsed && (
+          <button
+            onClick={() => setCollapsed(prev => !prev)}
+            className="flex lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 transition-colors items-center gap-1.5 text-xs font-bold shadow-xs active:scale-95"
+            title="Abrir painel de filtros"
+          >
+            <IconFilter className="w-4 h-4 text-[#196BFB] dark:text-blue-400" />
+            <span className="hidden sm:inline">Filtros</span>
+          </button>
+        )}
+
         <div className="flex items-center gap-3.5">
           <Breadcrumbs activeTab={activeTab} />
           {!isSupabaseConfigured && (
-            <span className="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] rounded-full uppercase tracking-wider select-none animate-pulse">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] rounded-full uppercase tracking-wider select-none animate-pulse">
               Modo Demo (Sem BD)
             </span>
           )}
@@ -120,7 +185,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         {/* Botão de Ação Rápida (+ Novo) Padronizado */}
         <div className="relative">
           <button
-            onClick={() => setShowQuickMenu(!showQuickMenu)}
+            onClick={toggleQuickMenu}
             className="h-9 flex items-center gap-1.5 px-3.5 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold text-xs rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
             style={{ backgroundColor: currentTheme.secondary_color }}
           >
@@ -181,7 +246,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         {/* Alternador de 3 Temas Padronizado (w-9 h-9) */}
         <div className="relative">
           <button
-            onClick={() => setShowThemeMenu(!showThemeMenu)}
+            onClick={toggleThemeMenu}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
             title="Alterar Tema"
           >
@@ -235,7 +300,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         {/* Notificações Padronizado (w-9 h-9) */}
         <div className="relative">
           <button 
-            onClick={() => setShowNotifications(!showNotifications)}
+            onClick={toggleNotifications}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] text-slate-700 dark:text-slate-300 transition-all border border-slate-200/80 dark:border-white/10 active:scale-95 relative"
             title="Notificações"
           >
@@ -298,7 +363,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         {/* Perfil & Avatar Padronizado (w-9 h-9 rounded-xl) */}
         <div className="relative">
           <button
-            onClick={() => setShowUserDropdown(!showUserDropdown)}
+            onClick={toggleUserDropdown}
             className="w-9 h-9 rounded-xl border border-slate-200/80 dark:border-white/10 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold flex items-center justify-center text-xs cursor-pointer select-none shadow-sm active:scale-95 transition-all"
             style={{ backgroundColor: currentTheme.secondary_color }}
             title="Perfil do Usuário"

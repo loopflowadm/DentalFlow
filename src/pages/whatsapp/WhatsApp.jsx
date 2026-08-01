@@ -894,8 +894,8 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
           </div>
         </div>
       ) : activeChat ? (
-          <>
-            {/* Top Bar Chat */}
+        <>
+          {/* Top Bar Chat */}
             <div className={`h-[57px] px-3.5 border-b flex items-center justify-between flex-shrink-0 transition-colors ${
               isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-[#e9edef] bg-[#f0f2f5]'
             }`}>

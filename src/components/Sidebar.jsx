@@ -31,6 +31,13 @@ const formatPhone = (phone) => {
   return phone;
 };
 
+const monthNames = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const weekdaysMin = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+
 export default function Sidebar({ 
   activeTab, 
   setActiveTab, 
@@ -173,7 +180,7 @@ export default function Sidebar({
     e.preventDefault();
     if (!newLeadName || !newLeadPhone) return;
 
-    await addCrmLead({
+    const created = await addCrmLead({
       name: newLeadName,
       phone: newLeadPhone,
       procedure_name: newLeadProcedure || 'Consulta Geral',
@@ -181,6 +188,10 @@ export default function Sidebar({
       priority: newLeadPriority,
       status: 'NOVO'
     });
+
+    if (created && setSelectedLead) {
+      setSelectedLead(created);
+    }
 
     setNewLeadName('');
     setNewLeadPhone('');
@@ -209,19 +220,10 @@ export default function Sidebar({
   // Verifica se o módulo ativo utiliza a Sub-Sidebar contextual
   const hasSubSidebar = ['crm', 'pacientes', 'agenda'].includes(activeTab);
 
-  const filteredPatients = patients.filter(patient => 
-    patient.name.toLowerCase().includes(patientSearch.toLowerCase()) || 
-    (patient.phone && patient.phone.includes(patientSearch))
-  );
-
   return (
-    <div className="flex h-full select-none gap-4 relative">
-      
-      {/* ========================================================================= */}
-      {/* COLUNA 1: BARRA DE ÍCONES DE NAVEGAÇÃO (FIXA 80px NO DESKTOP)              */}
-      {/* ========================================================================= */}
+    <>
       <aside 
-        className="flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative bg-white dark:bg-[#0D0D0D] transition-colors duration-300 z-30 overflow-hidden"
+        className="hidden md:flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative bg-white dark:bg-[#0D0D0D] transition-colors duration-300 z-30"
         style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_1 } : undefined}
       >
         <div className="flex flex-col items-center gap-4 w-full">
@@ -232,9 +234,10 @@ export default function Sidebar({
               onClick={() => setActiveTab('dashboard')}
             >
               <Logo collapsed={true} className="h-10 w-10 text-slate-800 dark:text-white transition-all duration-300 transform group-hover:scale-110 drop-shadow-[0_2px_10px_rgba(25,107,251,0.25)]" />
-              {/* Tooltip */}
-              <div className="absolute left-20 bg-slate-900 dark:bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-2xl whitespace-nowrap z-50">
-                DentalFlow
+              {/* Tooltip da Logo */}
+              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+                <span>DentalFlow</span>
+                <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
               </div>
             </div>
           </div>
@@ -289,9 +292,10 @@ export default function Sidebar({
                     </span>
                   )}
 
-                  {/* Tooltip Lateral */}
-                  <div className="absolute left-20 bg-slate-900 dark:bg-slate-950 text-white text-xs font-semibold px-3 py-2 rounded-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity shadow-xl whitespace-nowrap z-50">
-                    {item.label}
+                  {/* Tooltip Lateral Elevado */}
+                  <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+                    <span>{item.label}</span>
+                    <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
                   </div>
                 </button>
               );
@@ -304,47 +308,247 @@ export default function Sidebar({
           {/* Botão de Logout */}
           <button
             onClick={logout}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-500/10 transition-all"
-            title="Sair do Sistema"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-500/10 transition-all relative group"
           >
             <IconLogout className="w-5 h-5" />
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-rose-950/95 border border-rose-500/30 text-rose-200 text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+              <span>Sair do Sistema</span>
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-rose-950" />
+            </div>
           </button>
         </div>
       </aside>
 
-      {/* ========================================================================= */}
-      {/* COLUNA 2: SUB-SIDEBAR CONTEXTUAL (OPCIONAL E COLAPSÁVEL, 260px)           */}
-      {/* ========================================================================= */}
-      {hasSubSidebar && !collapsed && (
+      {/* ------------------------------------------------------------- */}
+      {/* BARRA DE NAVEGAÇÃO INFERIOR (BOTTOM NAVIGATION) - MOBILE      */}
+      {/* ------------------------------------------------------------- */}
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-950 border-t border-slate-200/80 dark:border-white/10 z-40 flex items-center justify-around px-4 rounded-t-2xl shadow-lg md:hidden transition-colors duration-300">
+        <button
+          onClick={() => { setActiveTab('dashboard'); setShowMoreMenu(false); }}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${activeTab === 'dashboard' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
+          style={activeTab === 'dashboard' ? { color: currentTheme.secondary_color } : {}}
+        >
+          <IconLayoutDashboard className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Início</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('crm'); setShowMoreMenu(false); }}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${activeTab === 'crm' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
+          style={activeTab === 'crm' ? { color: currentTheme.secondary_color } : {}}
+        >
+          <IconLayoutKanban className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Jornada</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('pacientes'); setShowMoreMenu(false); }}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${activeTab === 'pacientes' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
+          style={activeTab === 'pacientes' ? { color: currentTheme.secondary_color } : {}}
+        >
+          <IconUsers className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Fichas</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('agenda'); setShowMoreMenu(false); }}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${activeTab === 'agenda' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
+          style={activeTab === 'agenda' ? { color: currentTheme.secondary_color } : {}}
+        >
+          <IconCalendar className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Agenda</span>
+        </button>
+
+        <button
+          onClick={() => setShowMoreMenu(!showMoreMenu)}
+          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${showMoreMenu ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
+          style={showMoreMenu ? { color: currentTheme.secondary_color } : {}}
+        >
+          <IconPlus className="w-5 h-5" />
+          <span className="text-[9px] font-bold mt-0.5">Mais</span>
+        </button>
+      </div>
+
+      {/* Menu suspenso do botão "Mais" no mobile */}
+      {showMoreMenu && (
         <>
-          {/* Backdrop escuro para fechar ao clicar fora (Mobile/Tablet) */}
-          <div 
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-35 md:hidden"
-            onClick={() => setCollapsed(true)}
-          />
-          <aside 
-            className={`border border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-[#080808] flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden animate-in slide-in-from-left duration-250 z-40 md:z-10 transition-colors duration-300 ${
-              collapsed ? 'hidden' : 'fixed inset-4 w-[calc(100vw-32px)] md:relative md:inset-auto md:w-64 xl:w-72'
-            }`} 
-            style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_2 } : undefined}
-          >
-          
-          {/* HEADER DA SUB-SIDEBAR (TÍTULO E BOTÃO DE RECOLHER) */}
-          <div className="h-16 px-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#0D0D0D] transition-colors duration-300">
-            <span className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider font-title pl-1">
-              {activeTab === 'crm' && "Jornada do Paciente"}
-              {activeTab === 'pacientes' && "Pacientes"}
-              {activeTab === 'agenda' && "Agenda do Dia"}
-            </span>
-            {/* Toggle de Fechamento */}
-            <button
-              onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors flex-shrink-0"
-              title="Recolher painel"
-            >
-              <IconChevronLeft className="w-3.5 h-3.5" />
-            </button>
+          <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-45 md:hidden" onClick={() => setShowMoreMenu(false)} />
+          <div className="fixed bottom-20 left-4 right-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 rounded-3xl shadow-2xl z-50 md:hidden animate-in slide-in-from-bottom duration-200">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Outros Módulos</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {allowedMenuItems.filter(item => !['dashboard', 'crm', 'pacientes', 'agenda'].includes(item.id)).map(item => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { setActiveTab(item.id); setShowMoreMenu(false); }}
+                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all border ${isActive ? 'border-transparent text-white font-bold' : 'bg-slate-100 dark:bg-black/20 border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300'}`}
+                    style={isActive ? { backgroundColor: currentTheme.secondary_color } : {}}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs font-bold truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => { logout(); setShowMoreMenu(false); }}
+                className="flex items-center gap-3 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 col-span-2 mt-1"
+              >
+                <IconLogout className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs font-bold">Sair do Sistema</span>
+              </button>
+            </div>
           </div>
+        </>
+      )}
+    </>
+  );
+}
+
+export function SubSidebar({
+  activeTab,
+  collapsed,
+  setCollapsed,
+  selectedLead,
+  setSelectedLead,
+  selectedPatient,
+  setSelectedPatient,
+  selectedAppointment,
+  setSelectedAppointment,
+  agendaDate,
+  setAgendaDate,
+  selectedChairs,
+  setSelectedChairs,
+  selectedDentists,
+  setSelectedDentists,
+  agendaViewMode,
+  setAgendaViewMode,
+  onOpenWhatsApp
+}) {
+  const { themeMode, currentTheme } = useTheme();
+  const { patients, appointments, crmLeads, addCrmLead, chairs, dentists, addChair, addDentist } = useClinic();
+
+  const [crmSearch, setCrmSearch] = useState('');
+  const [crmPriority, setCrmPriority] = useState('');
+  const [crmStageFilter, setCrmStageFilter] = useState('all');
+  const [patientSearch, setPatientSearch] = useState('');
+  const [showAddLeadSidebar, setShowAddLeadSidebar] = useState(false);
+
+  // Mini Calendário (Agenda)
+  const [miniCalDate, setMiniCalDate] = useState(new Date());
+
+  const navigateMiniCal = (direction) => {
+    setMiniCalDate(prev => {
+      const next = new Date(prev);
+      next.setMonth(next.getMonth() + direction);
+      return next;
+    });
+  };
+
+  // Gerador de Dias do Mini Calendário
+  const getMiniCalDays = () => {
+    const year = miniCalDate.getFullYear();
+    const month = miniCalDate.getMonth();
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
+    const days = [];
+
+    // Dias do mês anterior
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      days.push({
+        day: prevMonthDays - i,
+        date: new Date(year, month - 1, prevMonthDays - i),
+        isCurrentMonth: false
+      });
+    }
+
+    // Dias do mês atual
+    for (let i = 1; i <= totalDaysInMonth; i++) {
+      days.push({
+        day: i,
+        date: new Date(year, month, i),
+        isCurrentMonth: true
+      });
+    }
+
+    // Dias do próximo mês para completar grade de 42 posições (6 semanas)
+    const remainingSlots = 42 - days.length;
+    for (let i = 1; i <= remainingSlots; i++) {
+      days.push({
+        day: i,
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false
+      });
+    }
+
+    return days;
+  };
+
+  const miniCalDays = getMiniCalDays();
+
+  const columnsList = [
+    'Novo Paciente', 'Primeiro Contato', 'Avaliação Agendada', 'Confirmado', 
+    'Compareceu', 'Orçamento', 'Negociação', 'Fechado', 
+    'Tratamento', 'Retorno', 'Concluído', 'Perdido'
+  ];
+
+  const totalLeadsCount = crmLeads.length;
+  const newLeadsCount = crmLeads.filter(l => (l.stage || 0) <= 1).length;
+  const inNegotiationCount = crmLeads.filter(l => (l.stage || 0) >= 2 && (l.stage || 0) <= 6).length;
+  const closedCount = crmLeads.filter(l => (l.stage || 0) >= 7 || l.is_patient).length;
+
+  const filteredLeads = crmLeads.filter(lead => {
+    const matchSearch = lead.name.toLowerCase().includes(crmSearch.toLowerCase()) || 
+                        (lead.procedure_name && lead.procedure_name.toLowerCase().includes(crmSearch.toLowerCase()));
+    const matchPriority = !crmPriority || lead.priority === crmPriority;
+    
+    let matchStage = true;
+    if (crmStageFilter === 'new') matchStage = (lead.stage || 0) <= 1;
+    else if (crmStageFilter === 'negotiating') matchStage = (lead.stage || 0) >= 2 && (lead.stage || 0) <= 6;
+    else if (crmStageFilter === 'closed') matchStage = (lead.stage || 0) >= 7 || lead.is_patient;
+
+    return matchSearch && matchPriority && matchStage;
+  });
+
+  const filteredPatients = patients.filter(patient => 
+    patient.name.toLowerCase().includes(patientSearch.toLowerCase()) || 
+    (patient.phone && patient.phone.includes(patientSearch))
+  );
+
+  const hasSubSidebar = ['crm', 'pacientes', 'agenda'].includes(activeTab);
+
+  if (!hasSubSidebar || collapsed) return null;
+
+  return (
+    <>
+      {/* Backdrop overlay para tablet/mobile */}
+      <div 
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+        onClick={() => setCollapsed(true)}
+      />
+      <aside 
+        className="fixed inset-y-0 left-0 z-50 w-80 lg:static lg:z-auto lg:w-64 xl:w-72 border-r border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#080808] flex flex-col h-full overflow-hidden flex-shrink-0 shadow-2xl lg:shadow-none transition-all duration-300"
+        style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_2 } : undefined}
+      >
+      {/* HEADER DA SUB-SIDEBAR (SLIM E UNIFICADO NO CARD PRINCIPAL) */}
+      <div className="h-14 px-4 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#0D0D0D] transition-colors duration-300">
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider pl-1">
+          {activeTab === 'crm' && "Filtros & Pacientes (CRM)"}
+          {activeTab === 'pacientes' && "Lista de Pacientes"}
+          {activeTab === 'agenda' && "Agenda do Dia"}
+        </span>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+          title="Recolher painel"
+        >
+          <IconChevronLeft className="w-3.5 h-3.5" />
+        </button>
+      </div>
 
           {/* CONTEÚDO CONTEXTUAL */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-none">
@@ -791,8 +995,6 @@ export default function Sidebar({
 
           </div>
         </aside>
-      </>
-    )}
 
       {/* ========================================================================= */}
       {/* MODAL INTEGRADO DE CADASTRO DE LEAD (SIDEBAR)                            */}
@@ -831,9 +1033,10 @@ export default function Sidebar({
                 <input
                   type="text"
                   required
-                  placeholder="ex: 5511999999999"
+                  maxLength={16}
+                  placeholder="ex: (83) 99999-8888"
                   value={newLeadPhone}
-                  onChange={(e) => setNewLeadPhone(e.target.value)}
+                  onChange={(e) => setNewLeadPhone(formatPhone(e.target.value))}
                   className="w-full bg-slate-50 dark:bg-black border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-slate-400 dark:focus:border-slate-700 text-slate-800 dark:text-white transition-colors"
                 />
               </div>
@@ -885,159 +1088,6 @@ export default function Sidebar({
           </div>
         </div>
       )}
-
-      {/* Botão Flutuante de Expansão (Maximizar) - Visível somente quando a segunda sidebar está recolhida */}
-      {hasSubSidebar && collapsed && (
-        <button
-          onClick={() => setCollapsed(false)}
-          className="absolute left-[72px] top-6 w-6 h-12 bg-white dark:bg-[#0D0D0D] hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-white/10 border-l-transparent rounded-r-xl flex items-center justify-center text-slate-600 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-all shadow-md z-40 group hover:w-7 active:scale-95"
-          title="Expandir painel"
-        >
-          <IconChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-        </button>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* DRAWER / SHEET "MAIS" PARA DISPOSITIVOS MÓVEIS               */}
-      {/* ------------------------------------------------------------- */}
-      {showMoreMenu && (
-        <>
-          {/* Backdrop para fechar o menu */}
-          <div 
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-45 md:hidden"
-            onClick={() => setShowMoreMenu(false)}
-          />
-          {/* Menu de mais opções */}
-          <div className="fixed bottom-20 left-4 right-4 bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 rounded-[32px] p-5 shadow-2xl z-50 animate-in slide-in-from-bottom duration-250 text-left md:hidden max-h-[70vh] overflow-y-auto text-slate-800 dark:text-white transition-colors duration-300">
-            <div className="flex justify-between items-center mb-4 pl-1">
-              <span className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest font-title">
-                Mais Opções
-              </span>
-              <button 
-                onClick={() => setShowMoreMenu(false)}
-                className="text-[10px] font-bold text-slate-500 dark:text-white/50 hover:text-slate-800 dark:hover:text-white"
-              >
-                Fechar
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {menuItems.filter(item => !['dashboard', 'crm', 'pacientes', 'agenda'].includes(item.id)).map(item => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                       setActiveTab(item.id);
-                       setShowMoreMenu(false);
-                    }}
-                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all border ${
-                      isActive 
-                        ? 'border-transparent text-white font-bold' 
-                        : 'bg-slate-100 dark:bg-black/20 border-slate-200/80 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                    style={isActive ? { backgroundColor: currentTheme.secondary_color } : {}}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-xs font-bold truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-
-              {/* Logout no mobile */}
-              <button
-                onClick={() => {
-                  logout();
-                  setShowMoreMenu(false);
-                }}
-                className="flex items-center gap-3 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 hover:text-red-500 col-span-2 mt-1"
-              >
-                <IconLogout className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs font-bold">Sair do Sistema</span>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* BARRA DE NAVEGAÇÃO INFERIOR (BOTTOM NAVIGATION) - MOBILE      */}
-      {/* ------------------------------------------------------------- */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-950 border-t border-slate-200/80 dark:border-white/10 z-40 flex items-center justify-around px-4 rounded-t-2xl shadow-lg md:hidden transition-colors duration-300">
-        {/* Item 1: Dashboard */}
-        <button
-          onClick={() => {
-            setActiveTab('dashboard');
-            setShowMoreMenu(false);
-          }}
-          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-            activeTab === 'dashboard' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'
-          }`}
-          style={activeTab === 'dashboard' ? { color: currentTheme.secondary_color } : {}}
-        >
-          <IconLayoutDashboard className="w-5 h-5" />
-          <span className="text-[9px] font-bold mt-0.5">Início</span>
-        </button>
-
-        {/* Item 2: CRM */}
-        <button
-          onClick={() => {
-            setActiveTab('crm');
-            setShowMoreMenu(false);
-          }}
-          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-            activeTab === 'crm' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'
-          }`}
-          style={activeTab === 'crm' ? { color: currentTheme.secondary_color } : {}}
-        >
-          <IconLayoutKanban className="w-5 h-5" />
-          <span className="text-[9px] font-bold mt-0.5">Jornada</span>
-        </button>
-
-        {/* Item 3: Pacientes */}
-        <button
-          onClick={() => {
-            setActiveTab('pacientes');
-            setShowMoreMenu(false);
-          }}
-          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-            activeTab === 'pacientes' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'
-          }`}
-          style={activeTab === 'pacientes' ? { color: currentTheme.secondary_color } : {}}
-        >
-          <IconUsers className="w-5 h-5" />
-          <span className="text-[9px] font-bold mt-0.5">Fichas</span>
-        </button>
-
-        {/* Item 4: Agenda */}
-        <button
-          onClick={() => {
-            setActiveTab('agenda');
-            setShowMoreMenu(false);
-          }}
-          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-            activeTab === 'agenda' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'
-          }`}
-          style={activeTab === 'agenda' ? { color: currentTheme.secondary_color } : {}}
-        >
-          <IconCalendar className="w-5 h-5" />
-          <span className="text-[9px] font-bold mt-0.5">Agenda</span>
-        </button>
-
-        {/* Item 5: Mais */}
-        <button
-          onClick={() => setShowMoreMenu(!showMoreMenu)}
-          className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${
-            showMoreMenu ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'
-          }`}
-          style={showMoreMenu ? { color: currentTheme.secondary_color } : {}}
-        >
-          <IconPlus className="w-5 h-5" />
-          <span className="text-[9px] font-bold mt-0.5">Mais</span>
-        </button>
-      </div>
-
-    </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
 import ToolsSidebar from './ToolsSidebar';
 import DentalArch from './DentalArch';
@@ -20,9 +20,13 @@ export default function OdontogramView({ patient, onSavePatientData }) {
   const themeMode = themeContext?.themeMode;
   const isDarkMode = themeMode === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
 
+  // Ref de Timer para Debounce do Salvamento no Supabase (Evita travamentos e excesso de renders)
+  const saveTimeoutRef = useRef(null);
+
   // Estado das marcações dos dentes
   const [teethData, setTeethData] = useState(() => {
-    return patient?.medical_history?.odontogram?.teethData || patient?.odontogram_data || {};
+    const raw = patient?.medical_history?.odontogram?.teethData || patient?.odontogram_data || {};
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
   });
 
   // Periodontograma
@@ -85,20 +89,29 @@ export default function OdontogramView({ patient, onSavePatientData }) {
     }, 3000);
   };
 
-  // Sincronizar quando o paciente mudar
+  // Sincronizar quando o paciente mudar (com parse seguro de JSON)
   useEffect(() => {
     if (patient) {
-      setTeethData(patient?.medical_history?.odontogram?.teethData || patient?.odontogram_data || {});
-      setPerioData(patient?.medical_history?.odontogram?.perioData || {});
-      setFixedBridges(patient?.medical_history?.odontogram?.fixedBridges || []);
-      setOrthoConfig(patient?.medical_history?.odontogram?.orthoConfig || { upperActive: false, lowerActive: false, bracketType: 'metal', elasticColor: '#2563EB' });
-      setToothHistory(patient?.medical_history?.odontogram?.toothHistory || []);
-      setNotes(patient?.medical_history?.odontogram?.notes || patient?.notes || '');
+      let odontoObj = patient?.medical_history?.odontogram || {};
+      if (typeof patient?.medical_history === 'string') {
+        try {
+          const parsed = JSON.parse(patient.medical_history);
+          odontoObj = parsed.odontogram || {};
+        } catch (e) {
+          odontoObj = {};
+        }
+      }
+      setTeethData(odontoObj.teethData || patient?.odontogram_data || {});
+      setPerioData(odontoObj.perioData || {});
+      setFixedBridges(odontoObj.fixedBridges || []);
+      setOrthoConfig(odontoObj.orthoConfig || { upperActive: false, lowerActive: false, bracketType: 'metal', elasticColor: '#2563EB' });
+      setToothHistory(odontoObj.toothHistory || []);
+      setNotes(odontoObj.notes || patient?.notes || '');
     }
   }, [patient?.id]);
 
-  // Função para persistir dados no Supabase / Estado Pai
-  const persistOdontogram = useCallback(async (
+  // Função Debounced para persistir dados no Supabase / Estado Pai (Evita re-renderizações excessivas e travamento da UI)
+  const persistOdontogram = useCallback((
     newTeethData, 
     newPerioData, 
     newFixedBridges, 
@@ -107,39 +120,60 @@ export default function OdontogramView({ patient, onSavePatientData }) {
     newNotes
   ) => {
     if (!patient || !onSavePatientData) return;
-    try {
-      setIsSavingNotes(true);
-      const updatedPatient = {
-        ...patient,
-        medical_history: {
-          ...(patient.medical_history || {}),
-          odontogram: {
-            teethData: newTeethData,
-            perioData: newPerioData,
-            fixedBridges: newFixedBridges,
-            orthoConfig: newOrthoConfig,
-            toothHistory: newHistory,
-            notes: newNotes,
-            updatedAt: new Date().toISOString()
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSavingNotes(true);
+        let currentHistoryObj = {};
+        if (patient.medical_history) {
+          if (typeof patient.medical_history === 'string') {
+            try {
+              currentHistoryObj = JSON.parse(patient.medical_history);
+            } catch (e) {
+              currentHistoryObj = {};
+            }
+          } else if (typeof patient.medical_history === 'object') {
+            currentHistoryObj = patient.medical_history;
           }
         }
-      };
-      await onSavePatientData(updatedPatient);
-    } catch (err) {
-      console.warn('[OdontogramView] Erro ao persistir dados no Supabase:', err);
-    } finally {
-      setIsSavingNotes(false);
-    }
+
+        const updatedPatient = {
+          ...patient,
+          medical_history: {
+            ...currentHistoryObj,
+            odontogram: {
+              teethData: newTeethData,
+              perioData: newPerioData,
+              fixedBridges: newFixedBridges,
+              orthoConfig: newOrthoConfig,
+              toothHistory: newHistory,
+              notes: newNotes,
+              updatedAt: new Date().toISOString()
+            }
+          }
+        };
+
+        await onSavePatientData(updatedPatient);
+      } catch (err) {
+        console.warn('[OdontogramView] Erro ao persistir dados no Supabase:', err);
+      } finally {
+        setIsSavingNotes(false);
+      }
+    }, 600);
   }, [patient, onSavePatientData]);
 
   // Debounce de Auto-Salvamento para Observações Gerais
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (patient) {
-        persistOdontogram(teethData, perioData, fixedBridges, orthoConfig, toothHistory, notes);
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
+    if (patient) {
+      persistOdontogram(teethData, perioData, fixedBridges, orthoConfig, toothHistory, notes);
+    }
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
   }, [notes]);
 
   // Manipulador de Clique no Dente / Superfície

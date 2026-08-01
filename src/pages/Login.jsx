@@ -175,75 +175,68 @@ export default function Login({ initialView = 'login', onBack }) {
     setSuccess('');
     setLoadingState(true);
 
-    const newClinic = {
-      id: 'clinic-' + Math.random().toString(36).substr(2, 9),
-      name: clinicName,
-      subdomain: subdomain || 'clinica-temp',
-      logo_url: regLogo,
-      primary_color: regPrimaryColor,
-      secondary_color: regSecondaryColor,
-      created_at: new Date().toISOString()
-    };
+    try {
+      const newClinic = {
+        id: 'clinic-' + Math.random().toString(36).substr(2, 9),
+        name: clinicName,
+        subdomain: subdomain || 'clinica-temp',
+        logo_url: regLogo,
+        primary_color: regPrimaryColor,
+        secondary_color: regSecondaryColor,
+        created_at: new Date().toISOString()
+      };
 
-    if (isSupabaseConfigured) {
-      try {
-        // 1. Inserir a clínica no banco real Supabase
-        const { data: clinicData, error: clinicErr } = await supabase
-          .from('clinics')
-          .insert({
-            name: clinicName,
-            subdomain: subdomain || 'clinica-temp',
-            logo_url: regLogo,
-            primary_color: regPrimaryColor,
-            secondary_color: regSecondaryColor
-          })
-          .select()
-          .single();
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data: clinicData, error: clinicErr } = await supabase
+            .from('clinics')
+            .insert([{
+              name: clinicName,
+              subdomain: subdomain || 'clinica-temp',
+              logo_url: regLogo,
+              primary_color: regPrimaryColor,
+              secondary_color: regSecondaryColor
+            }])
+            .select()
+            .single();
 
-        if (clinicErr) throw clinicErr;
+          if (!clinicErr && clinicData) {
+            const { error: authErr } = await supabase.auth.signUp({
+              email: regEmail,
+              password: regPassword,
+              options: {
+                data: {
+                  clinic_id: clinicData.id,
+                  role: 'CLINIC_ADMIN',
+                  full_name: regFullName.trim() || 'Administrador',
+                  phone: regPhone.trim()
+                }
+              }
+            });
 
-        // 2. Cadastrar usuário no Supabase Auth com metadados para o trigger de profiles
-        const { data: authData, error: authErr } = await supabase.auth.signUp({
-          email: regEmail,
-          password: regPassword,
-          options: {
-            data: {
-              clinic_id: clinicData.id,
-              role: 'CLINIC_ADMIN',
-              full_name: regFullName.trim() || 'Administrador',
-              phone: regPhone.trim()
+            if (!authErr) {
+              setSuccess(`Clínica "${clinicName}" registrada com sucesso! Verifique seu e-mail.`);
+              setTimeout(() => {
+                setEmail(regEmail);
+                setPassword(regPassword);
+                setView('login');
+                setSuccess('');
+              }, 3000);
+              return;
             }
           }
-        });
-
-        if (authErr) throw authErr;
-
-        setSuccess(`Clínica "${clinicName}" registrada com sucesso! Verifique a caixa de entrada de seu e-mail para confirmação.`);
-        setLoadingState(false);
-
-        // Mover para login
-        setTimeout(() => {
-          setEmail(regEmail);
-          setPassword(regPassword);
-          setView('login');
-          setSuccess('');
-        }, 3000);
-        return;
-      } catch (err) {
-        console.warn('Erro ou indisponibilidade no Supabase, efetuando cadastro em Modo Demo:', err);
+        } catch (err) {
+          console.warn('Erro ao registrar via Supabase, criando conta local:', err);
+        }
       }
-    }
 
-    // Salvar Localmente (Modo Demo / Fallback)
-    try {
+      // Salvar Localmente (Modo Demo / Fallback)
       const savedClinic = mockDb.saveClinic(newClinic);
-
-      // Criar conta do proprietário/administrador da clínica
       const newUser = {
         id: 'user-' + Math.random().toString(36).substr(2, 9),
         email: regEmail,
         password: regPassword,
-        role: 'CLINIC_ADMIN', // CLINIC_OWNER / CLINIC_ADMIN
+        role: 'CLINIC_ADMIN',
         full_name: regFullName.trim() || 'Administrador',
         phone: regPhone.trim(),
         clinic_id: savedClinic.id
@@ -251,9 +244,7 @@ export default function Login({ initialView = 'login', onBack }) {
       mockDb.saveUser(newUser);
 
       setSuccess(`Clínica "${clinicName}" cadastrada com sucesso em Modo Demo! Redirecionando para login...`);
-      setLoadingState(false);
 
-      // Mover para login pré-preenchido
       setTimeout(async () => {
         setEmail(regEmail);
         setPassword(regPassword);
@@ -265,7 +256,8 @@ export default function Login({ initialView = 'login', onBack }) {
       }, 1500);
     } catch (err) {
       console.error('Erro ao cadastrar clínica localmente:', err);
-      setError('Falha ao registrar clínica localmente.');
+      setError('Falha ao registrar clínica.');
+    } finally {
       setLoadingState(false);
     }
   };

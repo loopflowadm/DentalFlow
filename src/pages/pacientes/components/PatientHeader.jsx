@@ -42,7 +42,7 @@ export default function PatientHeader({
     : 'C16A3F1B';
 
   return (
-    <div className="w-full bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition-colors duration-300 relative overflow-hidden text-slate-800 dark:text-white">
+    <div className="w-full bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/5 px-3 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition-colors duration-300 relative overflow-hidden text-slate-800 dark:text-white">
       {/* Informações do Paciente */}
       <div className="flex items-center gap-4">
         {/* Foto / Avatar com Anel de Profundidade */}

@@ -81,6 +81,19 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* Recharts Fix - Remove black focus outline from SVG charts */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-responsive-container svg,
+.recharts-responsive-container div {
+  outline: none !important;
+}
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-layer:focus {
+  outline: none !important;
+}
+
 /* Efeito de botão físico macOS */
 .btn-depth-primary {
   @apply relative overflow-hidden bg-primary text-white font-semibold rounded-xl transition-all;

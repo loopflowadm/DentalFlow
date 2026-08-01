@@ -5,9 +5,8 @@ import {
   Check, ArrowRight, ChevronDown, Users, FileText, CheckCircle2,
   BarChart3, Clock, X, UserPlus, Search, Bell, Lock, Headphones,
   Star, Brain, Plug, TrendingUp, ClipboardList, Zap, Heart,
-  ExternalLink, Mail, Phone, MapPin, Globe, ChevronRight,
-  Play, Monitor, Smartphone, Tablet, Activity, Award,
-  Folder, CreditCard, Bot, Link
+  Play, Monitor, Smartphone, Tablet, Activity, Award, Phone,
+  Folder, CreditCard, Bot, Link as LinkIcon, ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Logo from '../components/Logo';
@@ -30,11 +29,6 @@ const fadeIn = {
   })
 };
 
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
-};
-
 /* ── Animated section wrapper ── */
 function AnimatedSection({ children, className = '', delay = 0 }) {
   const ref = useRef(null);
@@ -52,9 +46,8 @@ function AnimatedSection({ children, className = '', delay = 0 }) {
   );
 }
 
-/* ── Brand Logo: Official logo with proper styling for landing contexts ── */
+/* ── Brand Logo ── */
 const BrandLogo = ({ className = '', variant = 'dark' }) => {
-  // variant: 'dark' = dark fill (for light backgrounds), 'light' = white fill (for dark backgrounds)
   const fillClass = variant === 'light' ? 'landing-logo--light' : 'landing-logo--dark';
   return (
     <div className={`landing-brand-logo ${fillClass} ${className}`}>
@@ -88,6 +81,7 @@ export default function LandingPage({ onLogin, onRegister }) {
   const [formLoading, setFormLoading] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -137,34 +131,27 @@ export default function LandingPage({ onLogin, onRegister }) {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  /* ═══════════════════════════════════════════════════════════
-     RENDER
-  ═══════════════════════════════════════════════════════════ */
   return (
     <div className="landing-page">
       {/* ═══════════════ HEADER ═══════════════ */}
       <header className={`landing-header ${scrolled ? 'landing-header--scrolled' : ''}`}>
         <div className="landing-header__inner">
-          {/* Logo */}
           <div className="landing-header__logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <BrandLogo variant="dark" />
           </div>
 
-          {/* Nav */}
           <nav className="landing-header__nav">
-            <button onClick={() => scrollToSection('recursos')}>Recursos</button>
-            <button onClick={() => scrollToSection('funcionalidades')}>Funcionalidades</button>
-            <button onClick={() => scrollToSection('como-funciona')}>Como Funciona</button>
-            <button onClick={() => scrollToSection('integracoes')}>Integrações</button>
-            <button onClick={() => scrollToSection('precos')}>Preços</button>
+            <button onClick={() => scrollToSection('segunda-feira')}>Rotina</button>
+            <button onClick={() => scrollToSection('beneficios')}>Benefícios</button>
+            <button onClick={() => scrollToSection('demonstracao')}>Demonstração</button>
+            <button onClick={() => scrollToSection('oferta')}>Oferta</button>
             <button onClick={() => scrollToSection('contato')}>Contato</button>
           </nav>
 
-          {/* Actions */}
           <div className="landing-header__actions">
             <button onClick={onLogin} className="landing-btn--ghost">Entrar</button>
-            <button onClick={onRegister} className="landing-btn--primary landing-btn--sm">
-              Começar Gratuitamente
+            <button onClick={() => scrollToSection('oferta')} className="landing-btn--primary landing-btn--sm">
+              Quero Minha Clínica no Automático
             </button>
           </div>
         </div>
@@ -172,7 +159,6 @@ export default function LandingPage({ onLogin, onRegister }) {
 
       {/* ═══════════════ HERO SECTION ═══════════════ */}
       <section className="landing-hero">
-        {/* Background decorations */}
         <div className="landing-hero__bg">
           <div className="landing-hero__orb landing-hero__orb--1" />
           <div className="landing-hero__orb landing-hero__orb--2" />
@@ -181,7 +167,7 @@ export default function LandingPage({ onLogin, onRegister }) {
         </div>
 
         <div className="landing-hero__inner">
-          {/* Left - Copy */}
+          {/* Left Column Copy */}
           <motion.div
             className="landing-hero__copy"
             initial="hidden"
@@ -189,120 +175,128 @@ export default function LandingPage({ onLogin, onRegister }) {
             variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
           >
             <motion.div variants={fadeUp} className="landing-hero__badge">
-              <Sparkles style={{ width: 14, height: 14 }} />
-              Menos tempo no WhatsApp • Zero cadeiras vazias
+              <Sparkles style={{ width: 14, height: 14, color: '#F59E0B' }} />
+              A nova geração de gestão para clínicas odontológicas
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="landing-hero__title">
-              Reduza faltas e organize sua clínica{' '}
-              <span className="landing-hero__title-accent">sem passar o dia</span> no WhatsApp.
+              A clínica que{' '}
+              <span className="landing-hero__title-accent">trabalha enquanto você atende.</span>
             </motion.h1>
 
             <motion.p variants={fadeUp} className="landing-hero__subtitle">
-              Lembretes automáticos, agenda inteligente e controle financeiro simples.
-              Tudo em um único sistema feito para a rotina real do seu consultório.
+              Chega de confirmações manuais, agendas com furos e planilhas espalhadas. O DentalFlow <strong>automatiza a rotina da sua clínica</strong> para que você e sua equipe possam focar no que realmente importa: <strong>cuidar dos pacientes</strong>.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="landing-hero__buttons">
-              <div className="flex flex-col items-center sm:items-start gap-1.5">
-                <button onClick={onRegister} className="landing-btn--primary landing-btn--lg">
-                  Testar grátis por 14 dias
-                  <ArrowRight style={{ width: 18, height: 18 }} />
-                </button>
-                <span className="text-xs text-slate-400 font-medium pl-1">
-                  ✓ Sem cartão de crédito • Configuração em 2 minutos
-                </span>
-              </div>
-              <button onClick={() => scrollToSection('contato')} className="landing-btn--outline landing-btn--lg">
-                <MessageSquare style={{ width: 16, height: 16 }} />
-                Falar com especialista
+            <motion.div variants={fadeUp} className="landing-hero__buttons flex-wrap gap-4">
+              <button onClick={() => scrollToSection('oferta')} className="landing-btn--primary landing-btn--lg">
+                Começar 14 dias grátis
+                <ArrowRight style={{ width: 18, height: 18 }} />
+              </button>
+
+              <button onClick={() => scrollToSection('demonstracao')} className="landing-btn--outline landing-btn--lg flex items-center gap-2">
+                <Play style={{ width: 14, height: 14, fill: '#196BFB', color: '#196BFB' }} />
+                Veja funcionando em 2 min
               </button>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="landing-hero__social-proof">
-              <div className="flex items-center gap-4 text-xs text-slate-300 font-medium pt-1">
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
-                  <Shield className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Segurança LGPD</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Ativação em 2 min</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-800">
-                  <Headphones className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Suporte no Brasil</span>
-                </div>
+            {/* 4 Trust points in 2x2 grid */}
+            <motion.div variants={fadeUp} className="landing-hero__trust-grid grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 text-xs font-semibold text-slate-400">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-500" />
+                <span>Sem cartão de crédito</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-500" />
+                <span>Ativação em 2 minutos</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-500" />
+                <span>Dados protegidos (LGPD)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-blue-500" />
+                <span>Suporte humano no WhatsApp</span>
               </div>
             </motion.div>
           </motion.div>
 
-          {/* Right - Dashboard Mockup */}
+          {/* Right Column Showcase Mockup */}
           <motion.div
             className="landing-hero__mockup"
-            initial={{ opacity: 0, x: 60, scale: 0.95 }}
+            initial={{ opacity: 0, x: 50, scale: 0.96 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Dashboard Card */}
+            {/* Top Right Floating Notification Badge */}
+            <motion.div
+              className="landing-hero__float-notif"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+            >
+              <div className="landing-hero__notif-icon bg-emerald-500/20 text-emerald-500 p-2 rounded-xl">
+                <MessageSquare className="w-5 h-5 fill-emerald-500 text-emerald-500" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold text-slate-800">Paciente confirmou!</span>
+                  <span className="text-[10px] text-slate-400">agora</span>
+                </div>
+                <span className="text-xs text-slate-600 font-medium block">
+                  Ana Paula confirmou a consulta de amanhã às 14:00
+                </span>
+              </div>
+            </motion.div>
+
+            {/* Laptop App Mockup */}
             <div className="landing-dashboard">
-              {/* Browser chrome */}
               <div className="landing-dashboard__chrome">
                 <div className="landing-dashboard__dots">
                   <span style={{ background: '#FF5F57' }} />
                   <span style={{ background: '#FFBD2E' }} />
                   <span style={{ background: '#28C840' }} />
                 </div>
-                <div className="landing-dashboard__url">dentalflow.app</div>
+                <div className="landing-dashboard__url">dentalflow.app • Resumo da Clínica</div>
                 <div style={{ width: 48 }} />
               </div>
 
-              {/* App Content */}
               <div className="landing-dashboard__content">
-                {/* Top bar */}
                 <div className="landing-dashboard__topbar">
                   <div className="landing-dashboard__topbar-left">
                     <div className="landing-dashboard__app-icon">DF</div>
-                    <span className="landing-dashboard__greeting">Olá, Dra. Camila! 👋</span>
+                    <span className="landing-dashboard__greeting">Resumo da clínica</span>
                   </div>
                   <div className="landing-dashboard__topbar-right">
                     <Search style={{ width: 14, height: 14, color: '#94A3B8' }} />
                     <Bell style={{ width: 14, height: 14, color: '#94A3B8' }} />
-                    <img className="landing-dashboard__avatar" src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=50" alt="" />
                   </div>
                 </div>
-                <div className="landing-dashboard__sub">Aqui está o resumo da sua clínica hoje.</div>
 
-                {/* Stats */}
                 <div className="landing-dashboard__stats">
                   {[
-                    { label: 'Consultas hoje', val: '24', delta: '▲ 30%', positive: true },
-                    { label: 'Faturamento', val: 'R$ 12.840', delta: '▲ 16%', positive: true },
-                    { label: 'Pacientes ativos', val: '1.268', delta: '▲ 14%', positive: true },
-                    { label: 'Taxa de retorno', val: '72%', delta: '▼ 8%', positive: false },
+                    { label: 'Consultas hoje', val: '24', delta: '↑ 12%', positive: true },
+                    { label: 'Confirmadas', val: '21', delta: '↑ 19%', positive: true },
+                    { label: 'Faturamento do mês', val: 'R$ 8.750,00', delta: '↑ 23%', positive: true },
+                    { label: 'Pacientes ativos', val: '842', delta: '↑ 6%', positive: true },
                   ].map((s, i) => (
                     <div key={i} className="landing-dashboard__stat-card">
                       <span className="landing-dashboard__stat-label">{s.label}</span>
                       <span className="landing-dashboard__stat-value">{s.val}</span>
-                      <span className={`landing-dashboard__stat-delta ${s.positive ? 'positive' : 'negative'}`}>{s.delta} vs ontem</span>
+                      <span className={`landing-dashboard__stat-delta ${s.positive ? 'positive' : 'negative'}`}>{s.delta}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Two columns: Agenda + Chart */}
                 <div className="landing-dashboard__columns">
-                  {/* Agenda */}
                   <div className="landing-dashboard__panel">
                     <div className="landing-dashboard__panel-header">
-                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-secondary" /> Agenda do dia</span>
-                      <span className="landing-dashboard__panel-link">Ver todas →</span>
+                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-blue-500" /> Agenda do dia</span>
                     </div>
                     {[
-                      { time: '08:00', name: 'Mariana Silva', tag: 'Profilaxia', color: '#196BFB' },
-                      { time: '09:30', name: 'João Pereira', tag: 'Clareamento', color: '#10B981' },
-                      { time: '11:00', name: 'Ana Souza', tag: 'Restauração', color: '#8B5CF6' },
-                      { time: '14:00', name: 'Carlos Lima', tag: 'Retorno', color: '#F59E0B' },
-                      { time: '15:30', name: 'Juliana Martins', tag: 'Ortodontia', color: '#EC4899' },
+                      { time: '07:00', name: 'Ana Paula Souza', tag: 'Clareamento', color: '#196BFB' },
+                      { time: '08:30', name: 'Célio Eduardo', tag: 'Avaliação', color: '#10B981' },
+                      { time: '10:00', name: 'Vanessa Lima', tag: 'Limpeza', color: '#8B5CF6' },
+                      { time: '14:00', name: 'João Pedro Silva', tag: 'Retorno', color: '#F59E0B' },
                     ].map((a, i) => (
                       <div key={i} className="landing-dashboard__agenda-item">
                         <span className="landing-dashboard__agenda-time">{a.time}</span>
@@ -312,287 +306,416 @@ export default function LandingPage({ onLogin, onRegister }) {
                     ))}
                   </div>
 
-                  {/* Chart */}
                   <div className="landing-dashboard__panel">
                     <div className="landing-dashboard__panel-header">
-                      <span>📊 Faturamento</span>
-                      <span className="landing-dashboard__panel-link">Mensal ▾</span>
+                      <span className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Confirmações automáticas</span>
                     </div>
-                    <div className="landing-dashboard__chart">
-                      <svg className="landing-dashboard__chart-svg" viewBox="0 0 240 80" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="chartFill" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#196BFB" stopOpacity="0.15" />
-                            <stop offset="100%" stopColor="#196BFB" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                        <path d="M0,60 Q20,55 40,50 T80,35 T120,25 T160,15 T200,20 L240,8 L240,80 L0,80 Z" fill="url(#chartFill)" />
-                        <path d="M0,60 Q20,55 40,50 T80,35 T120,25 T160,15 T200,20 L240,8" fill="none" stroke="#196BFB" strokeWidth="2.5" strokeLinecap="round" />
-                        <circle cx="200" cy="20" r="4" fill="#196BFB" stroke="white" strokeWidth="2" />
-                      </svg>
-                      <div className="landing-dashboard__chart-tooltip">R$ 12.840</div>
-                      <div className="landing-dashboard__chart-labels">
-                        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                    <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-100">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Enviadas hoje: <strong className="text-slate-800">48</strong></span>
+                        <span className="text-slate-500">Confirmadas: <strong className="text-slate-800">41</strong></span>
+                      </div>
+                      <div className="h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                        <span className="text-[11px] font-bold text-blue-600">Taxa de Confirmação 85.4%</span>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Quick actions */}
-                <div className="landing-dashboard__actions-row">
-                  <span className="landing-dashboard__actions-title">Atalhos rápidos</span>
-                  <div className="landing-dashboard__shortcuts">
-                    {[
-                      { icon: <UserPlus style={{ width: 14, height: 14 }} />, label: 'Novo paciente' },
-                      { icon: <Calendar style={{ width: 14, height: 14 }} />, label: 'Nova consulta' },
-                      { icon: <MessageSquare style={{ width: 14, height: 14 }} />, label: 'Enviar lembrete' },
-                      { icon: <BarChart3 style={{ width: 14, height: 14 }} />, label: 'Relatórios' },
-                    ].map((b, i) => (
-                      <div key={i} className="landing-dashboard__shortcut">
-                        {b.icon}
-                        <span>{b.label}</span>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Floating Phone */}
-            <div className="landing-hero__phone">
-              <div className="landing-hero__phone-notch" />
-              <div className="landing-hero__phone-screen">
-                <div className="landing-hero__phone-header">
-                  <BrandIcon variant="dark" className="landing-hero__phone-brand-icon" />
-                  <span className="landing-hero__phone-title">Agenda</span>
-                  <span className="landing-hero__phone-date">Hoje, 24 de Mai</span>
+            {/* Right Side Floating Phone with WhatsApp Chat */}
+            <div className="landing-hero__phone-whatsapp">
+              <div className="landing-hero__phone-header">
+                <div className="landing-hero__whatsapp-avatar">DF</div>
+                <div>
+                  <span className="landing-hero__whatsapp-name">DentalFlow Clínica</span>
+                  <span className="landing-hero__whatsapp-status">online</span>
                 </div>
-                <div className="landing-hero__phone-items">
+              </div>
+              <div className="landing-hero__whatsapp-body">
+                <div className="landing-hero__wa-msg landing-hero__wa-msg--received">
+                  Olá, Ana Paula! 😊<br />
+                  Sua consulta é amanhã (15/06) às 14:00.<br /><br />
+                  Para confirmar, responda com:<br />
+                  1 - Confirmar<br />
+                  2 - Reagendar<br />
+                  3 - Cancelar
+                  <span className="landing-hero__wa-time">09:42</span>
+                </div>
+                <div className="landing-hero__wa-msg landing-hero__wa-msg--sent">
+                  1
+                  <span className="landing-hero__wa-time">09:43 ✓✓</span>
+                </div>
+                <div className="landing-hero__wa-msg landing-hero__wa-msg--received bg-emerald-50 border-emerald-200 text-emerald-900">
+                  ✅ <strong>Consulta confirmada!</strong><br />
+                  Te esperamos! 😊
+                  <span className="landing-hero__wa-time">09:43</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══════════════ SEÇÃO: MAIS QUE UM SISTEMA ═══════════════ */}
+      <section className="landing-overview-section py-16 bg-slate-50 border-y border-slate-200/80">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200/90 shadow-xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left Copy & Checklist */}
+            <AnimatedSection className="lg:col-span-5">
+              <span className="text-xs font-bold text-blue-600 tracking-wider uppercase block mb-2">MAIS QUE UM SISTEMA.</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight mb-4">
+                É uma nova forma de administrar sua clínica.
+              </h2>
+              <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                Enquanto você faz um procedimento, o DentalFlow cuida de toda a operação em segundo plano.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 text-xs font-semibold text-slate-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Confirma consultas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Organiza recebimentos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Envia lembretes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Atualiza a agenda</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Acompanha orçamentos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span>Gera relatórios</span>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Right Dashboard Calendar View Mockup */}
+            <AnimatedSection delay={0.15} className="lg:col-span-7">
+              <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-lg bg-white">
+                <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <div className="flex items-center gap-2">
+                    <BrandIcon variant="dark" className="w-4 h-4" />
+                    <span className="font-bold text-slate-800">DentalFlow • Agenda Semanal</span>
+                  </div>
+                  <span>12 - 18 de Maio, 2024</span>
+                </div>
+
+                <div className="p-4 grid grid-cols-6 gap-2 text-[10px] bg-slate-50/50 min-h-[220px]">
                   {[
-                    { name: 'Mariana Silva', time: '08:00', color: '#196BFB' },
-                    { name: 'João Pereira', time: '09:30', color: '#10B981' },
-                    { name: 'Ana Souza', time: '11:00', color: '#8B5CF6' },
-                    { name: 'Carlos Lima', time: '14:00', color: '#F59E0B' },
-                    { name: 'Juliana Martins', time: '15:30', color: '#EC4899' },
-                  ].map((item, i) => (
-                    <div key={i} className="landing-hero__phone-item">
-                      <div className="landing-hero__phone-dot" style={{ background: item.color }} />
-                      <div className="landing-hero__phone-item-info">
-                        <span className="landing-hero__phone-item-name">{item.name}</span>
-                        <span className="landing-hero__phone-item-time">{item.time}</span>
+                    { day: 'Seg 12', time: '07:00', title: 'Ana Paula Souza', tag: 'Clareamento', bg: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
+                    { day: 'Ter 13', time: '09:30', title: 'Vanessa Lima', tag: 'Avaliação', bg: 'bg-rose-100 border-rose-300 text-rose-800' },
+                    { day: 'Qua 14', time: '11:00', time2: '11:00', title: 'Felisberto Alves', tag: 'Limpeza', bg: 'bg-teal-100 border-teal-300 text-teal-800' },
+                    { day: 'Qui 15', time: '08:30', title: 'Juliana Martins', tag: 'Canal', bg: 'bg-red-100 border-red-300 text-red-800' },
+                    { day: 'Sex 16', time: '09:00', title: 'Fernando Rocha', tag: 'Aparelho', bg: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
+                    { day: 'Sáb 17', time: '10:30', title: 'Patrícia Gomes', tag: 'Clareamento', bg: 'bg-blue-100 border-blue-300 text-blue-800' },
+                  ].map((col, idx) => (
+                    <div key={idx} className="flex flex-col gap-2">
+                      <span className="font-bold text-slate-600 text-center pb-1 border-b border-slate-200">{col.day}</span>
+                      <div className={`p-2 rounded-lg border ${col.bg} flex flex-col justify-between h-20 shadow-xs`}>
+                        <span className="font-extrabold text-[9px] truncate">{col.title}</span>
+                        <span className="opacity-80 text-[8px]">{col.tag}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Floating glassmorphism cards */}
-            <motion.div
-              className="landing-hero__float-card landing-hero__float-card--ai"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-            >
-              <Brain style={{ width: 16, height: 16, color: '#8B5CF6' }} />
-              <span>IA ativa</span>
-            </motion.div>
-
-            <motion.div
-              className="landing-hero__float-card landing-hero__float-card--patients"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut', delay: 0.5 }}
-            >
-              <TrendingUp style={{ width: 16, height: 16, color: '#10B981' }} />
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#0F172A' }}>+35%</span>
-                <span style={{ fontSize: 9, color: '#64748B', display: 'block' }}>retornos</span>
-              </div>
-            </motion.div>
-          </motion.div>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 
-      {/* ═══════════════ FEATURE BAR ═══════════════ */}
-      <section id="recursos" className="landing-feature-bar">
-        <AnimatedSection className="landing-feature-bar__inner">
-          {[
-            { icon: <Calendar style={{ width: 20, height: 20 }} />, label: 'Agenda Inteligente' },
-            { icon: <MessageSquare style={{ width: 20, height: 20 }} />, label: 'WhatsApp Integrado' },
-            { icon: <Users style={{ width: 20, height: 20 }} />, label: 'CRM de Pacientes' },
-            { icon: <DollarSign style={{ width: 20, height: 20 }} />, label: 'Financeiro' },
-            { icon: <ClipboardList style={{ width: 20, height: 20 }} />, label: 'Prontuário Digital' },
-            { icon: <Brain style={{ width: 20, height: 20 }} />, label: 'Inteligência Artificial' },
-            { icon: <BarChart3 style={{ width: 20, height: 20 }} />, label: 'Relatórios' },
-            { icon: <Plug style={{ width: 20, height: 20 }} />, label: 'Integrações' },
-          ].map((f, i) => (
-            <div key={i} className="landing-feature-bar__item">
-              <div className="landing-feature-bar__icon">{f.icon}</div>
-              <span>{f.label}</span>
-            </div>
-          ))}
-        </AnimatedSection>
-      </section>
-
-      {/* ═══════════════ FUNCIONALIDADES GRID ═══════════════ */}
-      <section id="funcionalidades" className="landing-features">
-        <div className="landing-features__inner">
-          {/* Left copy */}
-          <AnimatedSection className="landing-features__copy">
-            <span className="landing-overline">FEITO PARA O DIA A DIA DA CLÍNICA</span>
-            <h2 className="landing-section-title">
-              Enquanto você atende,<br />o DentalFlow cuida do resto.
+      {/* ═══════════════ SEÇÃO: IMAGINE COMO SERÁ SUA SEGUNDA-FEIRA (STEPPER HORIZONTAL) ═══════════════ */}
+      <section id="segunda-feira" className="landing-timeline-section py-20 bg-white border-b border-slate-200/80">
+        <div className="max-w-6xl mx-auto px-4">
+          <AnimatedSection className="mb-14">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              Imagine como será sua segunda-feira.
             </h2>
-            <p className="landing-section-subtitle">
-              Sua equipe ganha horas no dia sem precisar enviar mensagens manualmente nem decifrar planilhas complexas.
-            </p>
-            <button onClick={onRegister} className="landing-btn--primary landing-btn--lg" style={{ marginTop: 24 }}>
-              Testar 14 dias grátis
-              <ArrowRight style={{ width: 18, height: 18 }} />
-            </button>
           </AnimatedSection>
 
-          {/* Right 2x3 grid */}
-          <div className="landing-features__grid">
-            {[
-              { icon: <Calendar style={{ width: 22, height: 22 }} />, title: 'Agenda sem furos', desc: 'Consultas organizadas com confirmação automática pelo WhatsApp.', color: '#196BFB' },
-              { icon: <MessageSquare style={{ width: 22, height: 22 }} />, title: 'WhatsApp Direto e Nativo', desc: 'Envie lembretes e confirmações sem precisar escanear QR Code todo dia.', color: '#25D366' },
-              { icon: <Users style={{ width: 22, height: 22 }} />, title: 'Prontuário em 1 Clique', desc: 'Histórico de tratamentos e anamnese acessíveis no celular ou PC.', color: '#6366F1' },
-              { icon: <DollarSign style={{ width: 22, height: 22 }} />, title: 'Caixa e Orçamentos', desc: 'Saiba exatamente quanto tem a receber e quais orçamentos estão abertos.', color: '#F59E0B' },
-              { icon: <Brain style={{ width: 22, height: 22 }} />, title: 'Lembretes de Retorno', desc: 'O sistema avisa automaticamente quando o paciente precisa voltar.', color: '#8B5CF6' },
-              { icon: <BarChart3 style={{ width: 22, height: 22 }} />, title: 'Relatórios Claros', desc: 'Visão simples do faturamento mensal sem precisar ser contador.', color: '#06B6D4' },
-            ].map((c, i) => (
-              <AnimatedSection key={i} delay={i * 0.08} className="landing-features__card">
-                <div className="landing-features__card-icon" style={{ background: c.color + '12', color: c.color }}>
-                  {c.icon}
+          {/* Horizontal Stepper Line */}
+          <div className="relative">
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-6 left-12 right-12 h-0.5 bg-blue-200 z-0" />
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
+              {[
+                {
+                  time: '08:00',
+                  icon: <Calendar className="w-5 h-5 text-white" />,
+                  desc: 'Pacientes confirmam presença automaticamente pelo WhatsApp no domingo.'
+                },
+                {
+                  time: '09:20',
+                  icon: <MessageSquare className="w-5 h-5 text-white" />,
+                  desc: 'Remarcações acontecem e a agenda se reorganiza sozinho.'
+                },
+                {
+                  time: '11:10',
+                  icon: <FileText className="w-5 h-5 text-white" />,
+                  desc: 'Você acessa o prontuário com todo o histórico do paciente.'
+                },
+                {
+                  time: '14:00',
+                  icon: <Phone className="w-5 h-5 text-white" />,
+                  desc: 'O sistema lembra um orçamento parado e o paciente recebe um contato.'
+                },
+                {
+                  time: '17:50',
+                  icon: <TrendingUp className="w-5 h-5 text-white" />,
+                  desc: 'Financeiro atualizado. Relatórios prontos. Dia encerrado com tudo em ordem.'
+                }
+              ].map((step, i) => (
+                <AnimatedSection key={i} delay={i * 0.08} className="flex flex-col items-start md:items-center text-left md:text-center">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4 border-4 border-white">
+                    {step.icon}
+                  </div>
+                  <span className="text-lg font-black text-slate-900 mb-2">{step.time}</span>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    {step.desc}
+                  </p>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ SEÇÃO: NA PRÁTICA — VEJA ACONTECENDO (DARK BANNER) ═══════════════ */}
+      <section id="demonstracao" className="landing-practice-section py-16 bg-slate-950">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-blue-950/80 border border-blue-500/30 rounded-3xl p-8 md:p-12 shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Title & Button */}
+              <AnimatedSection className="lg:col-span-4">
+                <span className="text-xs font-bold text-blue-400 tracking-wider uppercase block mb-2">NA PRÁTICA</span>
+                <h2 className="text-3xl font-black text-white leading-tight mb-3">
+                  Veja acontecendo.
+                </h2>
+                <p className="text-slate-300 text-xs leading-relaxed mb-6">
+                  Assista como o DentalFlow trabalha por você e por sua equipe.
+                </p>
+                <button
+                  onClick={() => setIsPlayingVideo(!isPlayingVideo)}
+                  className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  <Play className="w-4 h-4 fill-blue-400" />
+                  <span>Assistir demonstração completa (2 minutos)</span>
+                </button>
+              </AnimatedSection>
+
+              {/* Right 5 Sequential Steps Flow connected by arrows */}
+              <AnimatedSection delay={0.15} className="lg:col-span-8">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3 overflow-x-auto pb-2">
+                  {/* Step 1 */}
+                  <div className="flex flex-col items-center text-center min-w-[110px]">
+                    <div className="bg-slate-800/90 border border-slate-700 p-2 rounded-xl mb-2 w-full text-[10px] text-slate-300">
+                      <span className="font-bold text-slate-200 block mb-1">Olá Jader!</span>
+                      <span>Sua consulta é amanhã... 1 - Confirmar</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300">Paciente recebe mensagem</span>
+                  </div>
+
+                  <ChevronRight className="w-5 h-5 text-blue-400/60 hidden md:block flex-shrink-0" />
+
+                  {/* Step 2 */}
+                  <div className="flex flex-col items-center text-center min-w-[110px]">
+                    <div className="bg-emerald-950/80 border border-emerald-500/40 p-2 rounded-xl mb-2 w-full text-[10px] text-emerald-300">
+                      <span className="font-bold block">✅ Consulta confirmada!</span>
+                      <span>Te esperamos!</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300">Paciente confirma</span>
+                  </div>
+
+                  <ChevronRight className="w-5 h-5 text-blue-400/60 hidden md:block flex-shrink-0" />
+
+                  {/* Step 3 */}
+                  <div className="flex flex-col items-center text-center min-w-[110px]">
+                    <div className="bg-slate-800/90 border border-slate-700 p-2 rounded-xl mb-2 w-full text-[10px] text-blue-300 flex items-center justify-center gap-1">
+                      <Calendar className="w-3 h-3 text-blue-400" />
+                      <span>Agenda 100% OK</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300">Agenda atualiza automaticamente</span>
+                  </div>
+
+                  <ChevronRight className="w-5 h-5 text-blue-400/60 hidden md:block flex-shrink-0" />
+
+                  {/* Step 4 */}
+                  <div className="flex flex-col items-center text-center min-w-[110px]">
+                    <div className="bg-slate-800/90 border border-slate-700 p-2 rounded-xl mb-2 w-full text-[10px] text-slate-200">
+                      <span className="font-bold text-emerald-400 block">✓ Nova confirmação</span>
+                      <span>João Silva confirmou</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300">Recepção é avisada</span>
+                  </div>
+
+                  <ChevronRight className="w-5 h-5 text-blue-400/60 hidden md:block flex-shrink-0" />
+
+                  {/* Step 5 */}
+                  <div className="flex flex-col items-center text-center min-w-[110px]">
+                    <div className="bg-slate-800/90 border border-slate-700 p-2 rounded-xl mb-2 w-full text-[10px] text-slate-200">
+                      <span className="font-bold text-emerald-400 block">✓ Receita confirmada</span>
+                      <span className="font-extrabold text-white text-xs">R$ 250,00</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-300">Financeiro sincronizado</span>
+                  </div>
                 </div>
-                <h3 className="landing-features__card-title">{c.title}</h3>
-                <p className="landing-features__card-desc">{c.desc}</p>
+              </AnimatedSection>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ BENEFÍCIOS TRANSFORMACIONAIS ═══════════════ */}
+      <section id="beneficios" className="landing-benefits-section">
+        <div className="landing-benefits-section__inner">
+          <AnimatedSection className="text-center mb-14">
+            <span className="landing-overline">VOCÊ ATENDE. O DENTALFLOW ADMINISTRA.</span>
+            <h2 className="landing-section-title text-white">
+              Tranquilidade para focar no que você faz de melhor.
+            </h2>
+          </AnimatedSection>
+
+          <div className="landing-benefits__grid">
+            {[
+              {
+                title: 'Nunca descubra uma falta quando a cadeira já estiver vazia.',
+                desc: 'Confirmações automáticas pelo WhatsApp reduzem esquecimentos e mantêm sua agenda organizada sem esforço da recepção.',
+                color: '#196BFB', icon: <Calendar className="w-6 h-6" />
+              },
+              {
+                title: 'Nenhum orçamento fica esquecido.',
+                desc: 'Pacientes que ainda não fecharam o tratamento recebem acompanhamentos automáticos e voltam para o seu funil de atendimento.',
+                color: '#10B981', icon: <DollarSign className="w-6 h-6" />
+              },
+              {
+                title: 'Sua recepção deixa de passar horas no WhatsApp.',
+                desc: 'Lembretes de consulta, confirmações e retornos periódicos acontecem sozinhos em segundo plano 24 horas por dia.',
+                color: '#25D366', icon: <MessageSquare className="w-6 h-6" />
+              },
+              {
+                title: 'Todo o financeiro em um único lugar.',
+                desc: 'Entradas, saídas, orçamentos, recibos e indicadores de faturamento organizados sem que você precise ser um contador.',
+                color: '#F59E0B', icon: <BarChart3 className="w-6 h-6" />
+              },
+              {
+                title: 'Prontuário completo em qualquer dispositivo.',
+                desc: 'Acesse o histórico clínico do paciente no consultório, em casa ou no celular com total sincronização e segurança LGPD.',
+                color: '#8B5CF6', icon: <ClipboardList className="w-6 h-6" />
+              },
+              {
+                title: 'Saiba exatamente como está sua clínica.',
+                desc: 'Visão clara da taxa de retorno de pacientes, faturamento mensal e eficiência da agenda em um painel intuitivo.',
+                color: '#06B6D4', icon: <TrendingUp className="w-6 h-6" />
+              }
+            ].map((card, i) => (
+              <AnimatedSection key={i} delay={i * 0.08} className="landing-benefits__card">
+                <div className="landing-benefits__icon" style={{ background: card.color + '15', color: card.color }}>
+                  {card.icon}
+                </div>
+                <h3 className="landing-benefits__card-title">{card.title}</h3>
+                <p className="landing-benefits__card-desc">{card.desc}</p>
               </AnimatedSection>
             ))}
           </div>
+
+          <AnimatedSection delay={0.3} className="text-center mt-12">
+            <button onClick={() => scrollToSection('demonstracao')} className="landing-btn--outline landing-btn--lg">
+              Ver como funciona na prática
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </AnimatedSection>
         </div>
       </section>
 
-      {/* ═══════════════ COMPARATIVO INDIRETO ═══════════════ */}
-      <section className="landing-comparison-section bg-slate-900/60 py-16 border-y border-slate-800">
-        <div className="max-w-6xl mx-auto px-4">
+      {/* ═══════════════ DEMONSTRAÇÃO EM VÍDEO ═══════════════ */}
+      <section id="demonstracao" className="landing-video-section">
+        <div className="landing-video-section__inner">
           <AnimatedSection className="text-center mb-12">
-            <span className="landing-overline">POR QUE ESCOLHER O DENTALFLOW</span>
-            <h2 className="landing-section-title text-white">Sistemas tradicionais vs O jeito DentalFlow</h2>
+            <span className="landing-overline">VEJA ACONTECENDO</span>
+            <h2 className="landing-section-title text-white">
+              Não mostramos promessas.<br />Mostramos o sistema funcionando.
+            </h2>
+            <p className="landing-section-subtitle text-slate-300 max-w-xl mx-auto mt-2">
+              Veja como o paciente confirma a consulta no WhatsApp e a sua agenda atualiza instantaneamente.
+            </p>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* Outros sistemas */}
-            <AnimatedSection className="bg-slate-950/80 p-6 rounded-2xl border border-red-500/20">
-              <div className="flex items-center gap-2 mb-4 text-red-400 font-bold text-lg">
-                <X className="w-5 h-5" />
-                <span>Sistemas Tradicionais</span>
+          <AnimatedSection delay={0.1} className="landing-video__player-container">
+            <div className="landing-video__chrome">
+              <div className="landing-video__dots">
+                <span style={{ background: '#FF5F57' }} />
+                <span style={{ background: '#FFBD2E' }} />
+                <span style={{ background: '#28C840' }} />
               </div>
-              <ul className="space-y-3 text-slate-300 text-sm">
-                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Mensagens no WhatsApp precisam ser enviadas manualmente uma por uma</li>
-                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Telas poluídas e lentas que exigem semanas de treinamento da recepção</li>
-                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Cobram valores extras por cada usuário ou módulo adicional</li>
-                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Suporte demorado via ticket com respostas genéricas</li>
-              </ul>
-            </AnimatedSection>
+              <span className="text-xs text-slate-400 font-medium">Demonstração Interativa • DentalFlow em 2 minutos</span>
+            </div>
 
-            {/* DentalFlow */}
-            <AnimatedSection delay={0.1} className="bg-blue-950/40 p-6 rounded-2xl border border-blue-500/30">
-              <div className="flex items-center gap-2 mb-4 text-blue-400 font-bold text-lg">
-                <Check className="w-5 h-5" />
-                <span>O Jeito DentalFlow</span>
+            <div className="landing-video__viewport" onClick={() => setIsPlayingVideo(!isPlayingVideo)}>
+              <div className="landing-video__preview-bg" />
+              <div className="landing-video__play-overlay">
+                <div className="landing-video__play-btn">
+                  <Play className="w-8 h-8 text-white fill-white ml-1" />
+                </div>
+                <span className="text-white font-bold text-sm mt-3">Clique para ver a automação ao vivo</span>
               </div>
-              <ul className="space-y-3 text-slate-200 text-sm">
-                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Confirmações e lembretes totalmente automáticos no WhatsApp</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Visual moderno e limpo: sua secretária aprende em menos de 15 minutos</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Preço fixo e transparente sem surpresas no fim do mês</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Suporte humanizado rápido direto no WhatsApp</li>
-              </ul>
-            </AnimatedSection>
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* ═══════════════ DARK CONTRAST SECTION ═══════════════ */}
-      <section className="landing-dark-section">
-        <div className="landing-dark-section__inner">
-          {/* Photo */}
-          <AnimatedSection className="landing-dark-section__photo-col">
-            <div className="landing-dark-section__photo-wrapper">
-              <div className="landing-dark-section__photo-glow" />
-              <img
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=500"
-                alt="Dentista usando DentalFlow"
-                className="landing-dark-section__photo"
-              />
+            {/* 4 Steps Flow */}
+            <div className="landing-video__steps-row">
+              {[
+                { step: '1', title: 'Paciente recebe mensagem no WhatsApp' },
+                { step: '2', title: 'Paciente responde "1" para confirmar' },
+                { step: '3', title: 'Agenda é atualizada na hora' },
+                { step: '4', title: 'Você atende com 0% de preocupação' }
+              ].map((s, idx) => (
+                <div key={idx} className="landing-video__step-item">
+                  <span className="landing-video__step-num">{s.step}</span>
+                  <span className="landing-video__step-text">{s.title}</span>
+                </div>
+              ))}
             </div>
           </AnimatedSection>
-
-          {/* Pain points */}
-          <AnimatedSection delay={0.15} className="landing-dark-section__problems">
-            <h3 className="landing-dark-section__heading">
-              Chega de perder tempo com tarefas que não geram receita.
-            </h3>
-            <ul className="landing-dark-section__list">
-              {[
-                'Enviar mensagens de confirmação uma a uma no WhatsApp',
-                'Chegar na clínica na segunda e encontrar furos na agenda',
-                'Perder orçamentos porque ninguém fez o acompanhamento',
-                'Não saber o valor exato a receber no fim do mês',
-                'Usar cadernos ou planilhas que somem'
-              ].map((t, i) => (
-                <li key={i} className="landing-dark-section__list-item landing-dark-section__list-item--problem">
-                  <span className="landing-dark-section__list-marker landing-dark-section__list-marker--x">
-                    <X style={{ width: 12, height: 12 }} />
-                  </span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </AnimatedSection>
-
-          {/* Benefits */}
-          <AnimatedSection delay={0.3} className="landing-dark-section__benefits">
-            <h3 className="landing-dark-section__heading landing-dark-section__heading--accent">
-              Com o DentalFlow, tudo roda sozinho em segundo plano.
-            </h3>
-            <ul className="landing-dark-section__list">
-              {[
-                'O paciente confirma no WhatsApp e a agenda atualiza',
-                'Lembretes de consulta enviados no horário certo',
-                'Acompanhamento automático de orçamentos pendentes',
-                'Controle de fluxo de caixa simples e intuitivo',
-                'Mais tempo para focar no atendimento clínico'
-              ].map((t, i) => (
-                <li key={i} className="landing-dark-section__list-item landing-dark-section__list-item--benefit">
-                  <span className="landing-dark-section__list-marker landing-dark-section__list-marker--check">
-                    <Check style={{ width: 12, height: 12 }} />
-                  </span>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </AnimatedSection>
         </div>
       </section>
 
-      {/* ═══════════════ RESULTS ═══════════════ */}
+      {/* ═══════════════ MÉTRICAS E RESULTADOS ═══════════════ */}
       <section className="landing-results">
         <AnimatedSection className="landing-results__header">
-          <span className="landing-overline">MÉTRICAS DA SUA CLÍNICA</span>
-          <h2 className="landing-section-title">O impacto real na rotina do consultório</h2>
+          <span className="landing-overline">O QUE MUDA NA ROTINA DA CLÍNICA</span>
+          <h2 className="landing-section-title">Resultados reais desde a primeira semana</h2>
         </AnimatedSection>
         <div className="landing-results__grid">
           {[
-            { icon: <Users style={{ width: 28, height: 28 }} />, val: '-70%', label: 'Menos faltas sem aviso', desc: 'Com confirmações automáticas no WhatsApp', color: '#196BFB' },
-            { icon: <TrendingUp style={{ width: 28, height: 28 }} />, val: '+35%', label: 'Mais retornos confirmados', desc: 'Reativação de pacientes antigos sem esforço', color: '#10B981' },
-            { icon: <Clock style={{ width: 28, height: 28 }} />, val: '2h/dia', label: 'Salvas na recepção', desc: 'Sua secretária foca no atendimento presencial', color: '#F59E0B' },
-            { icon: <Heart style={{ width: 28, height: 28 }} />, val: '98%', label: 'Aprovação da equipe', desc: 'Facilidade de uso desde o primeiro dia', color: '#EC4899' },
+            { val: '-70%', label: 'Menos faltas sem aviso', desc: 'Porque cada paciente recebe confirmações automáticas no WhatsApp.', color: '#196BFB' },
+            { val: '2h/dia', label: 'Horas economizadas', desc: 'Sua secretária deixa de executar tarefas repetitivas.', color: '#10B981' },
+            { val: '+35%', label: 'Mais retornos confirmados', desc: 'Pacientes antigos voltam para acompanhamento no tempo certo.', color: '#F59E0B' },
+            { val: '100%', label: 'Menos estresse administrativo', desc: 'Mais tempo livre e foco total no atendimento clínico.', color: '#EC4899' },
           ].map((s, i) => (
             <AnimatedSection key={i} delay={i * 0.1} className="landing-results__card">
-              <div className="landing-results__card-icon" style={{ background: s.color + '10', color: s.color }}>
-                {s.icon}
-              </div>
               <span className="landing-results__card-value" style={{ color: s.color }}>{s.val}</span>
               <span className="landing-results__card-label">{s.label}</span>
               <span className="landing-results__card-desc">{s.desc}</span>
@@ -601,389 +724,340 @@ export default function LandingPage({ onLogin, onRegister }) {
         </div>
       </section>
 
-      {/* ═══════════════ COMO FUNCIONA (3 PASSOS) ═══════════════ */}
-      <section id="como-funciona" className="landing-testimonials py-20 bg-slate-950/40">
-        <AnimatedSection className="landing-testimonials__header text-center mb-14">
-          <span className="landing-overline">PROCESSO SIMPLES E RÁPIDO</span>
-          <h2 className="landing-section-title">Comece a usar na sua clínica em 3 passos</h2>
-          <p className="landing-section-subtitle max-w-xl mx-auto mt-2">
-            Sem instalações demoradas, sem depender de técnico de TI e sem cadastrar cartão de crédito.
-          </p>
-        </AnimatedSection>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
-          {[
-            {
-              step: '01',
-              title: 'Crie sua conta em 2 minutos',
-              desc: 'Cadastre seu e-mail e o nome da clínica. Seu teste gratuito de 14 dias é liberado na hora com acesso total.',
-              icon: <UserPlus className="w-6 h-6 text-blue-400" />
-            },
-            {
-              step: '02',
-              title: 'Conecte seu WhatsApp e agenda',
-              desc: 'Vincule seu WhatsApp de atendimento e importe seus pacientes por planilha Excel ou cadastro rápido.',
-              icon: <Plug className="w-6 h-6 text-emerald-400" />
-            },
-            {
-              step: '03',
-              title: 'Deixe o sistema rodar no automático',
-              desc: 'Pronto! Suas confirmações de consulta, lembretes de retorno e gestão financeira passam a rodar sozinhos.',
-              icon: <Zap className="w-6 h-6 text-purple-400" />
-            }
-          ].map((item, i) => (
-            <AnimatedSection key={i} delay={i * 0.12} className="bg-slate-900/90 border border-slate-800 p-8 rounded-2xl relative flex flex-col justify-between hover:border-blue-500/30 transition-all">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center">
-                    {item.icon}
-                  </div>
-                  <span className="text-3xl font-extrabold text-slate-700">{item.step}</span>
-                </div>
-                <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
+      {/* ═══════════════ COMPARAÇÃO (OUTROS VS DENTALFLOW) ═══════════════ */}
+      <section className="landing-comparison-section bg-slate-900/60 py-16 border-y border-slate-800">
+        <div className="max-w-6xl mx-auto px-4">
+          <AnimatedSection className="text-center mb-12">
+            <span className="landing-overline">A MAIORIA DOS SISTEMAS ORGANIZA INFORMAÇÕES</span>
+            <h2 className="landing-section-title text-white">O DentalFlow organiza toda a operação.</h2>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <AnimatedSection className="bg-slate-950/80 p-6 rounded-2xl border border-red-500/20">
+              <div className="flex items-center gap-2 mb-4 text-red-400 font-bold text-lg">
+                <X className="w-5 h-5" />
+                <span>Outros Sistemas</span>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-800/60 flex items-center text-xs text-blue-400 font-semibold gap-1">
-                <span>Passo {item.step} de 03</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </div>
-            </AnimatedSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════ DEVICE SHOWCASE ═══════════════ */}
-      <section className="landing-showcase">
-        <AnimatedSection className="landing-showcase__header">
-          <span className="landing-overline">SIMPLES DE USAR. BONITO DE VER. DIFÍCIL DE ABANDONAR.</span>
-          <h2 className="landing-section-title">Uma experiência incrível<br />em qualquer dispositivo.</h2>
-        </AnimatedSection>
-
-        <AnimatedSection className="landing-showcase__devices">
-          {/* Laptop */}
-          <div className="landing-showcase__laptop">
-            <div className="landing-showcase__laptop-screen">
-              <div className="landing-showcase__laptop-chrome">
-                <span style={{ background: '#FF5F57' }} /><span style={{ background: '#FFBD2E' }} /><span style={{ background: '#28C840' }} />
-              </div>
-              <div className="landing-showcase__laptop-content">
-                <div className="landing-showcase__mock-topbar" />
-                <div className="landing-showcase__mock-grid">
-                  <div className="landing-showcase__mock-card" /><div className="landing-showcase__mock-card" /><div className="landing-showcase__mock-card" />
-                </div>
-                <div className="landing-showcase__mock-chart" />
-              </div>
-            </div>
-            <div className="landing-showcase__laptop-base" />
-          </div>
-
-          {/* Tablet */}
-          <div className="landing-showcase__tablet">
-            <div className="landing-showcase__tablet-cam" />
-            <div className="landing-showcase__tablet-content">
-              <div className="landing-showcase__mock-topbar" />
-              <div className="landing-showcase__mock-card" style={{ height: 20, marginBottom: 6 }} />
-              <div className="landing-showcase__mock-card" style={{ height: 30, marginBottom: 6 }} />
-              <div className="landing-showcase__mock-chart" style={{ height: 50 }} />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div className="landing-showcase__phone">
-            <div className="landing-showcase__phone-notch-small" />
-            <div className="landing-showcase__phone-content">
-              <div className="landing-showcase__mock-topbar" style={{ height: 8, width: '50%' }} />
-              <div className="landing-showcase__mock-card" style={{ height: 14, marginBottom: 4 }} />
-              <div className="landing-showcase__mock-card" style={{ height: 14, marginBottom: 4 }} />
-              <div className="landing-showcase__mock-card" style={{ height: 14, marginBottom: 4 }} />
-              <div className="landing-showcase__mock-chart" style={{ height: 40, background: '#EAF2FF', border: '1px solid #C7D9FF', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 6, fontWeight: 700, color: '#196BFB' }}>Agenda do dia</span>
-              </div>
-            </div>
-          </div>
-        </AnimatedSection>
-      </section>
-
-      {/* ═══════════════ INTEGRATIONS ═══════════════ */}
-      <section id="integracoes" className="landing-integrations">
-        <AnimatedSection className="landing-integrations__header">
-          <span className="landing-overline">CONECTE COM SUAS FERRAMENTAS FAVORITAS</span>
-          <h2 className="landing-section-title">Integrações poderosas</h2>
-          <p className="landing-section-subtitle" style={{ maxWidth: 560, margin: '0 auto' }}>
-            O DentalFlow se conecta com as ferramentas que sua clínica já utiliza.
-          </p>
-        </AnimatedSection>
-
-        <div className="landing-integrations__grid">
-          {[
-            { name: 'WhatsApp', icon: MessageSquare, desc: 'Mensagens automatizadas', color: 'text-emerald-500' },
-            { name: 'Google Calendar', icon: Calendar, desc: 'Sincronização de agenda', color: 'text-blue-500' },
-            { name: 'Google Drive', icon: Folder, desc: 'Armazenamento de arquivos', color: 'text-amber-500' },
-            { name: 'Gmail', icon: Mail, desc: 'E-mails automáticos', color: 'text-red-500' },
-            { name: 'Stripe', icon: CreditCard, desc: 'Pagamentos online', color: 'text-indigo-500' },
-            { name: 'OpenAI', icon: Bot, desc: 'Inteligência artificial', color: 'text-purple-500' },
-            { name: 'n8n', icon: Zap, desc: 'Automação de workflows', color: 'text-yellow-500' },
-            { name: 'Meta', icon: Smartphone, desc: 'Anúncios e leads', color: 'text-blue-600' },
-            { name: 'Microsoft', icon: Monitor, desc: 'Produtividade', color: 'text-sky-500' },
-            { name: 'API', icon: Link, desc: 'Integração personalizada', color: 'text-slate-500' },
-          ].map((item, i) => {
-            const Icon = item.icon;
-            return (
-              <AnimatedSection key={i} delay={i * 0.05} className="landing-integrations__card">
-                <span className="landing-integrations__card-icon">
-                  <Icon className={`w-6 h-6 ${item.color}`} />
-                </span>
-                <span className="landing-integrations__card-name">{item.name}</span>
-                <span className="landing-integrations__card-desc">{item.desc}</span>
-              </AnimatedSection>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ═══════════════ PRICING ═══════════════ */}
-      <section id="precos" className="landing-pricing">
-        <AnimatedSection className="landing-pricing__header">
-          <span className="landing-overline">PLANOS E PREÇOS TRANSPARENTES</span>
-          <h2 className="landing-section-title">Sem fidelidade, sem letras miúdas</h2>
-          <p className="landing-section-subtitle" style={{ maxWidth: 540, margin: '8px auto 0' }}>
-            Teste qualquer plano grátis por 14 dias. Altere ou cancele quando quiser em 1 clique.
-          </p>
-        </AnimatedSection>
-
-        <div className="landing-pricing__grid">
-          {[
-            {
-              name: 'Starter', price: 'R$ 197', period: '/mês',
-              desc: 'Para consultórios individuais e dentistas solo.',
-              features: ['Até 2 dentistas', 'Agenda inteligente', 'WhatsApp automático', 'Prontuário digital', 'Controle de caixa básico', 'Suporte no WhatsApp'],
-              highlight: false
-            },
-            {
-              name: 'Professional', price: 'R$ 397', period: '/mês',
-              desc: 'Para clínicas em crescimento que querem automatizar tudo.',
-              features: ['Dentistas ilimitados', 'WhatsApp ilimitado nativo', 'Financeiro & Orçamentos', 'Relatórios de faturamento', 'Lembretes de retorno', 'Sem taxa de setup'],
-              highlight: true, badge: 'Mais escolhido'
-            },
-            {
-              name: 'Enterprise', price: 'Sob consulta', period: '',
-              desc: 'Para redes de clínicas e franqueados.',
-              features: ['Multi-clínicas unificado', 'Integração de API customizada', 'Treinamento VIP da equipe', 'Gerente de conta dedicado', 'SLA de atendimento'],
-              highlight: false
-            },
-          ].map((plan, i) => (
-            <AnimatedSection key={i} delay={i * 0.1} className={`landing-pricing__card ${plan.highlight ? 'landing-pricing__card--highlight' : ''}`}>
-              {plan.badge && <span className="landing-pricing__badge">{plan.badge}</span>}
-              <h3 className="landing-pricing__plan-name">{plan.name}</h3>
-              <p className="landing-pricing__plan-desc">{plan.desc}</p>
-              <div className="landing-pricing__price">
-                <span className="landing-pricing__price-value">{plan.price}</span>
-                <span className="landing-pricing__price-period">{plan.period}</span>
-              </div>
-              <ul className="landing-pricing__features">
-                {plan.features.map((f, j) => (
-                  <li key={j}><Check style={{ width: 16, height: 16, color: plan.highlight ? '#196BFB' : '#10B981' }} /> {f}</li>
-                ))}
+              <ul className="space-y-3 text-slate-300 text-sm">
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Mensagens no WhatsApp enviadas manualmente uma por uma</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Agenda estática que exige checagem constante</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Cobrança de módulos extras e usuários adicionais</li>
+                <li className="flex items-start gap-2"><span className="text-red-400">✕</span> Suporte demorado por ticket</li>
               </ul>
-              <button
-                onClick={onRegister}
-                className={plan.highlight ? 'landing-btn--primary landing-btn--lg landing-btn--full' : 'landing-btn--outline landing-btn--lg landing-btn--full'}
-              >
-                {plan.price === 'Sob consulta' ? 'Falar com consultor' : 'Testar 14 dias grátis'}
-              </button>
             </AnimatedSection>
-          ))}
-        </div>
-      </section>
 
-      {/* ═══════════════ FAQ ═══════════════ */}
-      <section id="faq" className="landing-faq">
-        <AnimatedSection className="landing-faq__header">
-          <span className="landing-overline">DÚVIDAS FREQUENTES</span>
-          <h2 className="landing-section-title">Respostas diretas, sem enrolação</h2>
-        </AnimatedSection>
-
-        <div className="landing-faq__list">
-          {[
-            { q: 'Preciso instalar algum programa no computador?', a: 'Não. O DentalFlow funciona 100% na nuvem. Você abre no navegador do computador, tablet ou celular sem precisar instalar nada.' },
-            { q: 'Como funciona a integração com o WhatsApp?', a: 'O DentalFlow envia confirmações de consulta e lembretes direto no WhatsApp do paciente. O paciente responde "1" para confirmar e a sua agenda atualiza automaticamente.' },
-            { q: 'Preciso cadastrar meu cartão de crédito para testar?', a: 'Não! Você pode criar sua conta e usar todas as funcionalidades do plano Professional por 14 dias totalmente de graça.' },
-            { q: 'Posso trazer meus pacientes de outro sistema?', a: 'Sim. Nossa equipe ajuda você a importar sua lista de pacientes e cadastros via planilha Excel/CSV de forma rápida e segura.' },
-            { q: 'Minha secretária vai conseguir usar?', a: 'Sim! Desenhamos o DentalFlow para ser intuitivo e simples. Em 15 minutos sua recepção já estará usando a agenda e enviando confirmações.' },
-            { q: 'Existe contrato de fidelidade?', a: 'Nenhum. Você pode cancelar sua assinatura a qualquer momento com apenas 1 clique, sem multas nem burocracia.' },
-          ].map((faq, idx) => (
-            <AnimatedSection key={idx} delay={idx * 0.04} className="landing-faq__item">
-              <button
-                onClick={() => setOpenFaq(p => p === idx ? null : idx)}
-                className={`landing-faq__question ${openFaq === idx ? 'landing-faq__question--open' : ''}`}
-              >
-                <span>{faq.q}</span>
-                <ChevronDown style={{ width: 20, height: 20, transition: 'transform 0.3s', transform: openFaq === idx ? 'rotate(180deg)' : 'rotate(0)' }} />
-              </button>
-              <AnimatePresence>
-                {openFaq === idx && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div className="landing-faq__answer">{faq.a}</div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </AnimatedSection>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════ CONTACT FORM ═══════════════ */}
-      <section id="contato" className="landing-contact">
-        <AnimatedSection className="landing-contact__card">
-          <div className="landing-contact__header">
-            <h2 className="landing-section-title">Quer ver o DentalFlow funcionando na sua clínica?</h2>
-            <p className="landing-section-subtitle">Preencha abaixo para receber um contato direto pelo WhatsApp com uma demonstração personalizada.</p>
-          </div>
-          <AnimatePresence mode="wait">
-            {formSuccess ? (
-              <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                className="landing-contact__success">
-                <CheckCircle2 style={{ width: 48, height: 48, color: '#10B981' }} />
-                <h3>Recebemos seu contato!</h3>
-                <p>
-                  Nossa equipe enviará uma mensagem no seu WhatsApp em instantes para mostrar o sistema na prática.
-                </p>
-                <button onClick={() => setFormSuccess(false)} className="landing-btn--primary landing-btn--lg">Enviar outra dúvida</button>
-              </motion.div>
-            ) : (
-              <motion.form key="form" onSubmit={handleFormSubmit} className="landing-contact__form">
-                <div className="landing-contact__form-row">
-                  <div className="landing-contact__field">
-                    <label>Seu Nome</label>
-                    <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Dr(a). Seu Nome" />
-                  </div>
-                  <div className="landing-contact__field">
-                    <label>Seu E-mail</label>
-                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="seuemail@clinica.com" />
-                  </div>
-                </div>
-                <div className="landing-contact__form-row landing-contact__form-row--3">
-                  <div className="landing-contact__field">
-                    <label>WhatsApp com DDD</label>
-                    <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
-                  </div>
-                  <div className="landing-contact__field">
-                    <label>Especialidade Principal</label>
-                    <select value={procedure} onChange={e => setProcedure(e.target.value)}>
-                      <option value="Limpeza e Profilaxia">Estética e Facetas</option>
-                      <option value="Tratamento de Canal">Clínica Geral</option>
-                      <option value="Implante Dentário">Implantes e Cirurgia</option>
-                      <option value="Aparelho Ortodôntico (Manutenção)">Ortodontia</option>
-                    </select>
-                  </div>
-                  <div className="landing-contact__field">
-                    <label>Tamanho da Clínica</label>
-                    <select value={budget} onChange={e => setBudget(e.target.value)}>
-                      <option value="200">1 a 2 consultórios</option>
-                      <option value="1200">3 a 5 consultórios</option>
-                      <option value="3500">Mais de 5 consultórios</option>
-                    </select>
-                  </div>
-                </div>
-                <button type="submit" disabled={formLoading} className="landing-btn--primary landing-btn--lg landing-btn--full">
-                  {formLoading ? 'Enviando...' : 'Quero ver o sistema funcionando'}
-                  <ArrowRight style={{ width: 18, height: 18 }} />
-                </button>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </AnimatedSection>
-      </section>
-
-      {/* ═══════════════ CTA FINAL ═══════════════ */}
-      <section className="landing-cta-final">
-        <AnimatedSection className="landing-cta-final__inner">
-          <div className="landing-cta-final__bg-decor" />
-          <BrandIcon variant="light" className="landing-cta-final__brand-icon" />
-          <h2 className="landing-cta-final__title">
-            Pronto para reduzir faltas e ter a agenda sob controle?
-          </h2>
-          <p className="landing-cta-final__subtitle">
-            Crie sua conta em 2 minutos. Teste grátis sem cartão de crédito.
-          </p>
-          <button onClick={onRegister} className="landing-cta-final__button">
-            Começar teste grátis agora
-            <ArrowRight style={{ width: 20, height: 20 }} />
-          </button>
-          <div className="landing-cta-final__trust">
-            {[
-              { icon: <DollarSign style={{ width: 16, height: 16 }} />, label: 'Sem cartão de crédito' },
-              { icon: <Zap style={{ width: 16, height: 16 }} />, label: 'Ativação imediata' },
-              { icon: <Headphones style={{ width: 16, height: 16 }} />, label: 'Suporte no WhatsApp' },
-              { icon: <Lock style={{ width: 16, height: 16 }} />, label: 'Dados seguros LGPD' },
-            ].map((b, i) => (
-              <div key={i} className="landing-cta-final__trust-item">
-                {b.icon}
-                <span>{b.label}</span>
+            <AnimatedSection delay={0.1} className="bg-blue-950/40 p-6 rounded-2xl border border-blue-500/30">
+              <div className="flex items-center gap-2 mb-4 text-blue-400 font-bold text-lg">
+                <Check className="w-5 h-5" />
+                <span>O Jeito DentalFlow</span>
               </div>
+              <ul className="space-y-3 text-slate-200 text-sm">
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Agenda Inteligente + WhatsApp Automático</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Recuperação de pacientes e orçamentos pendentes</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Controle financeiro, retornos e IA em um único lugar</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-400 font-bold">✓</span> Suporte humanizado rápido direto no WhatsApp</li>
+              </ul>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ SEÇÃO: TUDO CONECTADO ═══════════════ */}
+      <section id="funcionalidades" className="landing-all-connected py-16 bg-white border-b border-slate-200/80">
+        <div className="max-w-6xl mx-auto px-4">
+          <AnimatedSection className="mb-10">
+            <span className="text-xs font-bold text-blue-600 tracking-wider uppercase block mb-2">TUDO CONECTADO</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Um único sistema. Tudo que sua clínica precisa.
+            </h2>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              { title: 'Agenda Inteligente', desc: 'Visualize sua semana, organize horários e tenha uma agenda sempre atualizada.', icon: <Calendar className="w-5 h-5 text-blue-600" />, bg: 'bg-blue-50' },
+              { title: 'WhatsApp Automático', desc: 'Confirmações, lembretes e retornos enviados automaticamente.', icon: <MessageSquare className="w-5 h-5 text-emerald-600" />, bg: 'bg-emerald-50' },
+              { title: 'CRM Inteligente', desc: 'Acompanhe cada paciente do primeiro contato ao pós-tratamento.', icon: <Users className="w-5 h-5 text-amber-600" />, bg: 'bg-amber-50' },
+              { title: 'Financeiro', desc: 'Controle completo de recebimentos, despesas, orçamentos e fluxo de caixa.', icon: <DollarSign className="w-5 h-5 text-purple-600" />, bg: 'bg-purple-50' },
+              { title: 'Prontuário Digital', desc: 'Histórico, anamnese, tratamentos e documentos tudo em um só lugar.', icon: <FileText className="w-5 h-5 text-sky-600" />, bg: 'bg-sky-50' },
+              { title: 'Inteligência Artificial', desc: 'Sua assistente para agilizar tarefas e apoiar decisões da rotina.', icon: <Sparkles className="w-5 h-5 text-pink-600" />, bg: 'bg-pink-50' },
+            ].map((item, idx) => (
+              <AnimatedSection key={idx} delay={idx * 0.05} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow">
+                <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center`}>
+                  {item.icon}
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+                <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+              </AnimatedSection>
             ))}
           </div>
-        </AnimatedSection>
+        </div>
       </section>
 
-      {/* ═══════════════ FOOTER ═══════════════ */}
-      <footer className="landing-footer">
-        <div className="landing-footer__inner">
-          <div className="landing-footer__top">
-            {/* Logo + desc */}
-            <div className="landing-footer__brand">
-              <div className="landing-footer__brand-logo">
-                <BrandLogo variant="light" />
+      {/* ═══════════════ SEÇÃO: POR QUE O DENTALFLOW? (COMPARATIVO + MÉTRICAS) ═══════════════ */}
+      <section className="landing-why-section py-16 bg-slate-50 border-b border-slate-200/80">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Copy */}
+            <AnimatedSection className="lg:col-span-4">
+              <span className="text-xs font-bold text-blue-600 tracking-wider uppercase block mb-2">POR QUE O DENTALFLOW?</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight mb-2">
+                A maioria organiza informações.
+              </h2>
+              <h2 className="text-2xl md:text-3xl font-black text-blue-600 leading-tight">
+                Nós organizamos a operação inteira.
+              </h2>
+            </AnimatedSection>
+
+            {/* Center Comparison Table */}
+            <AnimatedSection delay={0.1} className="lg:col-span-5 flex items-center justify-center">
+              <div className="flex border border-slate-200 rounded-2xl overflow-hidden shadow-md bg-white w-full max-w-md">
+                {/* Outros Sistemas Column */}
+                <div className="w-1/2 bg-slate-100 p-4 text-xs space-y-2 text-slate-500 border-r border-slate-200">
+                  <span className="font-extrabold text-slate-400 block pb-2 border-b border-slate-200 text-[11px]">OUTROS SISTEMAS</span>
+                  <div>Agenda comum</div>
+                  <div>WhatsApp manual</div>
+                  <div>Cadastro de pacientes</div>
+                  <div>Financeiro básico</div>
+                  <div>Interface complexa</div>
+                  <div>Várias plataformas</div>
+                  <div>Relatórios limitados</div>
+                </div>
+                {/* DentalFlow Column */}
+                <div className="w-1/2 bg-blue-600 text-white p-4 text-xs space-y-2 font-semibold">
+                  <span className="font-extrabold text-blue-100 block pb-2 border-b border-blue-500 text-[11px]">DENTALFLOW</span>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> Agenda Inteligente</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> WhatsApp Automático</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> CRM Inteligente</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> Gestão financeira completa</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> Design intuitivo e moderno</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> Tudo integrado em um só lugar</div>
+                  <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-200" /> Relatórios em tempo real</div>
+                </div>
               </div>
-              <p className="landing-footer__brand-desc">
-                O CRM inteligente para clínicas odontológicas modernas. Organize, automatize e cresça.
-              </p>
-              <div className="landing-footer__social">
-                <a href="#" aria-label="Instagram">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153a4.908 4.908 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 0 1-1.153 1.772 4.915 4.915 0 0 1-1.772 1.153c-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 0 1-1.772-1.153 4.904 4.904 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428a4.88 4.88 0 0 1 1.153-1.772A4.897 4.897 0 0 1 5.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm6.5-.25a1.25 1.25 0 0 0-2.5 0 1.25 1.25 0 0 0 2.5 0zM12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" /></svg>
-                </a>
-                <a href="#" aria-label="LinkedIn">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                </a>
-                <a href="#" aria-label="YouTube">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
-                </a>
+            </AnimatedSection>
+
+            {/* Right Metric Icons */}
+            <AnimatedSection delay={0.2} className="lg:col-span-3">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center">
+                  <Calendar className="w-6 h-6 text-blue-600 mb-1" />
+                  <span className="text-xl font-black text-blue-600">-70%</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-tight">menos faltas sem aviso</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center">
+                  <Users className="w-6 h-6 text-blue-600 mb-1" />
+                  <span className="text-xl font-black text-blue-600">+35%</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-tight">mais pacientes retornando</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center">
+                  <Clock className="w-6 h-6 text-emerald-600 mb-1" />
+                  <span className="text-xl font-black text-emerald-600">2h/dia</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-tight">economizadas na recepção</span>
+                </div>
+                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center">
+                  <Zap className="w-6 h-6 text-amber-500 mb-1" />
+                  <span className="text-xl font-black text-amber-600">15min</span>
+                  <span className="text-[10px] text-slate-500 font-medium leading-tight">para aprender a usar</span>
+                </div>
               </div>
+              <span className="text-[9px] text-slate-400 block text-center mt-3">
+                *Resultados podem variar conforme a rotina e a adoção da plataforma.
+              </span>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ SEÇÃO: OFERTA EXCLUSIVA DE LANÇAMENTO ═══════════════ */}
+      <section id="oferta" className="landing-offer-section py-16 bg-slate-950">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-blue-950 border border-blue-500/30 rounded-3xl p-8 md:p-12 shadow-2xl text-white">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Left Copy & Checklist */}
+              <AnimatedSection className="lg:col-span-4">
+                <span className="text-xs font-bold text-blue-400 tracking-wider uppercase block mb-2">OFERTA EXCLUSIVA DE LANÇAMENTO</span>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight mb-6">
+                  Tudo que sua clínica precisa em um único plano simples.
+                </h2>
+                <div className="space-y-3 text-xs text-slate-300 font-medium">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Sem limite de dentistas ou secretárias</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Sem taxa de setup</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Sem contrato de fidelidade</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Suporte VIP no WhatsApp</span>
+                  </div>
+                </div>
+              </AnimatedSection>
+
+              {/* Center Pricing & Value Comparison Box */}
+              <AnimatedSection delay={0.15} className="lg:col-span-8">
+                <div className="bg-slate-900/90 border border-slate-700/80 rounded-2xl p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  {/* Separate Tools Costs */}
+                  <div className="md:col-span-5 text-xs text-slate-400 space-y-2 pr-4 border-r-0 md:border-r border-slate-800">
+                    <span className="font-bold text-slate-300 block mb-2">Ferramentas separadas <br /><span className="text-[10px] font-normal opacity-70">(custo mensal estimado)</span></span>
+                    <div className="flex justify-between"><span>Sistema odontológico</span><span>R$ 250</span></div>
+                    <div className="flex justify-between"><span>WhatsApp Business API</span><span>R$ 120</span></div>
+                    <div className="flex justify-between"><span>Agenda online</span><span>R$ 80</span></div>
+                    <div className="flex justify-between"><span>Financeiro / Fluxo de caixa</span><span>R$ 120</span></div>
+                    <div className="flex justify-between"><span>Relatórios / BI</span><span>R$ 80</span></div>
+                    <div className="pt-2 border-t border-slate-800 flex justify-between font-extrabold text-slate-200">
+                      <span>Total estimado</span>
+                      <span className="text-amber-400">R$ 650+</span>
+                    </div>
+                  </div>
+
+                  {/* DentalFlow Complete Plan Card */}
+                  <div className="md:col-span-7 bg-white text-slate-900 rounded-xl p-5 relative shadow-xl">
+                    <div className="absolute -top-3 right-4 bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full shadow-md">
+                      ECONOMIZE R$ 450+ POR MÊS
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-600 block uppercase mb-1">PLANO COMPLETO</span>
+                    <h3 className="text-lg font-black text-slate-900 mb-1">DentalFlow</h3>
+
+                    <div className="flex items-baseline gap-1 mb-1">
+                      <span className="text-3xl font-black text-blue-600">R$ 197</span>
+                      <span className="text-xs text-slate-500 font-semibold">/mês</span>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-600 block mb-3">14 dias grátis</span>
+
+                    <div className="space-y-1.5 text-[11px] text-slate-600 font-medium mb-4">
+                      <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Tudo incluso</div>
+                      <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Dentistas ilimitados</div>
+                      <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Secretárias ilimitadas</div>
+                      <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Suporte humano</div>
+                      <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Atualizações contínuas</div>
+                    </div>
+
+                    <button
+                      onClick={onRegister}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs py-3 rounded-lg shadow-md transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <span>Quero experimentar grátis</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <span className="text-[9px] text-slate-400 block text-center mt-2">Sem cartão de crédito • Ativação imediata</span>
+                  </div>
+                </div>
+              </AnimatedSection>
             </div>
 
-            {/* Links */}
-            <div className="landing-footer__links-group">
-              <h4>Produto</h4>
-              <a href="#recursos">Recursos</a>
-              <a href="#funcionalidades">Funcionalidades</a>
-              <a href="#como-funciona">Como Funciona</a>
-              <a href="#integracoes">Integrações</a>
-              <a href="#precos">Preços</a>
+            {/* Bottom Trust Badges */}
+            <div className="mt-8 pt-6 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-400">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-blue-400" />
+                <div><strong className="text-slate-200 block">100% seguro</strong>Seus dados protegidos (LGPD)</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <div><strong className="text-slate-200 block">Ativação imediata</strong>Sua clínica online em minutos</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Headphones className="w-4 h-4 text-emerald-400" />
+                <div><strong className="text-slate-200 block">Suporte humano</strong>No WhatsApp sempre que precisar</div>
+              </div>
             </div>
-            <div className="landing-footer__links-group">
-              <h4>Empresa</h4>
-              <a href="#">Sobre nós</a>
-              <a href="#">Blog</a>
-              <a href="#">Carreiras</a>
-              <a href="#contato">Contato</a>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ SEÇÃO: CTA FINAL COM FOTO DO MÉDICO ═══════════════ */}
+      <section className="landing-cta-doctor py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 md:p-10 shadow-lg grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            {/* Left Doctor Photo */}
+            <AnimatedSection className="md:col-span-4 flex justify-center">
+              <div className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden shadow-md border-2 border-white">
+                <img
+                  src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=500"
+                  alt="Cirurgião-Dentista sorrindo na clínica"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </AnimatedSection>
+
+            {/* Middle Copy */}
+            <AnimatedSection delay={0.1} className="md:col-span-5 text-slate-800">
+              <p className="text-sm text-slate-600 font-semibold mb-1">Você abriu uma clínica para cuidar de pessoas.</p>
+              <p className="text-sm text-slate-600 font-semibold mb-3">Não para administrar planilhas e enviar mensagens.</p>
+              <h3 className="text-xl md:text-2xl font-black text-blue-600 leading-snug mb-3">
+                Deixe as tarefas repetitivas com o DentalFlow.
+              </h3>
+              <p className="text-sm font-bold text-slate-900">Você cuida dos pacientes.</p>
+              <p className="text-sm font-bold text-slate-900">Nós cuidamos da operação.</p>
+            </AnimatedSection>
+
+            {/* Right Action Button & Badges */}
+            <AnimatedSection delay={0.2} className="md:col-span-3 flex flex-col items-center md:items-start gap-3">
+              <button onClick={onRegister} className="landing-btn--primary landing-btn--lg w-full">
+                Começar teste gratuito
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <div className="space-y-1 text-xs text-slate-500 font-medium">
+                <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> 14 dias grátis</div>
+                <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Sem cartão de crédito</div>
+                <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Configuração em 2 minutos</div>
+              </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ FOOTER COMPLETO ═══════════════ */}
+      <footer className="landing-footer bg-slate-950 text-slate-400 py-12 border-t border-slate-800">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10 border-b border-slate-800">
+            {/* Brand column */}
+            <div className="md:col-span-2 space-y-3">
+              <BrandLogo variant="light" />
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                Gestão inteligente para clínicas que querem crescer com organização.
+              </p>
             </div>
-            <div className="landing-footer__links-group">
-              <h4>Legal</h4>
-              <a href="#">Política de Privacidade</a>
-              <a href="#">Termos de Uso</a>
-              <a href="#">LGPD</a>
-              <a href="#">Segurança</a>
+
+            {/* Produto */}
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-white uppercase text-[11px] tracking-wider mb-2">Produto</h4>
+              <div><a href="#funcionalidades" className="hover:text-white transition-colors">Recursos</a></div>
+              <div><a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a></div>
+              <div><a href="#integracoes" className="hover:text-white transition-colors">Integrações</a></div>
+              <div><a href="#ia" className="hover:text-white transition-colors">IA</a></div>
+            </div>
+
+            {/* Empresa */}
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-white uppercase text-[11px] tracking-wider mb-2">Empresa</h4>
+              <div><a href="#" className="hover:text-white transition-colors">Sobre nós</a></div>
+              <div><a href="#" className="hover:text-white transition-colors">Blog</a></div>
+              <div><a href="#" className="hover:text-white transition-colors">Carreiras</a></div>
+              <div><a href="#contato" className="hover:text-white transition-colors">Contato</a></div>
+            </div>
+
+            {/* Suporte & Fale Conosco */}
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-white uppercase text-[11px] tracking-wider mb-2">Suporte</h4>
+              <div><a href="#faq" className="hover:text-white transition-colors">Central de ajuda</a></div>
+              <div><a href="#faq" className="hover:text-white transition-colors">Dúvidas frequentes</a></div>
+              <div><a href="#" className="hover:text-white transition-colors">Status do sistema</a></div>
+              <div className="pt-2 text-[11px] text-slate-400">
+                <span>📞 WhatsApp: (11) 97234-5678</span><br />
+                <span>✉️ contato@dentalflow.com.br</span>
+              </div>
             </div>
           </div>
 
-          <div className="landing-footer__bottom">
+          <div className="pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
             <span>© {new Date().getFullYear()} DentalFlow. Todos os direitos reservados.</span>
-            <span className="flex items-center gap-1 justify-center">Feito com <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 inline" /> para clínicas odontológicas</span>
+            <span>Feito com ❤️ para clínicas odontológicas.</span>
           </div>
         </div>
       </footer>

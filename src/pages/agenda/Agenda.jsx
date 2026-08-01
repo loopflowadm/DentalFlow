@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useRealtimeModuleSync } from '../../hooks/useRealtimeModuleSync';
+import { formatPhone } from '../../lib/formatters';
 import { 
   Plus, Calendar as CalIcon, ChevronLeft, ChevronRight,
   Clock, MapPin, Check, X, ShieldAlert, ArrowLeftRight,
@@ -35,10 +37,16 @@ export default function Agenda({
     checkPatientInadimplente,
     chairs,
     dentists,
-    addPatient
+    addPatient,
+    fetchClinicData
   } = useClinic();
   const { currentTheme } = useTheme();
   const { user } = useAuth();
+
+  // Escutar atualizações de consultas em tempo real (Cascata Zero-UI)
+  const { isHighlighted } = useRealtimeModuleSync('appointments', user?.clinic_id, () => {
+    if (fetchClinicData) fetchClinicData();
+  });
 
   // Refs e Helpers para Autocomplete e Conflitos
   const autocompleteRef = useRef(null);
@@ -146,6 +154,163 @@ export default function Agenda({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [view, setView]);
+
+  // Relógio do tempo real da agenda
+  const [nowTime, setNowTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Posicionamento percentual da Linha do Tempo Atual (07:00 as 19:00)
+  const getCurrentTimeTopPercentage = () => {
+    const hours = nowTime.getHours();
+    const minutes = nowTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 7 * 60;  // 07:00
+    const endMinutes = 19 * 60;   // 19:00
+    
+    if (totalMinutes < startMinutes || totalMinutes > endMinutes) return null;
+    return ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100;
+  };
+
+  const currentTimeTop = getCurrentTimeTopPercentage();
+
+  // Renderizador de Card de Agendamento (Com Cor de Fundo Completa, Foto Garantida e Nome Único)
+  const renderAgendaCard = (app, isCompact = false) => {
+    const pat = app.patient_id ? patients.find(p => p.id === app.patient_id) : null;
+    let rawName = pat?.name || app.patientName || app.patient_name || 'Paciente';
+    
+    // Tratamento estrito de duplicação caso a string venha repetida (ex: "John DoeJohn Doe")
+    if (rawName && rawName.length > 4 && rawName.length % 2 === 0) {
+      const half = rawName.length / 2;
+      if (rawName.substring(0, half) === rawName.substring(half)) {
+        rawName = rawName.substring(0, half);
+      }
+    }
+    const patName = rawName;
+
+    // Foto do paciente ou avatar default foto de alta definição
+    const defaultAvatarPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+    const patPhoto = pat?.photoUrl || pat?.avatar_url || app.photoUrl || app.avatar_url || defaultAvatarPhoto;
+    
+    const doc = app.doctor_id ? dentists.find(d => d.id === app.doctor_id) : null;
+    const docName = doc ? (doc.full_name.startsWith('Dr') ? doc.full_name : `Dr(a). ${doc.full_name}`) : null;
+    
+    const chair = app.chair_id ? chairs.find(c => c.id === app.chair_id) : null;
+    const chairName = chair ? chair.name : (app.room || 'Cadeira 01');
+
+    const isConsulta = app.type === 'CONSULTA' || (!app.type && (app.patient_id || app.patientName));
+    
+    // Paleta de Cores Elegante com Gradiente & Profundidade Visual (macOS Depth UI)
+    const getCardStyle = () => {
+      if (app.type === 'COMPROMISSO') {
+        return {
+          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
+          borderColor: 'rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 4px 14px rgba(51, 65, 85, 0.25)'
+        };
+      }
+      if (app.type === 'TAREFA') {
+        return {
+          background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)',
+          borderColor: 'rgba(255, 255, 255, 0.25)',
+          boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)'
+        };
+      }
+      // Consultas Clínicas
+      const procColor = app.color || '#2563eb';
+      if (procColor === '#10b981' || procColor === '#059669' || procColor === 'emerald') {
+        return {
+          background: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
+          borderColor: 'rgba(52, 211, 153, 0.35)',
+          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)'
+        };
+      }
+      if (procColor === '#ef4444' || procColor === '#dc2626') {
+        return {
+          background: 'linear-gradient(135deg, #991b1b 0%, #dc2626 100%)',
+          borderColor: 'rgba(248, 113, 113, 0.35)',
+          boxShadow: '0 4px 14px rgba(220, 38, 38, 0.25)'
+        };
+      }
+      if (procColor === '#8b5cf6' || procColor === '#7c3aed') {
+        return {
+          background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)',
+          borderColor: 'rgba(167, 139, 250, 0.35)',
+          boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)'
+        };
+      }
+      // Royal Blue Padrão
+      return {
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+        borderColor: 'rgba(96, 165, 250, 0.35)',
+        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+      };
+    };
+
+    const cardStyle = getCardStyle();
+
+    return (
+      <div
+        key={app.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, app.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedApp(app);
+        }}
+        className={`rounded-2xl border text-left flex flex-col justify-between cursor-grab active:cursor-grabbing text-white transition-all hover:scale-[1.01] hover:brightness-105 ${
+          isCompact ? 'w-full max-h-[85px] text-[10px] p-2' : 'h-full max-h-[100px] min-w-[210px] w-64 text-[10px] p-2.5'
+        }`}
+        style={cardStyle}
+      >
+        <div className="space-y-1">
+          {/* Header com Foto de Perfil + Nome do Paciente (Nome Único) */}
+          <div className="flex items-center gap-2 overflow-hidden">
+            {isConsulta && (
+              <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-white/20 shrink-0 border border-white/40 flex items-center justify-center shadow-2xs">
+                <img src={patPhoto} alt={patName} className="w-full h-full object-cover rounded-full shrink-0" />
+              </div>
+            )}
+            <h4 className="font-extrabold truncate leading-tight flex-1 text-[11px] text-white">
+              {isConsulta ? patName : app.title}
+            </h4>
+          </div>
+
+          {/* Subtítulo / Procedimento */}
+          <p className="text-[9.5px] opacity-90 truncate font-semibold pl-0.5">
+            {isConsulta ? (app.procedureName || 'Consulta Geral') : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
+          </p>
+
+          {/* Doutor Atendente */}
+          {docName && (
+            <p className="text-[8.5px] opacity-85 truncate font-medium flex items-center gap-1 pl-0.5">
+              <User className="w-2.5 h-2.5 shrink-0 inline opacity-90" />
+              <span className="truncate">{docName}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Rodapé: Cadeira & Status */}
+        <div className="flex justify-between items-center text-[8.5px] font-bold opacity-95 pt-1 border-t border-white/15 mt-1">
+          <span className="flex items-center gap-1 truncate max-w-[65%]">
+            <MapPin className="w-2.5 h-2.5 shrink-0" />
+            <span className="truncate">{chairName}</span>
+          </span>
+
+          <span className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider ${
+            app.status === 'CONFIRMED' 
+              ? 'bg-emerald-400/30 text-white border border-emerald-300/40' 
+              : 'bg-white/20 text-white'
+          }`}>
+            {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   // ==========================================
   // ESTADOS DOS FORMULÁRIOS
@@ -326,9 +491,10 @@ export default function Agenda({
       
       const startDate = new Date(app.start_time);
       const tzOffset = startDate.getTimezoneOffset() * 60000;
-      const localStartDate = new Date(startDate.getTime() - tzOffset);
-      setAppDate(localStartDate.toISOString().split('T')[0]);
-      setAppTime(localStartDate.toISOString().split('T')[1].substring(0, 5));
+      const isoStart = localStartDate.toISOString();
+      const [startDateStr, startTimeStr] = isoStart.split('T');
+      setAppDate(startDateStr || '');
+      setAppTime((startTimeStr || '09:00:00').substring(0, 5));
       setAppChairId(app.chair_id || '');
       setAppDoctorId(app.doctor_id || '');
       setAppDuration(app.duration || 30);
@@ -346,10 +512,12 @@ export default function Agenda({
       const tzOffset = start.getTimezoneOffset() * 60000;
       const localStart = new Date(start.getTime() - tzOffset);
       const localEnd = new Date(end.getTime() - tzOffset);
-      setCompStartDate(localStart.toISOString().split('T')[0]);
-      setCompStartTime(localStart.toISOString().split('T')[1].substring(0, 5));
-      setCompEndDate(localEnd.toISOString().split('T')[0]);
-      setCompEndTime(localEnd.toISOString().split('T')[1].substring(0, 5));
+      const [compStartD, compStartT] = localStart.toISOString().split('T');
+      const [compEndD, compEndT] = localEnd.toISOString().split('T');
+      setCompStartDate(compStartD || '');
+      setCompStartTime((compStartT || '09:00:00').substring(0, 5));
+      setCompEndDate(compEndD || '');
+      setCompEndTime((compEndT || '09:00:00').substring(0, 5));
       setCompIsRecurring(app.is_recurring || false);
       
     } else if (app.type === 'TAREFA') {
@@ -359,8 +527,9 @@ export default function Agenda({
       const start = new Date(app.start_time);
       const tzOffset = start.getTimezoneOffset() * 60000;
       const localStart = new Date(start.getTime() - tzOffset);
-      setTaskDueDate(localStart.toISOString().split('T')[0]);
-      setTaskDueTime(localStart.toISOString().split('T')[1].substring(0, 5));
+      const [taskD, taskT] = localStart.toISOString().split('T');
+      setTaskDueDate(taskD || '');
+      setTaskDueTime((taskT || '09:00:00').substring(0, 5));
       setTaskList(app.label || 'Entrada');
       setTaskPatientId(app.patient_id || '');
       const pat = patients.find(p => p.id === app.patient_id);
@@ -375,16 +544,38 @@ export default function Agenda({
     e.preventDefault();
 
     if (activeModalTab === 'consulta') {
-      if (!appPatientId || !appProcedureId) return;
+      let targetPatientId = appPatientId;
 
-      const matchedPat = patients.find(p => p.id === appPatientId);
+      // Se o usuário digitou o nome do paciente sem clicar na sugestão da lista, busca automaticamente pelo nome
+      if (!targetPatientId && patientSearch) {
+        const matchedByName = patients.find(p => 
+          p.name.toLowerCase().trim() === patientSearch.toLowerCase().trim() ||
+          p.name.toLowerCase().includes(patientSearch.toLowerCase().trim())
+        );
+        if (matchedByName) {
+          targetPatientId = matchedByName.id;
+          setAppPatientId(matchedByName.id);
+        }
+      }
+
+      if (!targetPatientId) {
+        alert('⚠️ ATENÇÃO: Por favor, selecione um paciente na lista de sugestões ou clique em "+ Cadastrar" para adicionar um novo paciente.');
+        return;
+      }
+
+      if (!appProcedureId) {
+        alert('⚠️ ATENÇÃO: Por favor, selecione o procedimento da consulta.');
+        return;
+      }
+
+      const matchedPat = patients.find(p => p.id === targetPatientId);
       const matchedProc = procedures.find(p => p.id === appProcedureId);
       const matchedChair = chairs.find(c => c.id === appChairId);
 
       // RN-001 de Contas a Receber: Bloqueio de Prontuário por Inadimplência
       // Apenas bloquear se for um novo agendamento ou se o paciente tiver sido alterado durante a edição
-      const shouldCheckInadimplente = !editingApp || editingApp.patient_id !== appPatientId;
-      if (shouldCheckInadimplente && checkPatientInadimplente(appPatientId)) {
+      const shouldCheckInadimplente = !editingApp || editingApp.patient_id !== targetPatientId;
+      if (shouldCheckInadimplente && checkPatientInadimplente(targetPatientId)) {
         const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') || 
                             matchedProc?.name?.toLowerCase().includes('canal') || 
                             matchedProc?.name?.toLowerCase().includes('dor');
@@ -402,7 +593,7 @@ export default function Agenda({
       const end = new Date(start.getTime() + appDuration * 60 * 1000);
 
       const appData = {
-        patient_id: appPatientId,
+        patient_id: targetPatientId,
         patientName: matchedPat?.name || 'Paciente Novo',
         patientPhone: matchedPat?.phone || '',
         procedure_id: appProcedureId,
@@ -650,7 +841,7 @@ export default function Agenda({
       <div className="flex-1 bg-white dark:bg-[#0D0D0D] overflow-hidden flex flex-col transition-colors duration-300">
         
         {/* CONTROLES SUPERIORES (BARRA DE NAVEGAÇÃO DA AGENDA) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-[#0D0D0D] px-4 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
+        <div className="min-h-[56px] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 bg-white dark:bg-[#0D0D0D] px-3 sm:px-6 py-2 sm:py-0 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
           
           {/* Date Navigator */}
           <div className="flex items-center gap-3">
@@ -711,7 +902,7 @@ export default function Agenda({
             </button>
           </div>
         </div>
-        
+
         {/* VIEW: SEMANA */}
         {view === 'week' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
@@ -730,7 +921,22 @@ export default function Agenda({
               })}
             </div>
 
-            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
+            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
+              {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
+              {currentTimeTop !== null && (
+                <div 
+                  className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                  style={{ top: `${currentTimeTop}%` }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-md border-2 border-white dark:border-slate-900 -ml-1 shrink-0 flex items-center justify-center">
+                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                  </div>
+                  <div className="flex-1 h-[2px] bg-red-500/90 shadow-sm" />
+                  <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-md mr-2 font-mono">
+                    {nowTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
               {timeSlots.map((time, slotIdx) => (
                 <div key={slotIdx} className="grid grid-cols-8 min-h-[70px]">
                   <div className="border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400 select-none">
@@ -755,38 +961,7 @@ export default function Agenda({
                         className="p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors"
                       >
                         {matchedApps.length === 0 && renderCellSubSlots(date, time)}
-                        {matchedApps.map((app) => (
-                          <div
-                            key={app.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, app.id)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedApp(app);
-                            }}
-                            className="absolute inset-x-1 top-1 bottom-1 rounded-xl border p-2 text-[10px] shadow-sm select-none hover:-translate-y-0.5 transition-all text-left flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing text-white"
-                            style={{ 
-                              backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
-                              borderColor: 'rgba(255, 255, 255, 0.15)',
-                              boxShadow: `0 3px 12px rgba(0,0,0,0.08)`
-                            }}
-                          >
-                            <div>
-                              <h4 className="font-extrabold truncate leading-tight">
-                                {app.type === 'CONSULTA' ? app.patientName : app.title}
-                              </h4>
-                              <p className="text-[9px] opacity-80 mt-0.5 truncate">
-                                {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
-                              </p>
-                            </div>
-                            <div className="flex justify-between items-center text-[8px] font-bold opacity-90 mt-1">
-                              <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" /> {time}</span>
-                              <span className="px-1 rounded bg-white/20">
-                                {app.status === 'CONFIRMED' ? '✓' : '?'}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
+                        {matchedApps.map((app) => renderAgendaCard(app, true))}
                       </div>
                     );
                   })}
@@ -805,7 +980,22 @@ export default function Agenda({
               </h4>
             </div>
 
-            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
+            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
+              {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
+              {currentTimeTop !== null && (
+                <div 
+                  className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                  style={{ top: `${currentTimeTop}%` }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-md border-2 border-white dark:border-slate-900 -ml-1 shrink-0 flex items-center justify-center">
+                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                  </div>
+                  <div className="flex-1 h-[2px] bg-red-500/90 shadow-sm" />
+                  <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-md mr-2 font-mono">
+                    {nowTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
               {timeSlots.map((time, slotIdx) => {
                 const hour = parseInt(time.split(':')[0]);
                 const dayApps = filteredApps.filter(app => {
@@ -828,37 +1018,7 @@ export default function Agenda({
                       className="col-span-10 p-2 relative transition-colors flex gap-2 overflow-x-auto"
                     >
                       {dayApps.length === 0 && renderCellSubSlots(currentDate, time)}
-                      {dayApps.map(app => (
-                        <div
-                          key={app.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, app.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedApp(app);
-                          }}
-                          className="h-full min-w-[200px] w-64 rounded-xl border p-2.5 text-left flex flex-col justify-between shadow-sm cursor-grab active:cursor-grabbing text-white"
-                          style={{ 
-                            backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
-                            borderColor: 'rgba(255, 255, 255, 0.15)' 
-                          }}
-                        >
-                          <div>
-                            <h4 className="font-extrabold text-xs truncate leading-tight">
-                              {app.type === 'CONSULTA' ? app.patientName : app.title}
-                            </h4>
-                            <p className="text-[10px] opacity-80 mt-0.5 truncate">
-                              {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
-                            </p>
-                          </div>
-                          <div className="flex justify-between items-center text-[9px] font-semibold mt-1">
-                            <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {app.room || 'Consultório'}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-white/25 uppercase font-bold text-[8px]">
-                              {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                      {dayApps.map(app => renderAgendaCard(app, false))}
                     </div>
                   </div>
                 );
@@ -953,7 +1113,22 @@ export default function Agenda({
             </div>
 
             {/* Linhas de Horário por Cadeira */}
-            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80">
+            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
+              {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
+              {currentTimeTop !== null && (
+                <div 
+                  className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                  style={{ top: `${currentTimeTop}%` }}
+                >
+                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-md border-2 border-white dark:border-slate-900 -ml-1 shrink-0 flex items-center justify-center">
+                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                  </div>
+                  <div className="flex-1 h-[2px] bg-red-500/90 shadow-sm" />
+                  <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-md mr-2 font-mono">
+                    {nowTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
               {timeSlots.map((time, slotIdx) => {
                 const hour = parseInt(time.split(':')[0]);
                 const activeChairs = selectedChairs.length > 0 ? chairs.filter(c => selectedChairs.includes(c.id)) : chairs;
@@ -986,38 +1161,7 @@ export default function Agenda({
                             className="p-1 border-r last:border-r-0 border-slate-100 dark:border-slate-800/40 relative transition-colors"
                           >
                             {chairApps.length === 0 && renderCellSubSlots(activeDate, time, () => setAppChairId(chair.id))}
-                            {chairApps.map(app => (
-                              <div
-                                key={app.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, app.id)}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedApp(app);
-                                }}
-                                className="absolute inset-x-1.5 top-1 bottom-1 rounded-xl border p-2.5 text-[10px] shadow-sm select-none hover:-translate-y-0.5 transition-all text-left flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing text-white"
-                                style={{ 
-                                  backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')), 
-                                  borderColor: 'rgba(255, 255, 255, 0.15)',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                }}
-                              >
-                                <div>
-                                  <h4 className="font-extrabold truncate leading-tight">
-                                    {app.type === 'CONSULTA' ? app.patientName : app.title}
-                                  </h4>
-                                  <p className="text-[9px] opacity-85 truncate mt-0.5">
-                                    {app.type === 'CONSULTA' ? app.procedureName : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
-                                  </p>
-                                </div>
-                                <div className="flex justify-between items-center text-[8px] font-bold opacity-90 mt-1">
-                                  <span>{time}</span>
-                                  <span className="px-1.5 py-0.5 rounded bg-white/20 font-bold uppercase text-[7px]">
-                                    {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                            {chairApps.map(app => renderAgendaCard(app, true))}
                           </div>
                         );
                       })}
@@ -1061,9 +1205,19 @@ export default function Agenda({
               <div className="space-y-5 text-xs text-left">
                 {/* Header Paciente / Título */}
                 <div className="flex items-center gap-3.5 pr-6">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0 shadow-inner border border-slate-200/30 dark:border-white/5">
-                    {selectedApp.type === 'CONSULTA' ? <User className="w-5 h-5 text-slate-400" /> : (selectedApp.type === 'TAREFA' ? <ClipboardList className="w-5 h-5 text-slate-400" /> : <Lock className="w-5 h-5 text-slate-400" />)}
-                  </div>
+                  {(() => {
+                    const pat = selectedApp.patient_id ? patients.find(p => p.id === selectedApp.patient_id) : null;
+                    const photo = pat?.photoUrl || pat?.avatar_url || selectedApp.photoUrl || selectedApp.avatar_url;
+                    return (
+                      <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-sm flex-shrink-0 shadow-md border border-white/20">
+                        {photo ? (
+                          <img src={photo} alt={selectedApp.patientName} className="w-full h-full object-cover" />
+                        ) : (
+                          selectedApp.type === 'CONSULTA' ? <User className="w-6 h-6 text-white" /> : (selectedApp.type === 'TAREFA' ? <ClipboardList className="w-6 h-6 text-white" /> : <Lock className="w-6 h-6 text-white" />)
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="overflow-hidden">
                     <h3 className="text-base font-extrabold text-slate-900 dark:text-white truncate font-title leading-tight">
                       {selectedApp.type === 'CONSULTA' ? selectedApp.patientName : selectedApp.title}
@@ -1314,9 +1468,10 @@ export default function Agenda({
                               <input
                                 type="text"
                                 required
-                                placeholder="Celular (ex: 88999699232)..."
+                                maxLength={16}
+                                placeholder="Celular ex: (88) 99969-9232..."
                                 value={quickPatientPhone}
-                                onChange={(e) => setQuickPatientPhone(e.target.value)}
+                                onChange={(e) => setQuickPatientPhone(formatPhone(e.target.value))}
                                 className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                               />
                               <button
@@ -1458,7 +1613,7 @@ export default function Agenda({
                           type="number"
                           required
                           value={appDuration}
-                          onChange={(e) => setAppDuration(parseInt(e.target.value))}
+                          onChange={(e) => setAppDuration(parseInt(e.target.value, 10) || 30)}
                           className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
@@ -1484,6 +1639,7 @@ export default function Agenda({
                           <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
                             <input
                               type="radio"
+                              name="sendConfirmation"
                               checked={appSendConfirmation === true}
                               onChange={() => setAppSendConfirmation(true)}
                               className="accent-secondary"
@@ -1493,6 +1649,7 @@ export default function Agenda({
                           <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
                             <input
                               type="radio"
+                              name="sendConfirmation"
                               checked={appSendConfirmation === false}
                               onChange={() => setAppSendConfirmation(false)}
                               className="accent-secondary"
