@@ -538,6 +538,48 @@ export function ClinicProvider({ children }) {
         apiKey: cachedAiConfig?.apiKey || ''
       });
 
+      // Se o Supabase não retornar dados para alguns módulos, verificar se há dados demo salvos no localStorage
+      try {
+        const seedStorageKey = `demo_data_${clinicId}`;
+        const cachedDemo = localStorage.getItem(seedStorageKey);
+        if (cachedDemo) {
+          const parsed = JSON.parse(cachedDemo);
+          if (mappedAppointments.length === 0 && parsed.appointments?.length > 0) {
+            setAppointments(parsed.appointments);
+          }
+          if (tData.length === 0 && parsed.transactions?.length > 0) {
+            setFinanceTransactions(parsed.transactions);
+          }
+          if (recData.length === 0 && parsed.medicalRecords?.length > 0) {
+            setMedicalRecords(parsed.medicalRecords);
+          }
+          if (toothData.length === 0 && parsed.toothRecords?.length > 0) {
+            setToothRecords(parsed.toothRecords);
+          }
+          if (apData.length === 0 && parsed.accountsPayable?.length > 0) {
+            setAccountsPayable(parsed.accountsPayable);
+          }
+          if (instData.length === 0 && parsed.installments?.length > 0) {
+            setInstallments(parsed.installments);
+          }
+          if (supData.length === 0 && parsed.suppliers?.length > 0) {
+            setSuppliers(parsed.suppliers);
+          }
+          if (mData.length === 0 && parsed.marketingCampaigns?.length > 0) {
+            setMarketingCampaigns(parsed.marketingCampaigns);
+          }
+          if (autData.length === 0 && parsed.automations?.length > 0) {
+            setAutomations(parsed.automations);
+          }
+          if (chairData.length === 0 && parsed.chairs?.length > 0) {
+            setChairs(parsed.chairs);
+          }
+          if (dentistData.length === 0 && parsed.dentists?.length > 0) {
+            setDentists(parsed.dentists);
+          }
+        }
+      } catch (e) {}
+
       // Inicializar chats do WhatsApp
       loadChatsState(finalPatients, leadData);
     } catch (err) {
@@ -2600,6 +2642,21 @@ export function ClinicProvider({ children }) {
     try {
       localStorage.setItem(`patient_notes_${firstPat.id}`, 'Paciente relata sensibilidade ao mastigar gelado no dente 16.');
       localStorage.setItem(`patient_notes_${secondPat.id}`, 'Troca de borrachinhas ortodônticas realizada.');
+
+      const seedStorageKey = `demo_data_${clinicId}`;
+      localStorage.setItem(seedStorageKey, JSON.stringify({
+        appointments: demoAppointments,
+        transactions: demoTransactions,
+        medicalRecords: demoMedicalRecords,
+        toothRecords: demoToothRecords,
+        suppliers: demoSuppliers,
+        accountsPayable: demoAccountsPayable,
+        installments: demoInstallments,
+        marketingCampaigns: demoMarketingCampaigns,
+        automations: demoAutomations,
+        dentists: demoDentists,
+        chairs: demoChairs
+      }));
     } catch (e) {}
   };
 
@@ -2628,7 +2685,7 @@ export function ClinicProvider({ children }) {
     // 2. Limpar localStorage de anotações, tags, procedimentos e convênios
     try {
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('patient_notes_') || key.startsWith('chat_tags_') || key.startsWith('clinic_procedures_') || key.startsWith('clinic_insurance_plans_')) {
+        if (key.startsWith('patient_notes_') || key.startsWith('chat_tags_') || key.startsWith('clinic_procedures_') || key.startsWith('clinic_insurance_plans_') || key.startsWith('demo_data_')) {
           localStorage.removeItem(key);
         }
       });
