@@ -2490,11 +2490,12 @@ export function ClinicProvider({ children }) {
         }
 
         if (day % 3 === 0) {
+          const instPat = createdPatients[(m + day) % createdPatients.length] || firstPat;
           fullYearInstallments.push({
             id: `inst-yr-${instIdCounter++}`,
             clinic_id: clinicId,
-            patient_id: pat.id,
-            patientName: pat.name,
+            patient_id: instPat.id,
+            patientName: instPat.name,
             description: `Tratamento Odontológico (Parcela ${(day % 6) + 1}/6)`,
             amount: 380.00,
             due_date: dateStr,
