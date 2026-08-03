@@ -2658,6 +2658,26 @@ export function ClinicProvider({ children }) {
         chairs: demoChairs
       }));
     } catch (e) {}
+
+    // Sincronizar em segundo plano com as tabelas do Supabase caso a clínica tenha conexão remota
+    if (clinicId && isValidUUID(clinicId)) {
+      try {
+        const prepareForDb = (arr) => arr.map(({ id, patientName, procedureName, ...item }) => ({
+          ...item,
+          clinic_id: clinicId
+        }));
+
+        Promise.allSettled([
+          supabase.from('appointments').insert(prepareForDb(demoAppointments)),
+          supabase.from('transactions').insert(prepareForDb(demoTransactions)),
+          supabase.from('medical_records').insert(prepareForDb(demoMedicalRecords)),
+          supabase.from('suppliers').insert(prepareForDb(demoSuppliers)),
+          supabase.from('accounts_payable').insert(prepareForDb(demoAccountsPayable)),
+          supabase.from('marketing_campaigns').insert(prepareForDb(demoMarketingCampaigns)),
+          supabase.from('automations').insert(prepareForDb(demoAutomations))
+        ]).catch(err => console.warn('Sincronização remota em segundo plano:', err));
+      } catch (err) {}
+    }
   };
 
   const clearAllData = async () => {
