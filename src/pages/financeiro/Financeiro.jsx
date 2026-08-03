@@ -173,11 +173,11 @@ export default function Financeiro() {
   const netBalance = totalIncome - totalExpense;
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black font-body">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-[#0b0f19] font-body">
       
       {/* Header Slim & Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
-        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/30 dark:border-white/10 overflow-x-auto scrollbar-none max-w-full">
+      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0b0f19] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
+        <div className="flex bg-slate-100 dark:bg-[#151c2c] p-1 rounded-xl border border-slate-200/30 dark:border-white/10 overflow-x-auto scrollbar-none max-w-full">
           {[
             { id: 'fluxo', label: 'Fluxo de Caixa' },
             { id: 'pagar', label: 'Contas a Pagar' },
@@ -187,9 +187,9 @@ export default function Financeiro() {
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 active:scale-[0.98] cursor-pointer ${
                 activeSubTab === tab.id 
-                  ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm' 
+                  ? 'bg-white dark:bg-[#1f293d] text-slate-800 dark:text-white shadow-xs border border-slate-200/50 dark:border-white/10' 
                   : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
               }`}
             >
@@ -205,7 +205,7 @@ export default function Financeiro() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Receitas Totais</span>
                 <span className="text-xl font-extrabold font-title text-emerald-500 block mt-1.5">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -215,7 +215,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Despesas / Comissões</span>
                 <span className="text-xl font-extrabold font-title text-red-500 block mt-1.5">R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -225,7 +225,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Líquido</span>
                 <span className={`text-xl font-extrabold font-title block mt-1.5 ${netBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>R$ {netBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>

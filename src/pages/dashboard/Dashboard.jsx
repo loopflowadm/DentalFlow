@@ -369,16 +369,16 @@ export default function Dashboard({ onNavigateTab }) {
   const formattedCurrentDateStr = `02 de ${monthNames[currentMonthIdx]}, ${currentYear}`;
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-black text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
       
       {/* SELETOR DE ABA DO DASHBOARD (VISÃO GERAL DO DIA / ANÁLISE DE BI) */}
-      <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0D0D0D] flex items-center justify-between transition-colors duration-300">
-        <div className="flex bg-slate-100 dark:bg-black p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
+      <div className="px-6 py-3 border-b border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#0b0f19] flex items-center justify-between transition-colors duration-300">
+        <div className="flex bg-slate-100 dark:bg-[#151c2c] p-1 rounded-xl border border-slate-200/40 dark:border-white/10">
           <button
             onClick={() => setDashboardTab('geral')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 active:scale-[0.98] cursor-pointer ${
               dashboardTab === 'geral'
-                ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#1f293d] text-slate-800 dark:text-white shadow-xs border border-slate-200/50 dark:border-white/10'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -387,9 +387,9 @@ export default function Dashboard({ onNavigateTab }) {
           </button>
           <button
             onClick={() => setDashboardTab('bi')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 active:scale-[0.98] cursor-pointer ${
               dashboardTab === 'bi'
-                ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm'
+                ? 'bg-white dark:bg-[#1f293d] text-slate-800 dark:text-white shadow-xs border border-slate-200/50 dark:border-white/10'
                 : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
@@ -409,7 +409,7 @@ export default function Dashboard({ onNavigateTab }) {
           <div className="flex-1 xl:flex-[3] space-y-6">
             
             {/* Banner de Boas-Vindas com Data e Horário no Canto Direito */}
-            <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+            <div className="bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
               <div>
                 <h2 className="text-lg font-black text-slate-900 dark:text-white font-title tracking-tight">
                   Olá, {getGreetingName()}!
@@ -435,7 +435,7 @@ export default function Dashboard({ onNavigateTab }) {
             {/* 5 Cards Executivos de KPI */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
               {executiveStats.map((stat, idx) => (
-                <div key={idx} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 shadow-xs hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 flex flex-col justify-between">
+                <div key={idx} className="bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 rounded-2xl p-4 shadow-xs hover:border-blue-300 dark:hover:border-blue-500/40 transition-all duration-200 hover:-translate-y-0.5 flex flex-col justify-between">
                   <div className="flex justify-between items-start gap-2">
                     <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider leading-tight">
                       {stat.label}
@@ -460,7 +460,7 @@ export default function Dashboard({ onNavigateTab }) {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               
               {/* Left: Volume & Frequência (ColSpan 7) */}
-              <div className="lg:col-span-7 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs text-left">
+              <div className="lg:col-span-7 bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs text-left">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-title">VOLUME & FREQUÊNCIA DE CONSULTAS</h3>
@@ -646,7 +646,7 @@ export default function Dashboard({ onNavigateTab }) {
               </div>
 
               {/* 2. Financeiro - Resumo do Mês (ColSpan 3 Dinâmico) */}
-              <div className="lg:col-span-3 bg-white dark:bg-[#0D0D0D] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs flex flex-col justify-between text-left">
+              <div className="lg:col-span-3 bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs flex flex-col justify-between text-left">
                 <div>
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider font-title">FINANCEIRO - RESUMO DO MÊS</h3>
                   
@@ -654,7 +654,7 @@ export default function Dashboard({ onNavigateTab }) {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 font-medium">Faturamento</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-slate-900 dark:text-white font-mono">{formattedRevenueStr}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white font-title tracking-tight">{formattedRevenueStr}</span>
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+15%' : '0%'}</span>
                       </div>
                     </div>
@@ -662,7 +662,7 @@ export default function Dashboard({ onNavigateTab }) {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 font-medium">Recebimentos</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-title tracking-tight">
                           {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.938).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+13%' : '0%'}</span>
@@ -672,7 +672,7 @@ export default function Dashboard({ onNavigateTab }) {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 font-medium">Despesas</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold text-rose-600 dark:text-rose-400 font-mono">
+                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400 font-title tracking-tight">
                           {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.331).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
                         <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+8%' : '0%'}</span>
@@ -682,7 +682,7 @@ export default function Dashboard({ onNavigateTab }) {
                     <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-white/5">
                       <span className="text-xs font-bold text-slate-900 dark:text-white">Lucro Líquido</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-mono">
+                        <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-title tracking-tight">
                           {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.607).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
                         <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+21%' : '0%'}</span>
