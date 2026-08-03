@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar, { SubSidebar } from '../components/Sidebar';
 import Header from '../components/Header';
 import CommandPalette from '../components/ui/CommandPalette';
+import DeveloperOptionsModal from '../components/DeveloperOptionsModal';
 
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -71,6 +72,7 @@ export default function ClinicApp() {
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
+  const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
 
   // Estados compartilhados da Agenda
   const [agendaDate, setAgendaDate] = useState(() => new Date());
@@ -295,6 +297,7 @@ export default function ClinicApp() {
           }}
           onQuickAction={handleQuickAction}
           onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
+          onOpenDevTools={() => setIsDevToolsOpen(true)}
         />
         
         <div className="flex-1 flex overflow-hidden p-0 bg-transparent">
@@ -333,6 +336,12 @@ export default function ClinicApp() {
         isOpen={isCmdPaletteOpen} 
         onClose={() => setIsCmdPaletteOpen(false)} 
         onNavigate={setActiveTab}
+      />
+
+      {/* Opções de Desenvolvedor (Dev Tools Modal) */}
+      <DeveloperOptionsModal 
+        isOpen={isDevToolsOpen} 
+        onClose={() => setIsDevToolsOpen(false)} 
       />
     </div>
   );

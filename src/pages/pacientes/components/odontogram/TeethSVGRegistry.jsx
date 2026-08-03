@@ -126,13 +126,73 @@ export const AnatomicalToothSVG = ({
 
   const toothData = typeof surfaces === 'object' && surfaces !== null ? surfaces : {};
   const surfaceState = toothData.surfaces || toothData;
+  const condsArr = Array.isArray(toothData.conditions) ? toothData.conditions : [];
 
-  const isImplante = toothData.whole === 'implante' || toothData.root === 'implante' || surfaceState.full === 'implante';
-  const isExtraido = toothData.whole === 'extraido' || surfaceState.full === 'extraido';
-  const isAusente = toothData.whole === 'ausente' || surfaceState.full === 'ausente';
-  const isCoroa = toothData.whole === 'coroa' || surfaceState.full === 'coroa';
-  const isFaceta = toothData.whole === 'faceta' || surfaceState.full === 'faceta';
-  const isEndo = toothData.root === 'endo' || toothData.root === 'endodontia' || surfaceState.root === 'endodontia';
+  // Extrator universal de chave de condição odontológica
+  const extractCondKey = (val) => {
+    if (!val) return null;
+    let raw = val;
+    if (typeof val === 'object') {
+      raw = val.condition || val.conditionId || val.id || val.type || val.name || null;
+    }
+    if (typeof raw !== 'string') return null;
+    const key = raw.toLowerCase().trim();
+    if (key === 'restauracao' || key === 'restauracao_resina' || key === 'resina') return 'resina';
+    if (key === 'canal' || key === 'endodontia' || key === 'endo') return 'endo';
+    if (key === 'carie' || key === 'cárie') return 'carie';
+    if (key === 'faceta' || key === 'lente') return 'faceta';
+    if (key === 'coroa' || key === 'protese') return 'coroa';
+    if (key === 'implante') return 'implante';
+    if (key === 'extraido' || key === 'exodontia') return 'extraido';
+    if (key === 'amalgama') return 'amalgama';
+    if (key === 'selante') return 'selante';
+    if (key === 'fratura') return 'fratura';
+    if (key === 'cervical' || key === 'lesao_cervical') return 'cervical';
+    return key;
+  };
+
+  // Buscar condição em condsArr para uma determinada face
+  const getCondFromArrForFace = (surfKey) => {
+    const faceAliasMap = {
+      V: ['v', 'vestibular'],
+      L: ['l', 'lingual', 'palatina'],
+      M: ['m', 'mesial'],
+      D: ['d', 'distal'],
+      O: ['o', 'oclusal', 'occlusal'],
+      root: ['root', 'raiz']
+    };
+    const aliases = faceAliasMap[surfKey] || [surfKey.toLowerCase()];
+    const found = condsArr.find(c => {
+      const f = (c.face || '').toLowerCase();
+      return aliases.includes(f);
+    });
+    return found ? extractCondKey(found.condition || found) : null;
+  };
+
+  const isImplante = extractCondKey(toothData.whole) === 'implante' || 
+                     extractCondKey(toothData.root) === 'implante' || 
+                     extractCondKey(surfaceState.full) === 'implante' ||
+                     condsArr.some(c => extractCondKey(c.condition) === 'implante');
+
+  const isExtraido = extractCondKey(toothData.whole) === 'extraido' || 
+                     extractCondKey(surfaceState.full) === 'extraido' ||
+                     condsArr.some(c => extractCondKey(c.condition) === 'extraido');
+
+  const isAusente = extractCondKey(toothData.whole) === 'ausente' || 
+                    extractCondKey(surfaceState.full) === 'ausente';
+
+  const isCoroa = extractCondKey(toothData.whole) === 'coroa' || 
+                  extractCondKey(surfaceState.full) === 'coroa' ||
+                  condsArr.some(c => extractCondKey(c.condition) === 'coroa');
+
+  const isFaceta = extractCondKey(toothData.whole) === 'faceta' || 
+                   extractCondKey(surfaceState.full) === 'faceta' ||
+                   condsArr.some(c => extractCondKey(c.condition) === 'faceta');
+
+  const isEndo = extractCondKey(toothData.root) === 'endo' || 
+                 extractCondKey(surfaceState.root) === 'endo' ||
+                 condsArr.some(c => (c.face || '').toLowerCase() === 'raiz' && extractCondKey(c.condition) === 'endo');
+
   const isPlanned = toothData.status === 'planejado';
 
   const showRoot = viewMode === 'Padrao' || viewMode === 'Raiz' || viewMode === 'padrao' || viewMode === 'raiz';
@@ -143,15 +203,22 @@ export const AnatomicalToothSVG = ({
   const defaultEnamelColor = isDarkMode ? '#1F2937' : '#FFFFFF';
   const defaultStrokeColor = isDarkMode ? '#64748B' : '#94A3B8';
 
+  const getSurfaceCondId = (surfKey) => {
+    const fromArr = getCondFromArrForFace(surfKey);
+    if (fromArr) return fromArr;
+
+    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'oclusal', root: 'raiz' };
+    const mappedKey = keyMap[surfKey] || surfKey;
+    const rawVal = surfaceState[surfKey] || surfaceState[mappedKey] || toothData[surfKey] || toothData[mappedKey];
+    return extractCondKey(rawVal);
+  };
+
   const getSurfaceFill = (surfKey) => {
     if (isExtraido || isAusente) return 'transparent';
     if (isCoroa) return '#EAB308';
     if (isFaceta) return '#A855F7';
 
-    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
-    const mappedKey = keyMap[surfKey] || surfKey;
-    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
-
+    const condId = getSurfaceCondId(surfKey);
     if (condId) {
       const cond = DENTAL_CONDITIONS.find(c => c.id === condId) || CONDITION_COLORS[condId];
       if (cond) return cond.color || cond.fill;
@@ -161,17 +228,12 @@ export const AnatomicalToothSVG = ({
 
   const getSurfaceOpacity = (surfKey) => {
     if (isCoroa || isFaceta) return 0.35;
-    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
-    const mappedKey = keyMap[surfKey] || surfKey;
-    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
+    const condId = getSurfaceCondId(surfKey);
     return condId ? 1 : (isDarkMode ? 0.4 : 1);
   };
 
   const getSurfaceStroke = (surfKey) => {
-    const keyMap = { V: 'vestibular', L: 'lingual', M: 'mesial', D: 'distal', O: 'occlusal', root: 'root' };
-    const mappedKey = keyMap[surfKey] || surfKey;
-    const condId = surfaceState[surfKey] || surfaceState[mappedKey];
-
+    const condId = getSurfaceCondId(surfKey);
     if (condId) {
       const cond = DENTAL_CONDITIONS.find(c => c.id === condId) || CONDITION_COLORS[condId];
       if (cond) return cond.stroke || defaultStrokeColor;

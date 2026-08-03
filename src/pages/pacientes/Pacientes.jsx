@@ -70,6 +70,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   // Modais
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [showEditPatient, setShowEditPatient] = useState(false);
+  const [showTagSelector, setShowTagSelector] = useState(false);
 
   // Campos de criação/edição de paciente
   const [pName, setPName] = useState('');
@@ -957,23 +958,77 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     ID: {selectedPatient.id ? (typeof selectedPatient.id === 'string' && selectedPatient.id.startsWith('p-') ? selectedPatient.id.replace('p-', '') : selectedPatient.id.substring(0, 8).toUpperCase()) : 'C16A3F1B'}
                   </span>
 
-                  {/* Alertas Médicos */}
+                  {/* Alertas Médicos Críticos */}
                   {criticalConditions.map((cond, idx) => (
-                    <span key={idx} className="hidden lg:flex px-2 py-0.5 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-md text-[9px] font-extrabold uppercase items-center gap-1 leading-none shrink-0">
-                      <AlertTriangle className="w-3 h-3" /> {cond}
+                    <span key={idx} className="flex px-2.5 py-1 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-[10px] font-black uppercase items-center gap-1 leading-none shrink-0 shadow-2xs">
+                      <AlertTriangle className="w-3 h-3 text-rose-500" /> {cond}
                     </span>
                   ))}
                 </div>
               </div>
 
               {/* Botões de Edição e Ações */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 relative">
+                {/* Popover de Categorização por Tag (Zero alert fallback) */}
                 <button
-                  onClick={() => alert('Categorizar paciente em desenvolvimento.')}
+                  type="button"
+                  onClick={() => setShowTagSelector(!showTagSelector)}
                   className="px-3 py-1.5 bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-2xs cursor-pointer active:scale-95"
+                  aria-expanded={showTagSelector}
+                  aria-label="Categorizar paciente"
                 >
-                  <Tag className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" /> Categorizar
+                  <Tag className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                  <span>Categorizar</span>
                 </button>
+
+                {showTagSelector && (
+                  <div className="absolute right-24 top-10 w-56 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-3 space-y-2 text-left animate-in fade-in zoom-in-95">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Categorizar Paciente</span>
+                      <button onClick={() => setShowTagSelector(false)} className="p-0.5 rounded text-slate-400 hover:text-slate-200">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      {[
+                        { name: 'Particular', color: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
+                        { name: 'VIP', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
+                        { name: 'Ortodontia', color: 'bg-purple-500/10 text-purple-500 border-purple-500/30' },
+                        { name: 'Implantodontia', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' },
+                        { name: 'Sensível a Anestesia', color: 'bg-rose-500/10 text-rose-500 border-rose-500/30' },
+                        { name: 'Em Atraso', color: 'bg-red-500/10 text-red-500 border-red-500/30' }
+                      ].map(t => {
+                        const historyObj = selectedPatient?.medical_history ? JSON.parse(selectedPatient.medical_history) : {};
+                        const currentTags = historyObj.tags || ['Particular'];
+                        const isChecked = currentTags.includes(t.name);
+
+                        return (
+                          <button
+                            key={t.name}
+                            type="button"
+                            onClick={async () => {
+                              const newTags = isChecked ? currentTags.filter(x => x !== t.name) : [...currentTags, t.name];
+                              const updatedHist = { ...historyObj, tags: newTags };
+                              const updatedPat = { ...selectedPatient, medical_history: JSON.stringify(updatedHist) };
+                              setSelectedPatient(updatedPat);
+                              await updatePatient(updatedPat);
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                              isChecked ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            }`}
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${t.color.split(' ')[0].replace('/10', '')}`} />
+                              {t.name}
+                            </span>
+                            {isChecked && <Check className="w-3.5 h-3.5 text-blue-500" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <button
                   onClick={openEditModal}
@@ -985,9 +1040,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               </div>
             </div>
 
-            {/* 2. Barra de Navegação das Abas do Prontuário */}
+            {/* 2. Barra de Navegação das Abas do Prontuário com Acessibilidade WCAG 2.2 */}
             <div className="px-6 bg-white dark:bg-[#0D0D0D] border-b border-slate-200/80 dark:border-white/10 flex-shrink-0 overflow-x-auto flex scrollbar-none transition-colors duration-300">
-              <div className="flex gap-4">
+              <div className="flex gap-4" role="tablist" aria-label="Abas do Prontuário do Paciente">
                 {[
                   { id: 'visao_geral', label: 'Visão Geral' },
                   { id: 'anamnese', label: 'Anamnese' },
@@ -999,8 +1054,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 ].map(tab => (
                   <button
                     key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeSubTab === tab.id}
+                    aria-controls={`panel-${tab.id}`}
                     onClick={() => setActiveSubTab(tab.id)}
-                    className={`py-3.5 text-xs font-bold transition-all border-b-2 px-1 flex items-center ${
+                    className={`py-3.5 text-xs font-bold transition-all border-b-2 px-1 flex items-center cursor-pointer focus:outline-none focus:text-blue-500 ${
                       activeSubTab === tab.id 
                         ? 'border-[#196BFB] text-[#196BFB] dark:text-blue-400 font-black' 
                         : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -2116,12 +2175,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAddPatient && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white"
+              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Cadastrar Novo Paciente</h3>
@@ -2347,12 +2406,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       {/* ========================================================================= */}
       <AnimatePresence>
         {showEditPatient && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white"
+              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Editar Dados do Paciente</h3>
@@ -2574,12 +2633,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAddPresc && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white"
+              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Emitir Prescrição Digital</h3>
@@ -2671,12 +2730,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       {/* ========================================================================= */}
       <AnimatePresence>
         {viewingPrescription && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-850 rounded-[32px] max-w-xl w-full p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-left space-y-6 text-slate-855 dark:text-white"
+              className="my-auto bg-white dark:bg-slate-850 rounded-[32px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-left space-y-6 text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>

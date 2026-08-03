@@ -36,7 +36,13 @@ export default function VisaoGeralView({
   if (anamnese.is_gestante === 'Sim') healthAlerts.push({ type: 'info', text: 'Paciente Gestante' });
 
   // Filtrar tarefas do paciente
-  const patientTasks = appointments.filter(a => a.patient_id === patient.id && a.type === 'TAREFA');
+  const patientTasks = appointments.filter(a => 
+    a.type === 'TAREFA' && (
+      a.patient_id === patient.id || 
+      a.patientId === patient.id || 
+      (a.patientName && patient.name && a.patientName.toLowerCase() === patient.name.toLowerCase())
+    )
+  );
 
   // Arcadas para preview resumido
   const upperTeethQ1 = [18, 17, 16, 15, 14, 13, 12, 11];
@@ -63,41 +69,7 @@ export default function VisaoGeralView({
 
   return (
     <div className="space-y-6 animate-fade-in text-left">
-      {/* 1. BANNER DE ALERTAS MÉDICOS CRÍTICOS (Se houver) */}
-      {healthAlerts.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-950/70 via-slate-900 to-amber-950/60 border border-rose-500/30 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-500/20 border border-rose-500/40 rounded-xl text-rose-400 shrink-0">
-              <ShieldAlert className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-rose-300">Atenção Clínica Crítica</h3>
-              <p className="text-[11px] text-slate-300 font-medium">Condições e restrições de saúde identificadas na anamnese do paciente</p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {healthAlerts.map((alt, idx) => (
-              <span 
-                key={idx}
-                className={`text-[10px] font-extrabold px-3 py-1 rounded-xl border flex items-center gap-1.5 uppercase tracking-wider shadow-sm ${
-                  alt.type === 'danger'
-                    ? 'bg-rose-500/20 text-rose-200 border-rose-500/40'
-                    : alt.type === 'warning'
-                      ? 'bg-amber-500/20 text-amber-200 border-amber-500/40'
-                      : 'bg-purple-500/20 text-purple-200 border-purple-500/40'
-                }`}
-              >
-                <AlertTriangle className="w-3 h-3" /> {alt.text}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-
-      {/* 3. GRID PRINCIPAL (DUAS COLUNAS) */}
+      {/* GRID PRINCIPAL (DUAS COLUNAS) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* COLUNA ESQUERDA: TAREFAS & OBSERVAÇÕES CLÍNICAS */}

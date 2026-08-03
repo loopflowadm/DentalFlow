@@ -115,6 +115,16 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   // Input de checklist rápido no Widget Direito
   const [newChecklistText, setNewChecklistText] = useState('');
 
+  // Toast de Feedback Inline
+  const [crmToast, setCrmToast] = useState(null);
+
+  useEffect(() => {
+    if (crmToast) {
+      const timer = setTimeout(() => setCrmToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [crmToast]);
+
   // Selecionar o primeiro lead caso nenhum esteja ativo ao montar
   useEffect(() => {
     if (!selectedLead && crmLeads.length > 0) {
@@ -197,10 +207,10 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
           };
           setSelectedLead(updated);
         }
-        alert(`"${selectedLead.name}" foi convertido em Paciente Clínico com sucesso! O registro permanece salvo no CRM.`);
+        setCrmToast({ message: `"${selectedLead.name}" foi convertido em Paciente Clínico com sucesso!`, type: 'success' });
       } catch (err) {
         console.error('Erro ao converter lead em paciente:', err);
-        alert('Falha ao converter lead em paciente.');
+        setCrmToast({ message: 'Falha ao converter lead em paciente.', type: 'error' });
       }
     }
   };
@@ -290,7 +300,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
     };
     updateCrmLead(updated);
     setSelectedLead(updated);
-    alert('Dados do paciente atualizados com sucesso!');
+    setCrmToast({ message: 'Dados do lead atualizados com sucesso!', type: 'success' });
   };
 
   // Mock de Anexo de Exame / Proposta
@@ -318,7 +328,18 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   };
 
   return (
-    <div className="h-full flex gap-6 overflow-hidden select-none">
+    <div className="h-full flex gap-6 overflow-hidden select-none relative">
+      {/* Toast flutuante de feedback no CRM */}
+      {crmToast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border text-xs font-extrabold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+          crmToast.type === 'error' 
+            ? 'bg-red-500 text-white border-red-400' 
+            : 'bg-emerald-500 text-white border-emerald-400'
+        }`}>
+          {crmToast.type === 'error' ? <AlertCircle className="w-4 h-4 shrink-0" /> : <Check className="w-4 h-4 shrink-0" />}
+          <span>{crmToast.message}</span>
+        </div>
+      )}
       
       {/* ========================================================================= */}
       {/* COLUNA 2: DETALHES DO LEAD (CENTRO - FLEX-1)                               */}

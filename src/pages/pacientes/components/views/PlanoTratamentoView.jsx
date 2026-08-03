@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '../../../../context/ThemeContext';
 import { 
   CheckCircle2, Clock, Play, FileText, Plus, Calendar, 
@@ -58,13 +58,23 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
   const [newPrice, setNewPrice] = useState('350');
   const [newStatus, setNewStatus] = useState('Agendado');
 
-  // Sync state if patient changes
-  useEffect(() => {
-    if (patient?.medical_history?.treatment_plan) {
-      setTreatmentPlan(patient.medical_history.treatment_plan);
-      setActiveStepId(patient.medical_history.treatment_plan.activeStepId || 2);
+  const getPlanFromPat = useCallback((pat) => {
+    if (!pat) return null;
+    let mh = pat.medical_history;
+    if (typeof mh === 'string') {
+      try { mh = JSON.parse(mh); } catch (e) { mh = null; }
     }
-  }, [patient?.id]);
+    return mh?.treatment_plan || null;
+  }, []);
+
+  // Sync state if patient or medical_history changes
+  useEffect(() => {
+    const plan = getPlanFromPat(patient);
+    if (plan) {
+      setTreatmentPlan(plan);
+      setActiveStepId(plan.activeStepId || 2);
+    }
+  }, [patient?.id, patient?.medical_history, getPlanFromPat]);
 
   // Persistir dados no Supabase via componente pai
   const persistPlanData = async (updatedPlan) => {
@@ -148,8 +158,13 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
     input.click();
   };
 
+  // Garantir arrays e objetos seguros com fallbacks
+  const stepsList = Array.isArray(treatmentPlan?.steps) ? treatmentPlan.steps : [];
+  const attachmentsList = Array.isArray(treatmentPlan?.attachments) ? treatmentPlan.attachments : [];
+  const financialSummary = treatmentPlan?.financialSummary || { total: 0, paid: 0 };
+
   // Obter dentes marcados na etapa ativa para o mini-odontograma
-  const activeStep = treatmentPlan.steps.find(s => s.id === activeStepId) || {};
+  const activeStep = stepsList.find(s => s.id === activeStepId) || {};
   const activeStepProcedures = activeStep.procedures || [];
 
   // Mapear procedimentos para formato esperado pelo TeethSVGRegistry
@@ -157,7 +172,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
   activeStepProcedures.forEach(proc => {
     // Escolhe cor com base no tipo de procedimento
     let condition = 'restauracao_resina';
-    const nameLower = proc.nome.toLowerCase();
+    const nameLower = (proc.nome || '').toLowerCase();
     if (nameLower.includes('canal') || nameLower.includes('endo')) {
       condition = 'endodontia';
     } else if (nameLower.includes('implante')) {
@@ -178,13 +193,13 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
   });
 
   // Métricas do plano
-  const totalSteps = treatmentPlan.steps.length;
-  const completedSteps = treatmentPlan.steps.filter(s => s.status === 'completed').length;
-  const activeSteps = treatmentPlan.steps.filter(s => s.status === 'active').length;
-  const pendingSteps = treatmentPlan.steps.filter(s => s.status === 'pending').length;
+  const totalSteps = stepsList.length || 1;
+  const completedSteps = stepsList.filter(s => s.status === 'completed').length;
+  const activeSteps = stepsList.filter(s => s.status === 'active').length;
+  const pendingSteps = stepsList.filter(s => s.status === 'pending').length;
 
-  const totalInvestment = treatmentPlan.financialSummary.total;
-  const paidAmount = treatmentPlan.financialSummary.paid;
+  const totalInvestment = financialSummary.total || 0;
+  const paidAmount = financialSummary.paid || 0;
   const remainingAmount = totalInvestment - paidAmount;
   const progressPercent = Math.round((completedSteps / totalSteps) * 100);
 
@@ -206,7 +221,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
                 ETAPAS DO TRATAMENTO
               </h3>
               <div className="space-y-1">
-                {treatmentPlan.steps.map(step => {
+                {stepsList.map(step => {
                   const isActive = step.id === activeStepId;
                   const isCompleted = step.status === 'completed';
                   const isCurrent = step.status === 'active';
@@ -260,7 +275,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
                 ANEXOS DO PLANO
               </h3>
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                {treatmentPlan.attachments.map(att => (
+                {attachmentsList.map(att => (
                   <div 
                     key={att.id}
                     onClick={() => setSelectedAttachment(att)}
@@ -537,8 +552,8 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
 
       {/* MODAL LIGHTBOX PARA ANEXOS */}
       {selectedAttachment && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-fade-in">
-          <div className={`border rounded-2xl p-4 max-w-2xl w-full relative flex flex-col gap-4 shadow-2xl ${
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto animate-fade-in">
+          <div className={`my-auto border rounded-2xl p-4 max-w-2xl w-full relative flex flex-col gap-4 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin ${
             isDarkMode ? 'bg-slate-950 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'
           }`}>
             <div className={`flex justify-between items-center border-b pb-2.5 ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
@@ -567,10 +582,10 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
 
       {/* MODAL DE ADICIONAR PROCEDIMENTO */}
       {showAddProcedure && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-fade-in">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto animate-fade-in">
           <form 
             onSubmit={handleAddProcedureSubmit}
-            className={`border rounded-2xl p-5 max-w-sm w-full relative flex flex-col gap-4 shadow-2xl text-left ${
+            className={`my-auto border rounded-2xl p-5 max-w-sm w-full relative flex flex-col gap-4 shadow-2xl text-left max-h-[90vh] overflow-y-auto scrollbar-thin ${
               isDarkMode ? 'bg-[#111726] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'
             }`}
           >

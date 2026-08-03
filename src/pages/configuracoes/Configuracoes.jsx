@@ -3,7 +3,7 @@ import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  Settings, Clock, Trash2, Check, Sun, Moon,
+  Settings, Clock, Trash2, Check, Sun, Moon, Edit, MapPin,
   Smartphone, Calendar, Mail, Key, QrCode, X, Palette, Image,
   Sparkles, Building, Type, Globe, Compass, Lock,
   Activity, DollarSign, User, Gem, Shield, Bot, Zap,
@@ -92,15 +92,56 @@ function adjustColorBrightness(hex, percent) {
 
 export default function Configuracoes() {
   const { 
-    procedures, saveProcedures, insurancePlans, saveInsurancePlans 
+    procedures, saveProcedures, insurancePlans, saveInsurancePlans,
+    dentists, clinicHours, saveClinicHours, dentistSchedules, saveDentistSchedules,
+    holidays, saveHolidays, chairs, addChair, updateChair, deleteChair
   } = useClinic();
   
   const { user, clinic, updateClinic } = useAuth();
   const { currentTheme, setThemeMode, applyTheme } = useTheme();
 
   // Estados locais
-  const [activeSubTab, setActiveSubTab] = useState('identidade'); // 'identidade' | 'equipe' | 'procs' | 'integracoes'
+  const [activeSubTab, setActiveSubTab] = useState('identidade'); // 'identidade' | 'equipe' | 'cadeiras' | 'procs' | 'expediente' | 'feriados' | 'integracoes'
   const [sandboxMode, setSandboxMode] = useState('light'); // 'light' | 'dark' preview in Sandbox
+
+  // Estados de edição de procedimento
+  const [showEditProc, setShowEditProc] = useState(false);
+  const [editingProc, setEditingProc] = useState(null);
+  const [editProcName, setEditProcName] = useState('');
+  const [editProcPrice, setEditProcPrice] = useState('');
+  const [editProcDuration, setEditProcDuration] = useState('30');
+  const [editProcCategory, setEditProcCategory] = useState('CLINICAL');
+  const [editProcColor, setEditProcColor] = useState('#a78bfa');
+
+  // Estados de Expediente & Escala (Com Pausa de Almoço)
+  const [localClinicStart, setLocalClinicStart] = useState(clinicHours?.start || '08:00');
+  const [localClinicEnd, setLocalClinicEnd] = useState(clinicHours?.end || '18:00');
+  const [localClinicWorkDays, setLocalClinicWorkDays] = useState(clinicHours?.workDays || [1, 2, 3, 4, 5, 6]);
+  const [hasLunchBreak, setHasLunchBreak] = useState(clinicHours?.hasLunchBreak !== false);
+  const [localClinicLunchStart, setLocalClinicLunchStart] = useState(clinicHours?.lunchStart || '12:00');
+  const [localClinicLunchEnd, setLocalClinicLunchEnd] = useState(clinicHours?.lunchEnd || '14:00');
+  
+  const [selectedDentistId, setSelectedDentistId] = useState('');
+  const [dentistWorkDays, setDentistWorkDays] = useState({ 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 0: false });
+  const [dentistStart, setDentistStart] = useState('08:00');
+  const [dentistEnd, setDentistEnd] = useState('18:00');
+  const [dentistLunchStart, setDentistLunchStart] = useState('12:00');
+  const [dentistLunchEnd, setDentistLunchEnd] = useState('14:00');
+  const [dentistHasLunch, setDentistHasLunch] = useState(true);
+
+  // Estados de Cadeiras & Consultórios
+  const [showAddChair, setShowAddChair] = useState(false);
+  const [newChairName, setNewChairName] = useState('');
+  const [showEditChair, setShowEditChair] = useState(false);
+  const [editingChair, setEditingChair] = useState(null);
+  const [editChairName, setEditChairName] = useState('');
+
+  // Estados de Feriados & Folgas
+  const [showAddHoliday, setShowAddHoliday] = useState(false);
+  const [newHolTitle, setNewHolTitle] = useState('');
+  const [newHolDate, setNewHolDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newHolType, setNewHolType] = useState('CLINIC');
+  const [newHolDentistId, setNewHolDentistId] = useState('');
 
   // Estados locais do Branding da Clínica
   const [cName, setCName] = useState('');
@@ -290,10 +331,121 @@ export default function Configuracoes() {
     setShowAddProc(false);
   };
 
+  const handleEditProcOpen = (proc) => {
+    setEditingProc(proc);
+    setEditProcName(proc.name || '');
+    setEditProcPrice(proc.price !== undefined ? String(proc.price) : '');
+    setEditProcDuration(proc.duration !== undefined ? String(proc.duration) : '30');
+    setEditProcCategory(proc.category || 'CLINICAL');
+    setEditProcColor(proc.color || '#3b82f6');
+    setShowEditProc(true);
+  };
+
+  const handleEditProcSubmit = (e) => {
+    e.preventDefault();
+    if (!editProcName || !editProcPrice || !editingProc) return;
+    const updated = procedures.map(p => {
+      if (p.id === editingProc.id) {
+        return {
+          ...p,
+          name: editProcName,
+          price: parseFloat(editProcPrice),
+          duration: parseInt(editProcDuration) || 30,
+          category: editProcCategory,
+          color: editProcColor
+        };
+      }
+      return p;
+    });
+    saveProcedures(updated);
+    setShowEditProc(false);
+    setEditingProc(null);
+  };
+
   const handleDeleteProc = (id) => {
     if (window.confirm('Tem certeza que deseja excluir este procedimento?')) {
       const updated = procedures.filter(p => p.id !== id);
       saveProcedures(updated);
+    }
+  };
+
+  const handleAddChairSubmit = async (e) => {
+    e.preventDefault();
+    if (!newChairName) return;
+    await addChair(newChairName.trim());
+    setNewChairName('');
+    setShowAddChair(false);
+  };
+
+  const handleEditChairOpen = (chair) => {
+    setEditingChair(chair);
+    setEditChairName(chair.name || '');
+    setShowEditChair(true);
+  };
+
+  const handleEditChairSubmit = async (e) => {
+    e.preventDefault();
+    if (!editChairName || !editingChair) return;
+    await updateChair({ ...editingChair, name: editChairName.trim() });
+    setShowEditChair(false);
+    setEditingChair(null);
+  };
+
+  const handleDeleteChairConfirm = async (chairId) => {
+    if (window.confirm('Tem certeza de que deseja excluir esta cadeira/consultório?')) {
+      await deleteChair(chairId);
+    }
+  };
+
+  const handleSaveClinicHours = (e) => {
+    e.preventDefault();
+    saveClinicHours({
+      start: localClinicStart,
+      end: localClinicEnd,
+      workDays: localClinicWorkDays,
+      hasLunchBreak,
+      lunchStart: localClinicLunchStart,
+      lunchEnd: localClinicLunchEnd
+    });
+    alert('Horário de funcionamento e pausa de almoço da clínica salvos com sucesso!');
+  };
+
+  const handleSaveDentistSchedule = (e) => {
+    e.preventDefault();
+    if (!selectedDentistId) {
+      alert('Por favor, selecione um profissional.');
+      return;
+    }
+    const updatedSchedules = {
+      ...dentistSchedules,
+      [selectedDentistId]: {
+        workDays: dentistWorkDays,
+        start: dentistStart,
+        end: dentistEnd
+      }
+    };
+    saveDentistSchedules(updatedSchedules);
+    alert('Escala do profissional salva com sucesso!');
+  };
+
+  const handleAddHolidaySubmit = (e) => {
+    e.preventDefault();
+    if (!newHolTitle || !newHolDate) return;
+    const fresh = {
+      id: 'hol-' + Math.random().toString(36).substr(2, 9),
+      title: newHolTitle,
+      date: newHolDate,
+      type: newHolType,
+      dentist_id: newHolType === 'DENTIST' ? newHolDentistId : null
+    };
+    saveHolidays([...holidays, fresh]);
+    setNewHolTitle('');
+    setShowAddHoliday(false);
+  };
+
+  const handleDeleteHoliday = (id) => {
+    if (window.confirm('Tem certeza de que deseja remover este feriado/folga?')) {
+      saveHolidays(holidays.filter(h => h.id !== id));
     }
   };
 
@@ -374,7 +526,10 @@ export default function Configuracoes() {
           {[
             { id: 'identidade', label: 'Identidade Visual', icon: Palette },
             { id: 'equipe', label: 'Equipe & Permissões', icon: Users },
-            { id: 'procs', label: 'Procedimentos & Convênios', icon: ClipboardList }
+            { id: 'cadeiras', label: 'Cadeiras & Consultórios', icon: MapPin },
+            { id: 'procs', label: 'Procedimentos & Convênios', icon: ClipboardList },
+            { id: 'expediente', label: 'Expediente & Escalas', icon: Clock },
+            { id: 'feriados', label: 'Feriados & Folgas', icon: Calendar }
           ].map(tab => {
             const TabIcon = tab.icon;
             const isTabActive = activeSubTab === tab.id;
@@ -1009,6 +1164,78 @@ export default function Configuracoes() {
         </div>
       )}
 
+      {/* SUB-ABA: CADEIRAS & CONSULTÓRIOS */}
+      {activeSubTab === 'cadeiras' && (
+        <div className="space-y-4 text-left animate-in fade-in">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadeiras & Consultórios da Clínica</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Gerencie o cadastro de salas de atendimento e cadeiras odontológicas.</p>
+            </div>
+            <button
+              onClick={() => setShowAddChair(true)}
+              className="px-4 py-2 hover:opacity-95 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
+              style={{ backgroundColor: currentTheme.secondary_color }}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span>+ Nova Cadeira</span>
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-550 border-b border-slate-200/40 dark:border-slate-800">
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Cadeira / Consultório</th>
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Status</th>
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+                {chairs.map(c => (
+                  <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-extrabold text-[10px]">
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                      <span>{c.name}</span>
+                    </td>
+                    <td className="py-3.5 px-5">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                        ● Ativa para Atendimento
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-right flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleEditChairOpen(c)}
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
+                        title="Editar Cadeira"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteChairConfirm(c.id)}
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 hover:text-red-500 rounded-xl transition-colors cursor-pointer"
+                        title="Excluir Cadeira"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {chairs.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="p-6 text-center text-slate-400 text-xs">
+                      Nenhuma cadeira cadastrada. Clique em "+ Nova Cadeira" para criar.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* SUB-ABA: PROCEDIMENTOS & CONVÊNIOS */}
       {activeSubTab === 'procs' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
@@ -1048,10 +1275,18 @@ export default function Configuracoes() {
                           {p.category}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-right">
+                      <td className="py-3.5 px-5 text-right flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleEditProcOpen(p)}
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
+                          title="Editar Procedimento"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           onClick={() => handleDeleteProc(p.id)}
                           className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 hover:text-red-500 rounded-xl transition-colors cursor-pointer"
+                          title="Excluir Procedimento"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1107,10 +1342,308 @@ export default function Configuracoes() {
         </div>
       )}
 
+      {/* SUB-ABA: EXPEDIENTE DA CLÍNICA E ESCALAS DOS PROFISSIONAIS */}
+      {activeSubTab === 'expediente' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left animate-in fade-in">
+          {/* Horário de Atendimento Geral da Clínica */}
+          <div className="lg:col-span-6 bg-white dark:bg-slate-850 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-2xl bg-blue-500/10 text-blue-500">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-800 dark:text-white font-title">Expediente Geral da Clínica</h3>
+                <p className="text-xs text-slate-400">Horário padrão de funcionamento do estabelecimento.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveClinicHours} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Abertura</label>
+                  <input
+                    type="time"
+                    required
+                    value={localClinicStart}
+                    onChange={(e) => setLocalClinicStart(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Fechamento</label>
+                  <input
+                    type="time"
+                    required
+                    value={localClinicEnd}
+                    onChange={(e) => setLocalClinicEnd(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Dias de Funcionamento</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 1, label: 'Seg' },
+                    { id: 2, label: 'Ter' },
+                    { id: 3, label: 'Qua' },
+                    { id: 4, label: 'Qui' },
+                    { id: 5, label: 'Sex' },
+                    { id: 6, label: 'Sáb' },
+                    { id: 0, label: 'Dom' }
+                  ].map(d => {
+                    const isSelected = localClinicWorkDays.includes(d.id);
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setLocalClinicWorkDays(localClinicWorkDays.filter(day => day !== d.id));
+                          } else {
+                            setLocalClinicWorkDays([...localClinicWorkDays, d.id]);
+                          }
+                        }}
+                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Pausa de Almoço */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Pausa de Almoço (Intervalo)</span>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-slate-500">
+                    <input
+                      type="checkbox"
+                      checked={hasLunchBreak}
+                      onChange={(e) => setHasLunchBreak(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 accent-blue-600"
+                    />
+                    Ativar Almoço
+                  </label>
+                </div>
+
+                {hasLunchBreak && (
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Início Almoço</label>
+                      <input
+                        type="time"
+                        value={localClinicLunchStart}
+                        onChange={(e) => setLocalClinicLunchStart(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Retorno Almoço</label>
+                      <input
+                        type="time"
+                        value={localClinicLunchEnd}
+                        onChange={(e) => setLocalClinicLunchEnd(e.target.value)}
+                        className="w-full bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow transition-all active:scale-[0.98]"
+              >
+                Salvar Horário e Almoço da Clínica
+              </button>
+            </form>
+          </div>
+
+          {/* Escala Personalizada por Dentista */}
+          <div className="lg:col-span-6 bg-white dark:bg-slate-850 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-500">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-800 dark:text-white font-title">Escala Semanal do Profissional</h3>
+                <p className="text-xs text-slate-400">Configure os turnos e dias de atendimento de cada dentista.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveDentistSchedule} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Selecione o Profissional</label>
+                <select
+                  required
+                  value={selectedDentistId}
+                  onChange={(e) => {
+                    const docId = e.target.value;
+                    setSelectedDentistId(docId);
+                    if (dentistSchedules[docId]) {
+                      setDentistWorkDays(dentistSchedules[docId].workDays || { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 0: false });
+                      setDentistStart(dentistSchedules[docId].start || '08:00');
+                      setDentistEnd(dentistSchedules[docId].end || '18:00');
+                    }
+                  }}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="">-- Selecione o Dentista --</option>
+                  {dentists.map(d => (
+                    <option key={d.id} value={d.id}>{d.full_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedDentistId && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Início Atendimento</label>
+                      <input
+                        type="time"
+                        required
+                        value={dentistStart}
+                        onChange={(e) => setDentistStart(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Término Atendimento</label>
+                      <input
+                        type="time"
+                        required
+                        value={dentistEnd}
+                        onChange={(e) => setDentistEnd(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Dias em que Atende</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { id: 1, label: 'Seg' },
+                        { id: 2, label: 'Ter' },
+                        { id: 3, label: 'Qua' },
+                        { id: 4, label: 'Qui' },
+                        { id: 5, label: 'Sex' },
+                        { id: 6, label: 'Sáb' },
+                        { id: 0, label: 'Dom' }
+                      ].map(d => {
+                        const isChecked = !!dentistWorkDays[d.id];
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            onClick={() => setDentistWorkDays(prev => ({ ...prev, [d.id]: !prev[d.id] }))}
+                            className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
+                              isChecked
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow transition-all active:scale-[0.98]"
+                  >
+                    Salvar Escala do Profissional
+                  </button>
+                </>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-ABA: FERIADOS, FOLGAS E BLOQUEIOS */}
+      {activeSubTab === 'feriados' && (
+        <div className="space-y-4 text-left animate-in fade-in">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
+            <div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Feriados, Folgas e Férias</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Cadastre recessos da clínica ou ausências de dentistas para bloquear o agendamento.</p>
+            </div>
+            <button
+              onClick={() => setShowAddHoliday(true)}
+              className="px-4 py-2 hover:opacity-95 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
+              style={{ backgroundColor: currentTheme.secondary_color }}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>+ Novo Feriado / Folga</span>
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Data</th>
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Título / Motivo</th>
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Escopo do Bloqueio</th>
+                  <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+                {holidays.map(hol => {
+                  const targetDentist = hol.dentist_id ? dentists.find(d => d.id === hol.dentist_id) : null;
+                  return (
+                    <tr key={hol.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="py-3.5 px-5 font-extrabold text-blue-500 font-mono">{hol.date}</td>
+                      <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white">{hol.title}</td>
+                      <td className="py-3.5 px-5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          hol.type === 'CLINIC'
+                            ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30'
+                            : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
+                        }`}>
+                          {hol.type === 'CLINIC' ? '🏢 Toda a Clínica' : `👤 Folga ${targetDentist ? targetDentist.full_name : 'Profissional'}`}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-5 text-right">
+                        <button
+                          onClick={() => handleDeleteHoliday(hol.id)}
+                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 hover:text-red-500 rounded-xl transition-colors cursor-pointer"
+                          title="Remover Feriado/Folga"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {holidays.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-slate-400 text-xs">
+                      Nenhum feriado ou folga cadastrado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: ADICIONAR PROFISSIONAL */}
       {showAddStaff && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Adicionar à Equipe</h3>
               <button 
@@ -1173,8 +1706,8 @@ export default function Configuracoes() {
 
       {/* MODAL: ADICIONAR PROCEDIMENTO */}
       {showAddProc && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Procedimento</h3>
               <button 
@@ -1448,8 +1981,8 @@ export default function Configuracoes() {
         </div>
       )}
       {showAddInsurance && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Convênio</h3>
               <button 
@@ -1493,6 +2026,257 @@ export default function Configuracoes() {
                 style={{ backgroundColor: currentTheme.secondary_color }}
               >
                 Cadastrar Convênio
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR PROCEDIMENTO */}
+      {showEditProc && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Editar Procedimento</h3>
+              <button 
+                onClick={() => {
+                  setShowEditProc(false);
+                  setEditingProc(null);
+                }}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditProcSubmit} className="space-y-4 text-slate-800 dark:text-slate-200 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nome do Procedimento</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Restauração Resina"
+                  value={editProcName}
+                  onChange={(e) => setEditProcName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preço Padrão (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="ex: 250.00"
+                    value={editProcPrice}
+                    onChange={(e) => setEditProcPrice(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Duração (Minutos)</label>
+                  <input
+                    type="number"
+                    step="5"
+                    required
+                    placeholder="ex: 30"
+                    value={editProcDuration}
+                    onChange={(e) => setEditProcDuration(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Categoria</label>
+                <select
+                  value={editProcCategory}
+                  onChange={(e) => setEditProcCategory(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                >
+                  <option value="CLINICAL">Clínica Geral</option>
+                  <option value="ORTHO">Ortodontia</option>
+                  <option value="SURGERY">Cirurgia</option>
+                  <option value="ESTHETIC">Estética</option>
+                  <option value="IMPLANT">Implantodontia</option>
+                  <option value="ENDO">Endodontia</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cor Identificadora</label>
+                <input
+                  type="color"
+                  value={editProcColor}
+                  onChange={(e) => setEditProcColor(e.target.value)}
+                  className="w-full h-9 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 cursor-pointer"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-secondary text-white font-bold rounded-xl shadow text-xs mt-2"
+                style={{ backgroundColor: currentTheme.secondary_color }}
+              >
+                Salvar Alterações
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CADASTRAR FERIADO OU FOLGA */}
+      {showAddHoliday && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Feriado / Bloqueio</h3>
+              <button 
+                onClick={() => setShowAddHoliday(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddHolidaySubmit} className="space-y-4 text-slate-800 dark:text-slate-200 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Título ou Motivo</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Feriado de Carnaval ou Férias Dr. Marcos"
+                  value={newHolTitle}
+                  onChange={(e) => setNewHolTitle(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Data do Bloqueio</label>
+                <input
+                  type="date"
+                  required
+                  value={newHolDate}
+                  onChange={(e) => setNewHolDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Escopo</label>
+                <select
+                  value={newHolType}
+                  onChange={(e) => setNewHolType(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                >
+                  <option value="CLINIC">Toda a Clínica (Feriado Geral)</option>
+                  <option value="DENTIST">Profissional Específico (Folga / Férias)</option>
+                </select>
+              </div>
+
+              {newHolType === 'DENTIST' && (
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Selecione o Profissional</label>
+                  <select
+                    required
+                    value={newHolDentistId}
+                    onChange={(e) => setNewHolDentistId(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  >
+                    <option value="">-- Escolha o Dentista --</option>
+                    {dentists.map(d => (
+                      <option key={d.id} value={d.id}>{d.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-secondary text-white font-bold rounded-xl shadow text-xs mt-2"
+                style={{ backgroundColor: currentTheme.secondary_color }}
+              >
+                Cadastrar Feriado / Folga
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: NOVA CADEIRA / CONSULTÓRIO */}
+      {showAddChair && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-extrabold text-sm text-slate-800 dark:text-white font-title flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-blue-500" />
+                <span>Nova Cadeira / Consultório</span>
+              </h3>
+              <button onClick={() => setShowAddChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddChairSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nome da Cadeira ou Consultório *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Consultório VIP 01, Cadeira Ortodontia..."
+                  value={newChairName}
+                  onChange={(e) => setNewChairName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-secondary text-white font-bold rounded-xl shadow text-xs cursor-pointer"
+                style={{ backgroundColor: currentTheme.secondary_color }}
+              >
+                Cadastrar Cadeira
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR CADEIRA / CONSULTÓRIO */}
+      {showEditChair && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-slate-850 w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-extrabold text-sm text-slate-800 dark:text-white font-title flex items-center gap-2">
+                <Edit className="w-4 h-4 text-blue-500" />
+                <span>Editar Cadeira / Consultório</span>
+              </h3>
+              <button onClick={() => setShowEditChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditChairSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nome da Cadeira *</label>
+                <input
+                  type="text"
+                  required
+                  value={editChairName}
+                  onChange={(e) => setEditChairName(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-secondary text-white font-bold rounded-xl shadow text-xs cursor-pointer"
+                style={{ backgroundColor: currentTheme.secondary_color }}
+              >
+                Salvar Alterações
               </button>
             </form>
           </div>

@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useRealtimeModuleSync } from '../../hooks/useRealtimeModuleSync';
 import { formatPhone } from '../../lib/formatters';
-import { 
+import {
   Plus, Calendar as CalIcon, ChevronLeft, ChevronRight,
   Clock, MapPin, Check, X, ShieldAlert, ArrowLeftRight,
   Phone, User, Edit, Copy, CheckSquare, AlertCircle, FileText,
@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Agenda({ 
-  selectedAppointment, 
+export default function Agenda({
+  selectedAppointment,
   setSelectedAppointment,
   currentDate,
   setCurrentDate,
@@ -28,17 +28,20 @@ export default function Agenda({
   prefilledLeadData,
   setPrefilledLeadData
 }) {
-  const { 
-    appointments, 
-    addAppointment, 
-    updateAppointment, 
-    patients, 
-    procedures, 
+  const {
+    appointments,
+    addAppointment,
+    updateAppointment,
+    patients,
+    procedures,
     checkPatientInadimplente,
     chairs,
     dentists,
     addPatient,
-    fetchClinicData
+    fetchClinicData,
+    clinicHours,
+    dentistSchedules,
+    holidays
   } = useClinic();
   const { currentTheme } = useTheme();
   const { user } = useAuth();
@@ -59,28 +62,28 @@ export default function Agenda({
 
   const getSchedulingConflict = (dateStr, timeStr, durationMin, doctorId, chairId, excludeAppId = null) => {
     if (!dateStr || !timeStr || !durationMin) return null;
-    
+
     const start = new Date(`${dateStr}T${timeStr}:00`);
     const end = new Date(start.getTime() + durationMin * 60 * 1000);
-    
+
     // Filtrar agendamentos ativos na mesma data
     const dateApps = appointments.filter(app => {
       if (app.id === excludeAppId) return false;
       if (app.status === 'CANCELLED') return false;
-      
+
       const appStart = new Date(app.start_time);
       return appStart.getFullYear() === start.getFullYear() &&
-             appStart.getMonth() === start.getMonth() &&
-             appStart.getDate() === start.getDate();
+        appStart.getMonth() === start.getMonth() &&
+        appStart.getDate() === start.getDate();
     });
-    
+
     for (const app of dateApps) {
       const appStart = new Date(app.start_time);
       const appEnd = new Date(app.end_time);
-      
+
       // Sobreposição de intervalos
       const isOverlapping = (start < appEnd) && (end > appStart);
-      
+
       if (isOverlapping) {
         if (chairId && app.chair_id === chairId) {
           return {
@@ -170,7 +173,7 @@ export default function Agenda({
     const totalMinutes = hours * 60 + minutes;
     const startMinutes = 7 * 60;  // 07:00
     const endMinutes = 19 * 60;   // 19:00
-    
+
     if (totalMinutes < startMinutes || totalMinutes > endMinutes) return null;
     return ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100;
   };
@@ -181,7 +184,7 @@ export default function Agenda({
   const renderAgendaCard = (app, isCompact = false) => {
     const pat = app.patient_id ? patients.find(p => p.id === app.patient_id) : null;
     let rawName = pat?.name || app.patientName || app.patient_name || 'Paciente';
-    
+
     // Tratamento estrito de duplicação caso a string venha repetida (ex: "John DoeJohn Doe")
     if (rawName && rawName.length > 4 && rawName.length % 2 === 0) {
       const half = rawName.length / 2;
@@ -194,63 +197,174 @@ export default function Agenda({
     // Foto do paciente ou avatar default foto de alta definição
     const defaultAvatarPhoto = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
     const patPhoto = pat?.photoUrl || pat?.avatar_url || app.photoUrl || app.avatar_url || defaultAvatarPhoto;
-    
+
     const doc = app.doctor_id ? dentists.find(d => d.id === app.doctor_id) : null;
     const docName = doc ? (doc.full_name.startsWith('Dr') ? doc.full_name : `Dr(a). ${doc.full_name}`) : null;
-    
+
     const chair = app.chair_id ? chairs.find(c => c.id === app.chair_id) : null;
     const chairName = chair ? chair.name : (app.room || 'Cadeira 01');
 
     const isConsulta = app.type === 'CONSULTA' || (!app.type && (app.patient_id || app.patientName));
-    
-    // Paleta de Cores Elegante com Gradiente & Profundidade Visual (macOS Depth UI)
-    const getCardStyle = () => {
+
+    // Formatador da Cadeira (Sem cortes truncados e com tooltip)
+    const formattedChairName = chairName ? (chairName.includes(' - ') ? chairName.split(' - ')[0] : chairName) : 'Cadeira 01';
+
+    // Estilização dos Cards da Agenda (Soft-Tint Sólido com Borda Lateral Indicadora de 4px)
+    const getCardStyleInfo = () => {
+      const statusUpper = (app.status || 'PENDING').toUpperCase();
+
       if (app.type === 'COMPROMISSO') {
         return {
-          background: 'linear-gradient(135deg, #334155 0%, #475569 100%)',
-          borderColor: 'rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 4px 14px rgba(51, 65, 85, 0.25)'
+          bgClass: 'bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200/80',
+          borderClass: 'border-slate-300 dark:border-slate-700 border-l-4 border-l-slate-500',
+          badgeClass: 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
+          badgeText: 'Compromisso',
+          textTitle: 'text-slate-900 dark:text-white',
+          textSub: 'text-slate-600 dark:text-slate-400'
         };
       }
+
       if (app.type === 'TAREFA') {
         return {
-          background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)',
-          borderColor: 'rgba(255, 255, 255, 0.25)',
-          boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)'
+          bgClass: 'bg-purple-500/10 dark:bg-purple-500/20 hover:bg-purple-500/15',
+          borderClass: 'border-purple-500/30 border-l-4 border-l-purple-500',
+          badgeClass: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30',
+          badgeText: app.label || 'Tarefa',
+          textTitle: 'text-purple-950 dark:text-purple-100',
+          textSub: 'text-purple-700 dark:text-purple-300'
         };
       }
-      // Consultas Clínicas
-      const procColor = app.color || '#2563eb';
-      if (procColor === '#10b981' || procColor === '#059669' || procColor === 'emerald') {
+
+      // Status das Consultas
+      if (statusUpper === 'CONFIRMED' || statusUpper === 'CONFIRMADO') {
         return {
-          background: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)',
-          borderColor: 'rgba(52, 211, 153, 0.35)',
-          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)'
+          bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/15',
+          borderClass: 'border-emerald-500/30 border-l-4 border-l-emerald-500',
+          badgeClass: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40',
+          badgeText: 'CONFIRMADO',
+          nextStatus: 'EM_ATENDIMENTO',
+          textTitle: 'text-emerald-950 dark:text-emerald-100',
+          textSub: 'text-emerald-700 dark:text-emerald-300'
         };
       }
-      if (procColor === '#ef4444' || procColor === '#dc2626') {
+
+      if (statusUpper === 'COMPLETED' || statusUpper === 'CONCLUIDO' || statusUpper === 'ATENDIDO') {
         return {
-          background: 'linear-gradient(135deg, #991b1b 0%, #dc2626 100%)',
-          borderColor: 'rgba(248, 113, 113, 0.35)',
-          boxShadow: '0 4px 14px rgba(220, 38, 38, 0.25)'
+          bgClass: 'bg-violet-500/10 dark:bg-violet-500/20 hover:bg-violet-500/15',
+          borderClass: 'border-violet-500/30 border-l-4 border-l-violet-500',
+          badgeClass: 'bg-violet-500/20 hover:bg-violet-500/30 text-violet-700 dark:text-violet-300 border border-violet-500/40',
+          badgeText: 'CONCLUÍDO',
+          nextStatus: 'PENDING',
+          textTitle: 'text-violet-950 dark:text-violet-100',
+          textSub: 'text-violet-700 dark:text-violet-300'
         };
       }
-      if (procColor === '#8b5cf6' || procColor === '#7c3aed') {
+
+      if (statusUpper === 'CANCELLED' || statusUpper === 'CANCELADO') {
         return {
-          background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)',
-          borderColor: 'rgba(167, 139, 250, 0.35)',
-          boxShadow: '0 4px 14px rgba(124, 58, 237, 0.25)'
+          bgClass: 'bg-rose-500/10 dark:bg-rose-500/20 hover:bg-rose-500/15',
+          borderClass: 'border-rose-500/30 border-l-4 border-l-rose-500',
+          badgeClass: 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-700 dark:text-rose-300 border border-rose-500/40',
+          badgeText: 'CANCELADO',
+          nextStatus: 'PENDING',
+          textTitle: 'text-rose-950 dark:text-rose-100',
+          textSub: 'text-rose-700 dark:text-rose-300'
         };
       }
-      // Royal Blue Padrão
+
+      if (statusUpper === 'EM_ATENDIMENTO' || statusUpper === 'EM ATENDIMENTO') {
+        return {
+          bgClass: 'bg-amber-500/10 dark:bg-amber-500/20 hover:bg-amber-500/15',
+          borderClass: 'border-amber-500/30 border-l-4 border-l-amber-500',
+          badgeClass: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-700 dark:text-amber-300 border border-amber-500/40',
+          badgeText: 'EM ATENDIMENTO',
+          nextStatus: 'COMPLETED',
+          textTitle: 'text-amber-950 dark:text-amber-100',
+          textSub: 'text-amber-700 dark:text-amber-300'
+        };
+      }
+
+      // PENDING / Agendado / Pendente
       return {
-        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-        borderColor: 'rgba(96, 165, 250, 0.35)',
-        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)'
+        bgClass: 'bg-blue-500/10 dark:bg-blue-500/20 hover:bg-blue-500/15',
+        borderClass: 'border-blue-500/30 border-l-4 border-l-blue-500',
+        badgeClass: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-700 dark:text-blue-300 border border-blue-500/40',
+        badgeText: 'PENDENTE',
+        nextStatus: 'CONFIRMED',
+        textTitle: 'text-blue-950 dark:text-blue-100',
+        textSub: 'text-blue-700 dark:text-blue-300'
       };
     };
 
-    const cardStyle = getCardStyle();
+    if (app.type === 'TAREFA') {
+      const isCompleted = app.status === 'COMPLETED';
+      const styleInfo = getCardStyleInfo();
+
+      return (
+        <div
+          key={app.id}
+          draggable
+          onDragStart={(e) => handleDragStart(e, app.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedApp(app);
+          }}
+          className={`rounded-2xl border text-left flex flex-col justify-between cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 hover:shadow-md ${styleInfo.bgClass} ${styleInfo.borderClass} ${
+            isCompact ? 'w-full max-h-[85px] text-[10px] p-2' : 'h-full max-h-[100px] min-w-[210px] w-64 text-[10px] p-2.5'
+          }`}
+        >
+          <div className="space-y-1">
+            <div className="flex items-center justify-between gap-1 overflow-hidden">
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <CheckSquare className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                <h4 className={`font-extrabold truncate text-[11px] ${styleInfo.textTitle} ${isCompleted ? 'line-through opacity-70' : ''}`}>
+                  {app.title || 'Tarefa'}
+                </h4>
+              </div>
+              <span className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider shrink-0 ${styleInfo.badgeClass}`}>
+                {app.label || 'Tarefa'}
+              </span>
+            </div>
+
+            {app.observations && (
+              <p className={`text-[9px] truncate font-medium pl-0.5 ${styleInfo.textSub}`}>
+                {app.observations}
+              </p>
+            )}
+
+            {pat && (
+              <p className="text-[8.5px] truncate font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded-md inline-block">
+                👤 {pat.name}
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-between items-center text-[8.5px] font-bold pt-1 border-t border-purple-500/20 mt-1">
+            <span className={`flex items-center gap-1 text-[8px] ${styleInfo.textSub}`}>
+              <Clock className="w-2.5 h-2.5" />
+              {new Date(app.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange(app.id, isCompleted ? 'PENDING' : 'COMPLETED');
+              }}
+              className={`px-2 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                isCompleted
+                  ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                  : 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+              }`}
+            >
+              {isCompleted ? '✓ Concluída' : '○ Marcar Concluída'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    const styleInfo = getCardStyleInfo();
 
     return (
       <div
@@ -261,52 +375,58 @@ export default function Agenda({
           e.stopPropagation();
           setSelectedApp(app);
         }}
-        className={`rounded-2xl border text-left flex flex-col justify-between cursor-grab active:cursor-grabbing text-white transition-all hover:scale-[1.01] hover:brightness-105 ${
+        className={`rounded-2xl border text-left flex flex-col justify-between cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 hover:shadow-md ${styleInfo.bgClass} ${styleInfo.borderClass} ${
           isCompact ? 'w-full max-h-[85px] text-[10px] p-2' : 'h-full max-h-[100px] min-w-[210px] w-64 text-[10px] p-2.5'
         }`}
-        style={cardStyle}
       >
         <div className="space-y-1">
           {/* Header com Foto de Perfil + Nome do Paciente (Nome Único) */}
           <div className="flex items-center gap-2 overflow-hidden">
             {isConsulta && (
-              <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-white/20 shrink-0 border border-white/40 flex items-center justify-center shadow-2xs">
+              <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 border border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-2xs">
                 <img src={patPhoto} alt={patName} className="w-full h-full object-cover rounded-full shrink-0" />
               </div>
             )}
-            <h4 className="font-extrabold truncate leading-tight flex-1 text-[11px] text-white">
+            <h4 className={`font-extrabold truncate leading-tight flex-1 text-[11px] ${styleInfo.textTitle}`}>
               {isConsulta ? patName : app.title}
             </h4>
           </div>
 
           {/* Subtítulo / Procedimento */}
-          <p className="text-[9.5px] opacity-90 truncate font-semibold pl-0.5">
+          <p className={`text-[9.5px] truncate font-semibold pl-0.5 ${styleInfo.textSub}`}>
             {isConsulta ? (app.procedureName || 'Consulta Geral') : (app.type === 'TAREFA' ? `Tarefa: ${app.observations}` : 'Compromisso')}
           </p>
 
           {/* Doutor Atendente */}
           {docName && (
-            <p className="text-[8.5px] opacity-85 truncate font-medium flex items-center gap-1 pl-0.5">
+            <p className={`text-[8.5px] truncate font-medium flex items-center gap-1 pl-0.5 ${styleInfo.textSub}`}>
               <User className="w-2.5 h-2.5 shrink-0 inline opacity-90" />
               <span className="truncate">{docName}</span>
             </p>
           )}
         </div>
 
-        {/* Rodapé: Cadeira & Status */}
-        <div className="flex justify-between items-center text-[8.5px] font-bold opacity-95 pt-1 border-t border-white/15 mt-1">
-          <span className="flex items-center gap-1 truncate max-w-[65%]">
+        {/* Rodapé: Cadeira Exibida Completa & Pílula de Troca Rápida de Status (1 Clique) */}
+        <div className="flex justify-between items-center text-[8.5px] font-bold pt-1 border-t border-slate-200/50 dark:border-white/10 mt-1 gap-1">
+          <span className={`flex items-center gap-1 shrink-0 ${styleInfo.textSub}`} title={chairName}>
             <MapPin className="w-2.5 h-2.5 shrink-0" />
-            <span className="truncate">{chairName}</span>
+            <span className="font-extrabold text-[9px] whitespace-nowrap">{formattedChairName}</span>
           </span>
 
-          <span className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider ${
-            app.status === 'CONFIRMED' 
-              ? 'bg-emerald-400/30 text-white border border-emerald-300/40' 
-              : 'bg-white/20 text-white'
-          }`}>
-            {app.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
-          </span>
+          {/* Pílula com Troca Rápida de Status em 1 Clique (Pendente -> Confirmado -> Em Atendimento -> Concluído) */}
+          <button
+            type="button"
+            title={`Clique para avançar status para: ${styleInfo.nextStatus || 'Agendado'}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (styleInfo.nextStatus) {
+                handleStatusChange(app.id, styleInfo.nextStatus);
+              }
+            }}
+            className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95 cursor-pointer shadow-2xs ${styleInfo.badgeClass}`}
+          >
+            {styleInfo.badgeText}
+          </button>
         </div>
       </div>
     );
@@ -315,7 +435,7 @@ export default function Agenda({
   // ==========================================
   // ESTADOS DOS FORMULÁRIOS
   // ==========================================
-  
+
   // 1. Aba Consulta
   const [appPatientId, setAppPatientId] = useState('');
   const [appProcedureId, setAppProcedureId] = useState('');
@@ -354,6 +474,7 @@ export default function Agenda({
   const [taskPatientId, setTaskPatientId] = useState('');
   const [taskPatientSearch, setTaskPatientSearch] = useState('');
   const [showTaskPatientSuggestions, setShowTaskPatientSuggestions] = useState(false);
+  const [taskSendReminder, setTaskSendReminder] = useState(true);
 
   // Inicializar IDs padrões no modal ao abrir
   useEffect(() => {
@@ -373,31 +494,30 @@ export default function Agenda({
   // Filtro de consultas
   const filteredApps = appointments.filter(app => {
     const matchesDentist = selectedDentists.length > 0 ? selectedDentists.includes(app.doctor_id) : true;
-    const matchesChair = selectedChairs.length > 0 
-      ? (selectedChairs.includes(app.chair_id) || selectedChairs.includes(app.room)) 
+    const matchesChair = selectedChairs.length > 0
+      ? (selectedChairs.includes(app.chair_id) || selectedChairs.includes(app.room))
       : true;
     return matchesDentist && matchesChair;
   });
 
   // Slots de Horários (07:00 às 18:00)
   const timeSlots = [
-    '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', 
+    '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
     '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
   ];
   const weekdays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
   const formatTimeLabel = (timeStr) => {
-    if (timeStr === '12:00') return 'Meio dia';
     const hour = timeStr.split(':')[0];
     return `${hour}h`;
   };
 
-  const renderCellSubSlots = (date, timeStr, onClickExtra = () => {}) => {
+  const renderCellSubSlots = (date, timeStr, onClickExtra = () => { }) => {
     const hour = timeStr.split(':')[0];
     return (
       <div className="absolute inset-0 flex flex-col pointer-events-auto z-0">
         {/* Top half (00 min) */}
-        <div 
+        <div
           onClick={(e) => {
             e.stopPropagation();
             setAppDate(date.toISOString().split('T')[0]);
@@ -413,7 +533,7 @@ export default function Agenda({
           </div>
         </div>
         {/* Bottom half (30 min) */}
-        <div 
+        <div
           onClick={(e) => {
             e.stopPropagation();
             setAppDate(date.toISOString().split('T')[0]);
@@ -438,7 +558,7 @@ export default function Agenda({
     const temp = new Date(date);
     const day = temp.getDay();
     temp.setDate(temp.getDate() - day); // Mover para domingo da semana corrente
-    
+
     for (let i = 0; i < 7; i++) {
       dates.push(new Date(temp));
       temp.setDate(temp.getDate() + 1);
@@ -464,6 +584,52 @@ export default function Agenda({
   const activeDate = parseDate(currentDate);
   const weekDates = getWeekDates(activeDate);
 
+  const activeDateIsoStr = activeDate.toISOString().split('T')[0];
+
+  const activeDayHolidays = (holidays || []).filter(h => {
+    if (h.date !== activeDateIsoStr) return false;
+    if (h.type === 'CLINIC') return true;
+    if (h.type === 'DENTIST' && selectedDentists && selectedDentists.length > 0) {
+      return selectedDentists.includes(h.dentist_id);
+    }
+    return true;
+  });
+
+  const isTimeSlotInactive = (timeStr, dateObj) => {
+    const targetDate = dateObj ? parseDate(dateObj) : activeDate;
+    const dayOfWeek = targetDate.getDay();
+    const clinicWorkDays = clinicHours?.workDays || [1, 2, 3, 4, 5, 6];
+
+    if (!clinicWorkDays.includes(dayOfWeek)) return true;
+
+    const [hStr] = timeStr.split(':');
+    const hour = parseInt(hStr, 10);
+    const startHour = parseInt((clinicHours?.start || '08:00').split(':')[0], 10);
+    const endHour = parseInt((clinicHours?.end || '18:00').split(':')[0], 10);
+
+    if (hour < startHour || hour >= endHour) return true;
+
+    // Checar Pausa de Almoço da clínica
+    if (clinicHours?.hasLunchBreak !== false) {
+      const lStart = parseInt((clinicHours?.lunchStart || '12:00').split(':')[0], 10);
+      const lEnd = parseInt((clinicHours?.lunchEnd || '14:00').split(':')[0], 10);
+      if (hour >= lStart && hour < lEnd) return true;
+    }
+
+    if (selectedDentists && selectedDentists.length === 1) {
+      const docId = selectedDentists[0];
+      const sched = dentistSchedules?.[docId];
+      if (sched) {
+        if (!sched.workDays?.[dayOfWeek]) return true;
+        const docStartHour = parseInt((sched.start || '08:00').split(':')[0], 10);
+        const docEndHour = parseInt((sched.end || '18:00').split(':')[0], 10);
+        if (hour < docStartHour || hour >= docEndHour) return true;
+      }
+    }
+
+    return false;
+  };
+
   const navigateDate = (direction) => {
     const temp = new Date(activeDate);
     if (view === 'day' || view === 'chair') {
@@ -480,7 +646,7 @@ export default function Agenda({
   const handleStartEditApp = (app) => {
     setEditingApp(app);
     setSelectedApp(null); // fecha o popover de detalhes
-    
+
     // Configura a aba do modal baseada no tipo do agendamento
     if (app.type === 'CONSULTA') {
       setActiveModalTab('consulta');
@@ -488,7 +654,7 @@ export default function Agenda({
       const pat = patients.find(p => p.id === app.patient_id);
       setPatientSearch(pat ? pat.name : (app.patientName || ''));
       setAppProcedureId(app.procedure_id || '');
-      
+
       const startDate = new Date(app.start_time);
       const tzOffset = startDate.getTimezoneOffset() * 60000;
       const isoStart = localStartDate.toISOString();
@@ -502,7 +668,7 @@ export default function Agenda({
       setAppSendConfirmation(app.send_confirmation !== false);
       setAppReturnDays(app.return_days ? String(app.return_days) : '');
       setAppLabel(app.label || 'Agendada');
-      
+
     } else if (app.type === 'COMPROMISSO') {
       setActiveModalTab('compromisso');
       setCompDoctorId(app.doctor_id || '');
@@ -519,7 +685,7 @@ export default function Agenda({
       setCompEndDate(compEndD || '');
       setCompEndTime((compEndT || '09:00:00').substring(0, 5));
       setCompIsRecurring(app.is_recurring || false);
-      
+
     } else if (app.type === 'TAREFA') {
       setActiveModalTab('tarefa');
       setTaskTitle(app.title || '');
@@ -535,7 +701,7 @@ export default function Agenda({
       const pat = patients.find(p => p.id === app.patient_id);
       setTaskPatientSearch(pat ? pat.name : '');
     }
-    
+
     setShowAddApp(true);
   };
 
@@ -548,7 +714,7 @@ export default function Agenda({
 
       // Se o usuário digitou o nome do paciente sem clicar na sugestão da lista, busca automaticamente pelo nome
       if (!targetPatientId && patientSearch) {
-        const matchedByName = patients.find(p => 
+        const matchedByName = patients.find(p =>
           p.name.toLowerCase().trim() === patientSearch.toLowerCase().trim() ||
           p.name.toLowerCase().includes(patientSearch.toLowerCase().trim())
         );
@@ -576,10 +742,10 @@ export default function Agenda({
       // Apenas bloquear se for um novo agendamento ou se o paciente tiver sido alterado durante a edição
       const shouldCheckInadimplente = !editingApp || editingApp.patient_id !== targetPatientId;
       if (shouldCheckInadimplente && checkPatientInadimplente(targetPatientId)) {
-        const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') || 
-                            matchedProc?.name?.toLowerCase().includes('canal') || 
-                            matchedProc?.name?.toLowerCase().includes('dor');
-        
+        const isEmergency = matchedProc?.name?.toLowerCase().includes('urgência') ||
+          matchedProc?.name?.toLowerCase().includes('canal') ||
+          matchedProc?.name?.toLowerCase().includes('dor');
+
         if (!isEmergency) {
           alert(`❌ AGENDAMENTO BLOQUEADO!\n\nO paciente ${matchedPat?.name} está INADIMPLENTE (parcelas vencidas há mais de 30 dias). Agendamentos eletivos (como "${matchedProc?.name}") estão bloqueados. Por favor, direcione o paciente ao setor financeiro.`);
           return;
@@ -678,6 +844,7 @@ export default function Agenda({
         end_time: end.toISOString(),
         patient_id: taskPatientId || null,
         label: taskList,
+        send_reminder: taskSendReminder,
         type: 'TAREFA'
       };
 
@@ -692,7 +859,17 @@ export default function Agenda({
           ...taskData,
           status: 'PENDING'
         });
-        alert('Tarefa criada com sucesso!');
+
+        if (taskSendReminder) {
+          const pat = taskPatientId ? patients.find(p => p.id === taskPatientId) : null;
+          if (pat && pat.phone) {
+            alert(`✅ Tarefa criada com sucesso!\n\n🔔 Lembrete agendado para o sistema e notificação via WhatsApp para ${pat.name} (${pat.phone}) no dia ${taskDueDate} às ${taskDueTime}.`);
+          } else {
+            alert(`✅ Tarefa criada com sucesso!\n\n🔔 Notificação de lembrete agendada no sistema para ${taskDueDate} às ${taskDueTime}.`);
+          }
+        } else {
+          alert('Tarefa criada com sucesso!');
+        }
       }
 
       setTaskTitle('');
@@ -742,24 +919,26 @@ export default function Agenda({
     e.preventDefault();
     const appId = e.dataTransfer.getData('text/plain');
     const app = appointments.find(a => a.id === appId);
-    
+
     if (app) {
       const year = slotDate.getFullYear();
       const month = String(slotDate.getMonth() + 1).padStart(2, '0');
       const day = String(slotDate.getDate()).padStart(2, '0');
-      
+
       const newStart = new Date(`${year}-${month}-${day}T${slotTime}:00`);
       const durationMin = app.duration || 60;
       const newEnd = new Date(newStart.getTime() + durationMin * 60 * 1000);
 
       const matchedChair = chairId ? chairs.find(c => c.id === chairId) : null;
+      const targetChairId = chairId || app.chair_id || app.chairId;
 
       const updated = {
         ...app,
         start_time: newStart.toISOString(),
         end_time: newEnd.toISOString(),
-        chair_id: chairId || app.chair_id,
-        room: matchedChair ? matchedChair.name : app.room
+        chair_id: targetChairId,
+        chairId: targetChairId,
+        room: matchedChair ? matchedChair.name : (app.room || 'Cadeira')
       };
       updateAppointment(updated);
     }
@@ -790,7 +969,7 @@ export default function Agenda({
   const handleDuplicateApp = async (app) => {
     const start = new Date(app.start_time);
     const end = new Date(app.end_time);
-    
+
     // Avança 1 dia para simular a duplicação
     start.setDate(start.getDate() + 1);
     end.setDate(end.getDate() + 1);
@@ -822,32 +1001,32 @@ export default function Agenda({
   // Filtrar pacientes autocomplete
   const filteredPatients = patients.filter(p => {
     const term = normalizeString(patientSearch);
-    if (!term) return false;
-    return normalizeString(p.name).includes(term) || p.phone.includes(term);
+    if (!term) return true;
+    return normalizeString(p.name).includes(term) || (p.phone && p.phone.includes(term)) || (p.cpf && p.cpf.includes(term));
   });
 
   const filteredTaskPatients = patients.filter(p => {
     const term = normalizeString(taskPatientSearch);
-    if (!term) return false;
-    return normalizeString(p.name).includes(term);
+    if (!term) return true;
+    return normalizeString(p.name).includes(term) || (p.phone && p.phone.includes(term));
   });
 
   return (
     <div className="h-full flex flex-col overflow-hidden text-slate-800 dark:text-slate-100">
-      
+
       {/* ========================================================================= */}
       {/* PAINEL UNIFICADO DA AGENDA (CONTROLES + GRADE DE HORÁRIOS)                */}
       {/* ========================================================================= */}
       <div className="flex-1 bg-white dark:bg-[#0D0D0D] overflow-hidden flex flex-col transition-colors duration-300">
-        
+
         {/* CONTROLES SUPERIORES (BARRA DE NAVEGAÇÃO DA AGENDA) */}
         <div className="min-h-[56px] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 bg-white dark:bg-[#0D0D0D] px-3 sm:px-6 py-2 sm:py-0 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
-          
+
           {/* Date Navigator */}
           <div className="flex items-center gap-3">
             <CalIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 hidden sm:block" />
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={() => navigateDate(-1)}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
               >
@@ -858,7 +1037,7 @@ export default function Agenda({
                 {view === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })}`}
                 {view === 'month' && activeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
               </h3>
-              <button 
+              <button
                 onClick={() => navigateDate(1)}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
               >
@@ -874,11 +1053,10 @@ export default function Agenda({
                   <button
                     key={v}
                     onClick={() => setView(v)}
-                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
-                      view === v 
-                        ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
+                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${view === v
+                        ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                    }`}
+                      }`}
                   >
                     {v === 'day' ? 'Dia' : v === 'week' ? 'Semana' : v === 'month' ? 'Mês' : 'Cadeira'}
                   </button>
@@ -903,73 +1081,113 @@ export default function Agenda({
           </div>
         </div>
 
-        {/* VIEW: SEMANA */}
-        {view === 'week' && (
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            <div className="grid grid-cols-8 border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0D0D0D] text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase tracking-wider transition-colors duration-300">
-              <div className="flex items-center justify-center border-r border-slate-200/80 dark:border-white/5">Horário</div>
-              {weekDates.map((date, idx) => {
-                const isToday = date.toDateString() === new Date().toDateString();
-                return (
-                  <div key={idx} className={`flex flex-col items-center justify-center ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-                    <span>{weekdays[date.getDay()].substring(0, 3)}</span>
-                    <span className={`text-base font-extrabold font-title mt-0.5 ${isToday ? 'bg-[#196BFB] text-white w-7 h-7 rounded-full flex items-center justify-center shadow-sm' : ''}`}>
-                      {date.getDate()}
-                    </span>
-                  </div>
-                );
-              })}
+        {/* BANNER DE FERIADO / FOLGA */}
+        {activeDayHolidays.length > 0 && (
+          <div className="mx-6 my-2 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-rose-500 flex-shrink-0" />
+              <span>
+                <strong>BLOQUEIO NA AGENDA:</strong> {activeDayHolidays.map(h => `${h.type === 'CLINIC' ? 'Feriado Clínico' : 'Folga Profissional'}: ${h.title}`).join(' | ')}
+              </span>
             </div>
-
-            <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
-              {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
-              {currentTimeTop !== null && (
-                <div 
-                  className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
-                  style={{ top: `${currentTimeTop}%` }}
-                >
-                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-md border-2 border-white dark:border-slate-900 -ml-1 shrink-0 flex items-center justify-center">
-                    <div className="w-1 h-1 rounded-full bg-white animate-ping" />
-                  </div>
-                  <div className="flex-1 h-[2px] bg-red-500/90 shadow-sm" />
-                  <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-md mr-2 font-mono">
-                    {nowTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              )}
-              {timeSlots.map((time, slotIdx) => (
-                <div key={slotIdx} className="grid grid-cols-8 min-h-[70px]">
-                  <div className="border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[10px] font-bold text-slate-400 select-none">
-                    {formatTimeLabel(time)}
-                  </div>
-                  
-                  {weekDates.map((date, dayIdx) => {
-                    const hour = parseInt(time.split(':')[0]);
-                    const matchedApps = filteredApps.filter(app => {
-                      const appStart = new Date(app.start_time);
-                      return appStart.getDate() === date.getDate() && 
-                             appStart.getMonth() === date.getMonth() && 
-                             appStart.getFullYear() === date.getFullYear() && 
-                             appStart.getHours() === hour;
-                    });
-
-                    return (
-                      <div
-                        key={dayIdx}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, time, date)}
-                        className="p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors"
-                      >
-                        {matchedApps.length === 0 && renderCellSubSlots(date, time)}
-                        {matchedApps.map((app) => renderAgendaCard(app, true))}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+            <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-[9px] uppercase tracking-wider font-extrabold text-rose-500">
+              Agenda Suspensa
+            </span>
           </div>
         )}
+
+        {/* VIEW: SEMANA */}
+        {view === 'week' && (() => {
+          const sundayDate = weekDates.find(d => d.getDay() === 0);
+          const hasSundayApps = sundayDate ? filteredApps.some(app => {
+            const appStart = new Date(app.start_time);
+            return appStart.getDate() === sundayDate.getDate() &&
+              appStart.getMonth() === sundayDate.getMonth() &&
+              appStart.getFullYear() === sundayDate.getFullYear();
+          }) : false;
+
+          const weekGridTemplate = `48px ${hasSundayApps ? 'minmax(140px, 1fr)' : '40px'} repeat(6, minmax(0, 1fr))`;
+
+          return (
+            <div className="flex-1 flex flex-col overflow-y-auto">
+              <div
+                className="grid border-b border-slate-200/80 dark:border-white/5 bg-slate-50 dark:bg-[#0D0D0D] text-center py-2.5 sticky top-0 z-10 flex-shrink-0 text-slate-600 dark:text-slate-400 font-semibold text-[10px] uppercase tracking-wider transition-all duration-300"
+                style={{ gridTemplateColumns: weekGridTemplate }}
+              >
+                <div className="flex items-center justify-center border-r border-slate-200/80 dark:border-white/5 font-black text-[8px] text-slate-400 dark:text-slate-500 uppercase tracking-tight">Horário</div>
+                {weekDates.map((date, idx) => {
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  const isSunday = date.getDay() === 0;
+                  return (
+                    <div key={idx} className={`flex flex-col items-center justify-center transition-all ${isSunday && !hasSundayApps ? 'opacity-35 text-slate-400' : ''} ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                      <span className={`${isSunday && !hasSundayApps ? 'text-[7.5px]' : 'text-[8.5px]'} tracking-wider font-bold uppercase`}>
+                        {weekdays[date.getDay()].substring(0, 3)}
+                      </span>
+                      <span className={`font-extrabold font-title mt-0.5 ${isSunday && !hasSundayApps ? 'text-xs' : 'text-sm'} ${isToday ? 'bg-[#196BFB] text-white w-5.5 h-5.5 rounded-full flex items-center justify-center shadow-sm text-xs' : ''}`}>
+                        {date.getDate()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
+                {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
+                {currentTimeTop !== null && (
+                  <div
+                    className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
+                    style={{ top: `${currentTimeTop}%` }}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-md border-2 border-white dark:border-slate-900 -ml-1 shrink-0 flex items-center justify-center">
+                      <div className="w-1 h-1 rounded-full bg-white animate-ping" />
+                    </div>
+                    <div className="flex-1 h-[2px] bg-red-500/90 shadow-sm" />
+                    <span className="text-[9px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-md mr-2 font-mono">
+                      {nowTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
+                {timeSlots.map((time, slotIdx) => (
+                  <div
+                    key={slotIdx}
+                    className="grid min-h-[70px]"
+                    style={{ gridTemplateColumns: weekGridTemplate }}
+                  >
+                    <div className="border-r border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 select-none">
+                      {formatTimeLabel(time)}
+                    </div>
+
+                    {weekDates.map((date, dayIdx) => {
+                      const hour = parseInt(time.split(':')[0]);
+                      const isSunday = date.getDay() === 0;
+                      const isInactive = isTimeSlotInactive(time, date) || (isSunday && !hasSundayApps);
+                      const matchedApps = filteredApps.filter(app => {
+                        const appStart = new Date(app.start_time);
+                        return appStart.getDate() === date.getDate() &&
+                          appStart.getMonth() === date.getMonth() &&
+                          appStart.getFullYear() === date.getFullYear() &&
+                          appStart.getHours() === hour;
+                      });
+
+                      return (
+                        <div
+                          key={dayIdx}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, time, date)}
+                          className={`p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors ${isSunday && !hasSundayApps ? 'bg-slate-100/30 dark:bg-slate-900/15' : (isInactive ? 'bg-slate-100/60 dark:bg-slate-900/40' : '')
+                            }`}
+                        >
+                          {matchedApps.length === 0 && renderCellSubSlots(date, time)}
+                          {matchedApps.map((app) => renderAgendaCard(app, true))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* VIEW: DIA */}
         {view === 'day' && (
@@ -983,7 +1201,7 @@ export default function Agenda({
             <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
               {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
               {currentTimeTop !== null && (
-                <div 
+                <div
                   className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
                   style={{ top: `${currentTimeTop}%` }}
                 >
@@ -1000,10 +1218,10 @@ export default function Agenda({
                 const hour = parseInt(time.split(':')[0]);
                 const dayApps = filteredApps.filter(app => {
                   const appStart = new Date(app.start_time);
-                  return appStart.getDate() === activeDate.getDate() && 
-                         appStart.getMonth() === activeDate.getMonth() && 
-                         appStart.getFullYear() === activeDate.getFullYear() && 
-                         appStart.getHours() === hour;
+                  return appStart.getDate() === activeDate.getDate() &&
+                    appStart.getMonth() === activeDate.getMonth() &&
+                    appStart.getFullYear() === activeDate.getFullYear() &&
+                    appStart.getHours() === hour;
                 });
 
                 return (
@@ -1039,7 +1257,7 @@ export default function Agenda({
                 const days = [];
                 const startMonth = new Date(activeDate.getFullYear(), activeDate.getMonth(), 1);
                 const startDay = startMonth.getDay();
-                
+
                 for (let i = 0; i < startDay; i++) {
                   days.push(<div key={`prev-${i}`} className="bg-slate-50/50 dark:bg-slate-900/10 min-h-[90px]" />);
                 }
@@ -1053,8 +1271,8 @@ export default function Agenda({
                   });
 
                   days.push(
-                    <div 
-                      key={`curr-${d}`} 
+                    <div
+                      key={`curr-${d}`}
                       onClick={() => {
                         setAppDate(cellDate.toISOString().split('T')[0]);
                         setAppTime('09:00');
@@ -1066,7 +1284,7 @@ export default function Agenda({
                       <span className="text-[10px] font-bold text-slate-400 select-none block mb-1">
                         {d}
                       </span>
-                      
+
                       <div className="flex-1 overflow-y-auto space-y-1">
                         {matchedApps.slice(0, 3).map(app => (
                           <button
@@ -1076,8 +1294,15 @@ export default function Agenda({
                               e.stopPropagation();
                               setSelectedApp(app);
                             }}
-                            className="w-full text-left truncate px-1.5 py-0.5 rounded text-[8px] text-white font-bold leading-tight"
-                            style={{ backgroundColor: app.type === 'COMPROMISSO' ? '#64748b' : (app.type === 'TAREFA' ? '#8b5cf6' : (app.color || '#3b82f6')) }}
+                            className={`w-full text-left truncate px-1.5 py-0.5 rounded text-[8px] font-bold leading-tight border transition-all ${
+                              app.status === 'CONFIRMED'
+                                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                                : app.status === 'COMPLETED'
+                                  ? 'bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/30'
+                                  : app.status === 'CANCELLED'
+                                    ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                                    : 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30'
+                            }`}
                           >
                             {app.type === 'CONSULTA' ? `${app.patientName.split(' ')[0]}: ${app.procedureName}` : app.title}
                           </button>
@@ -1116,7 +1341,7 @@ export default function Agenda({
             <div className="flex-grow divide-y divide-slate-100 dark:divide-slate-800/80 relative">
               {/* Linha do Tempo em Tempo Real (Indicador de Horário Atual) */}
               {currentTimeTop !== null && (
-                <div 
+                <div
                   className="absolute left-0 right-0 z-30 pointer-events-none flex items-center"
                   style={{ top: `${currentTimeTop}%` }}
                 >
@@ -1146,8 +1371,8 @@ export default function Agenda({
                         const chairApps = filteredApps.filter(app => {
                           const appStart = new Date(app.start_time);
                           const matchesDate = appStart.getDate() === activeDate.getDate() &&
-                                              appStart.getMonth() === activeDate.getMonth() &&
-                                              appStart.getFullYear() === activeDate.getFullYear();
+                            appStart.getMonth() === activeDate.getMonth() &&
+                            appStart.getFullYear() === activeDate.getFullYear();
                           const matchesHour = appStart.getHours() === hour;
                           const matchesChair = app.chair_id === chair.id || app.room === chair.name;
                           return matchesDate && matchesHour && matchesChair;
@@ -1180,16 +1405,16 @@ export default function Agenda({
       {/* ========================================================================= */}
       <AnimatePresence>
         {selectedApp && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <motion.div 
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="bg-white dark:bg-slate-850 rounded-[28px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-850 dark:text-white"
+              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-850 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               {/* Fechar */}
-              <button 
+              <button
                 onClick={() => {
                   setSelectedApp(null);
                   if (selectedAppointment) {
@@ -1284,7 +1509,7 @@ export default function Agenda({
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                     <span>
-                      {selectedApp.type === 'CONSULTA' 
+                      {selectedApp.type === 'CONSULTA'
                         ? `${dentists.find(d => d.id === selectedApp.doctor_id)?.full_name || 'Profissional'} · ${selectedApp.room || 'Cadeira'}`
                         : `${dentists.find(d => d.id === selectedApp.doctor_id)?.full_name || 'Bloqueio geral'}`
                       }
@@ -1332,15 +1557,14 @@ export default function Agenda({
                         <option value="COMPLETED">Atendido</option>
                         <option value="CANCELLED">Cancelado</option>
                       </select>
-                      <span className={`absolute left-3 top-[11px] w-2.5 h-2.5 rounded-full ${
-                        selectedApp.status === 'CONFIRMED' 
-                          ? 'bg-emerald-500' 
+                      <span className={`absolute left-3 top-[11px] w-2.5 h-2.5 rounded-full ${selectedApp.status === 'CONFIRMED'
+                          ? 'bg-emerald-500'
                           : selectedApp.status === 'PENDING'
                             ? 'bg-blue-500'
                             : selectedApp.status === 'COMPLETED'
                               ? 'bg-violet-500'
                               : 'bg-red-500'
-                      }`} />
+                        }`} />
                     </div>
                   </div>
                 )}
@@ -1356,16 +1580,16 @@ export default function Agenda({
       {/* ========================================================================= */}
       <AnimatePresence>
         {showAddApp && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <motion.div 
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 relative text-slate-800 dark:text-white transition-colors duration-300"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 relative text-slate-800 dark:text-white transition-colors duration-300 max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               {/* Fechar */}
-              <button 
+              <button
                 onClick={() => {
                   setShowAddApp(false);
                   setShowQuickPatientForm(false);
@@ -1384,11 +1608,10 @@ export default function Agenda({
                       key={tab}
                       type="button"
                       onClick={() => setActiveModalTab(tab)}
-                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                        activeModalTab === tab 
-                          ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm' 
+                      className={`flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeModalTab === tab
+                          ? 'bg-white dark:bg-[#196BFB] text-slate-900 dark:text-white shadow-sm'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                        }`}
                     >
                       {tab}
                     </button>
@@ -1400,68 +1623,42 @@ export default function Agenda({
                 </h3>
               )}
 
-              {/* FORMULÁRIO */}
-              <form onSubmit={handleAddAppSubmit} className="space-y-4 text-left">
-                
+              {/* FORMULÁRIO COM DESIGN CENTRADO NO USUÁRIO (PATIENT-FIRST) */}
+              <form onSubmit={handleAddAppSubmit} className="space-y-4 text-left font-body">
+
                 {/* ----------------- ABA: CONSULTA ----------------- */}
                 {activeModalTab === 'consulta' && (
                   <>
-                    {/* Dentista & Cadeira */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1">Dentista</label>
-                        <select
-                          required
-                          value={appDoctorId}
-                          onChange={(e) => setAppDoctorId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
-                        >
-                          {dentists.map(d => (
-                            <option key={d.id} value={d.id}>{d.full_name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1">Cadeira</label>
-                        <select
-                          required
-                          value={appChairId}
-                          onChange={(e) => setAppChairId(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer transition-colors duration-300"
-                        >
-                          {chairs.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Paciente (Autocomplete ou Cadastro Rápido) */}
+                    {/* 1. PACIENTE (Foco Principal da Tarefa - Hick's Law) */}
                     <div className="relative">
                       <div className="flex justify-between items-center pl-1 mb-1">
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Paciente</label>
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                          Paciente *
+                        </label>
                         <button
                           type="button"
                           onClick={() => setShowQuickPatientForm(!showQuickPatientForm)}
-                          className="text-[9px] text-secondary hover:underline font-bold"
+                          className="text-[10px] text-secondary hover:underline font-bold transition-all focus:outline-none focus:ring-1 focus:ring-secondary rounded px-1"
                           style={{ color: currentTheme.secondary_color }}
+                          aria-label={showQuickPatientForm ? 'Voltar para busca de paciente' : 'Cadastrar novo paciente rápido'}
                         >
-                          {showQuickPatientForm ? '« Buscar paciente' : '+ Cadastrar'}
+                          {showQuickPatientForm ? '« Buscar paciente' : '+ Cadastrar Novo'}
                         </button>
                       </div>
 
                       <div ref={autocompleteRef}>
                         {showQuickPatientForm ? (
-                          /* Subform Cadastro Rápido */
-                          <div className="p-3.5 bg-slate-100/50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800/80 rounded-2xl space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          /* Subform Cadastro Rápido com Prevenção de Erro */
+                          <div className="p-3.5 bg-slate-100/70 dark:bg-black/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
                             <div>
                               <input
                                 type="text"
                                 required
-                                placeholder="Nome completo..."
+                                placeholder="Nome completo do paciente..."
                                 value={quickPatientName}
                                 onChange={(e) => setQuickPatientName(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                                className="w-full bg-white dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:border-secondary"
+                                aria-label="Nome completo do paciente"
                               />
                             </div>
                             <div className="flex gap-2">
@@ -1469,15 +1666,16 @@ export default function Agenda({
                                 type="text"
                                 required
                                 maxLength={16}
-                                placeholder="Celular ex: (88) 99969-9232..."
+                                placeholder="Celular (WhatsApp)..."
                                 value={quickPatientPhone}
                                 onChange={(e) => setQuickPatientPhone(formatPhone(e.target.value))}
-                                className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                                className="flex-1 bg-white dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-mono font-semibold focus:outline-none focus:border-secondary"
+                                aria-label="WhatsApp do paciente"
                               />
                               <button
                                 type="button"
                                 onClick={handleQuickPatientSave}
-                                className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow border border-white/5 active:scale-95"
+                                className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl shadow active:scale-95 transition-all cursor-pointer"
                                 style={{ backgroundColor: currentTheme.secondary_color }}
                               >
                                 Salvar
@@ -1485,18 +1683,20 @@ export default function Agenda({
                             </div>
                           </div>
                         ) : (
-                          /* Autocomplete ou Badge */
+                          /* Autocomplete ou Badge de Paciente Selecionado */
                           <>
                             {appPatientId ? (
-                              <div className="flex items-center justify-between bg-slate-50 dark:bg-black/45 border border-slate-250 dark:border-slate-800 rounded-xl p-2.5 px-3 text-xs">
-                                <div className="flex items-center gap-2">
-                                  <User className="w-3.5 h-3.5 text-secondary animate-pulse" style={{ color: currentTheme.secondary_color }} />
-                                  <div className="text-left">
-                                    <span className="font-extrabold text-slate-800 dark:text-white">
+                              <div className="flex items-center justify-between bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 rounded-xl p-2.5 px-3 text-xs">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="w-7 h-7 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                    <User className="w-4 h-4" />
+                                  </div>
+                                  <div className="text-left truncate">
+                                    <span className="font-extrabold text-slate-800 dark:text-white block truncate">
                                       {patients.find(p => p.id === appPatientId)?.name || patientSearch}
                                     </span>
-                                    <span className="text-[10px] text-slate-450 dark:text-slate-500 block mt-0.5">
-                                      {patients.find(p => p.id === appPatientId)?.phone || ''}
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-mono">
+                                      {patients.find(p => p.id === appPatientId)?.phone || 'Sem telefone'}
                                     </span>
                                   </div>
                                 </div>
@@ -1506,9 +1706,11 @@ export default function Agenda({
                                     setAppPatientId('');
                                     setPatientSearch('');
                                   }}
-                                  className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                                  className="p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                                  title="Remover paciente selecionado"
+                                  aria-label="Remover paciente"
                                 >
-                                  <X className="w-3.5 h-3.5" />
+                                  <X className="w-4 h-4" />
                                 </button>
                               </div>
                             ) : (
@@ -1516,18 +1718,19 @@ export default function Agenda({
                                 <input
                                   type="text"
                                   required
-                                  placeholder="Busque por nome, telefone, CPF..."
+                                  placeholder="Digite para buscar paciente (Nome, Celular, CPF)..."
                                   value={patientSearch}
                                   onChange={(e) => {
                                     setPatientSearch(e.target.value);
                                     setShowSuggestions(true);
                                   }}
                                   onFocus={() => setShowSuggestions(true)}
-                                  className="w-full bg-slate-50 dark:bg-[#0B1220]/60 text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary transition-colors duration-300"
+                                  className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-secondary transition-colors"
+                                  aria-label="Buscar paciente"
                                 />
-                                {showSuggestions && patientSearch && (
-                                  <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
-                                    {filteredPatients.slice(0, 5).map(p => (
+                                {showSuggestions && (
+                                  <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-40 p-1.5 space-y-0.5 scrollbar-thin">
+                                    {filteredPatients.slice(0, 10).map(p => (
                                       <button
                                         key={p.id}
                                         type="button"
@@ -1536,13 +1739,14 @@ export default function Agenda({
                                           setPatientSearch(p.name);
                                           setShowSuggestions(false);
                                         }}
-                                        className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-blue-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors flex items-center justify-between"
                                       >
-                                        {p.name} <span className="opacity-60">({p.phone})</span>
+                                        <span className="font-bold truncate">{p.name}</span>
+                                        <span className="text-[10px] text-slate-400 font-mono shrink-0 pl-2">{p.phone}</span>
                                       </button>
                                     ))}
                                     {filteredPatients.length === 0 && (
-                                      <div className="p-2 text-center text-xs text-slate-550 flex flex-col gap-1.5 items-center">
+                                      <div className="p-3 text-center text-xs text-slate-400 flex flex-col gap-1.5 items-center">
                                         <span>Nenhum paciente encontrado</span>
                                         <button
                                           type="button"
@@ -1551,7 +1755,7 @@ export default function Agenda({
                                             setShowQuickPatientForm(true);
                                             setShowSuggestions(false);
                                           }}
-                                          className="px-2 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-500 text-[10px] font-bold rounded-lg transition-all"
+                                          className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-lg transition-all"
                                         >
                                           Cadastrar "{patientSearch}" rápido
                                         </button>
@@ -1566,56 +1770,113 @@ export default function Agenda({
                       </div>
                     </div>
 
-                    {/* Procedimento */}
+                    {/* 2. PROCEDIMENTO (Com auto-preenchimento de Duração) */}
                     <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Procedimento</label>
+                      <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                        Procedimento *
+                      </label>
                       <select
                         required
                         value={appProcedureId}
-                        onChange={(e) => setAppProcedureId(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                        onChange={(e) => {
+                          const procId = e.target.value;
+                          setAppProcedureId(procId);
+                          const selectedProc = procedures.find(p => p.id === procId);
+                          if (selectedProc && selectedProc.defaultDuration) {
+                            setAppDuration(parseInt(selectedProc.defaultDuration, 10));
+                          }
+                        }}
+                        className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-secondary cursor-pointer"
+                        aria-label="Procedimento clínico"
                       >
-                        <option value="">Escolher procedimento...</option>
+                        <option value="">-- Selecione o Procedimento --</option>
                         {procedures.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} - R$ {p.price}</option>
+                          <option key={p.id} value={p.id}>{p.name} ({p.defaultDuration || 30} min) - R$ {p.price}</option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Data, Horário e Duração */}
+                    {/* 3. DENTISTA & CADEIRA (Alinhados Lado a Lado) */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                          Profissional *
+                        </label>
+                        <select
+                          required
+                          value={appDoctorId}
+                          onChange={(e) => setAppDoctorId(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:border-secondary cursor-pointer"
+                          aria-label="Dentista responsável"
+                        >
+                          {dentists.map(d => (
+                            <option key={d.id} value={d.id}>{d.full_name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                          Consultório / Cadeira *
+                        </label>
+                        <select
+                          required
+                          value={appChairId}
+                          onChange={(e) => setAppChairId(e.target.value)}
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:border-secondary cursor-pointer"
+                          aria-label="Cadeira ou consultório"
+                        >
+                          {chairs.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 4. DATA, HORÁRIO & DURAÇÃO */}
                     <div className="grid grid-cols-3 gap-2.5">
                       <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Data</label>
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                          Data *
+                        </label>
                         <input
                           type="date"
                           required
                           value={appDate}
                           onChange={(e) => setAppDate(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs font-semibold focus:outline-none focus:border-secondary"
+                          aria-label="Data da consulta"
                         />
                       </div>
                       <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Horário</label>
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                          Horário *
+                        </label>
                         <input
                           type="time"
                           required
                           value={appTime}
                           onChange={(e) => setAppTime(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs font-semibold focus:outline-none focus:border-secondary"
+                          aria-label="Horário de início"
                         />
                       </div>
                       <div>
-                        <div className="flex justify-between items-center pl-1 mb-1">
-                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Duração</label>
-                          <span className="text-[8px] text-slate-400">min</span>
-                        </div>
-                        <input
-                          type="number"
-                          required
+                        <label className="block text-[10px] font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1 mb-1">
+                          Duração
+                        </label>
+                        <select
                           value={appDuration}
-                          onChange={(e) => setAppDuration(parseInt(e.target.value, 10) || 30)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-2 text-xs focus:outline-none focus:border-secondary"
-                        />
+                          onChange={(e) => setAppDuration(parseInt(e.target.value, 10))}
+                          className="w-full bg-slate-50 dark:bg-black text-slate-800 dark:text-white border border-slate-200/80 dark:border-white/10 rounded-xl py-2 px-2 text-xs font-semibold focus:outline-none focus:border-secondary cursor-pointer"
+                          aria-label="Duração em minutos"
+                        >
+                          <option value="15">15 min</option>
+                          <option value="30">30 min</option>
+                          <option value="45">45 min</option>
+                          <option value="60">1h (60m)</option>
+                          <option value="90">1h 30m</option>
+                          <option value="120">2h (120m)</option>
+                        </select>
                       </div>
                     </div>
 
@@ -1880,9 +2141,9 @@ export default function Agenda({
                               onFocus={() => setShowTaskPatientSuggestions(true)}
                               className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
                             />
-                            {showTaskPatientSuggestions && taskPatientSearch && (
+                            {showTaskPatientSuggestions && (
                               <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
-                                {filteredTaskPatients.slice(0, 5).map(p => (
+                                {filteredTaskPatients.slice(0, 8).map(p => (
                                   <button
                                     key={p.id}
                                     type="button"
@@ -1905,13 +2166,25 @@ export default function Agenda({
                         )}
                       </div>
                     </div>
+
+                    <div className="flex items-center gap-3 bg-purple-500/10 p-3 rounded-2xl border border-purple-500/20">
+                      <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none text-purple-600 dark:text-purple-300">
+                        <input
+                          type="checkbox"
+                          checked={taskSendReminder}
+                          onChange={(e) => setTaskSendReminder(e.target.checked)}
+                          className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 accent-purple-600"
+                        />
+                        <span>🔔 Enviar lembrete / notificação no horário agendado</span>
+                      </label>
+                    </div>
                   </>
                 )}
 
                 {/* Alerta de conflito de horários em tempo real */}
                 {(() => {
                   if (activeModalTab === 'tarefa') return null;
-                  
+
                   let duration = appDuration;
                   if (activeModalTab === 'compromisso') {
                     try {
@@ -1923,15 +2196,15 @@ export default function Agenda({
                       duration = 30;
                     }
                   }
-                  
+
                   const conflict = activeModalTab === 'consulta'
                     ? getSchedulingConflict(appDate, appTime, appDuration, appDoctorId, appChairId)
                     : getSchedulingConflict(compStartDate, compStartTime, duration, compDoctorId, null);
-                  
+
                   if (!conflict) return null;
-                  
+
                   return (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl flex gap-2.5 text-[11px] font-semibold leading-relaxed animate-in fade-in"

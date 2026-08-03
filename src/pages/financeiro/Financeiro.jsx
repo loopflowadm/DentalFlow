@@ -513,8 +513,8 @@ export default function Financeiro() {
 
       {/* MODAL: NOVO LANÇAMENTO */}
       {showAddTransaction && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Adicionar Transação Manual</h3>
               <button 
@@ -690,8 +690,8 @@ export default function Financeiro() {
 
       {/* MODAL: NOVO FORNECEDOR */}
       {showAddSupplier && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title text-left">Cadastrar Fornecedor</h3>
               <button 
@@ -759,8 +759,8 @@ export default function Financeiro() {
 
       {/* MODAL: NOVO CONTAS A PAGAR */}
       {showAddPayable && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title text-left">Cadastrar Nova Despesa</h3>
               <button 

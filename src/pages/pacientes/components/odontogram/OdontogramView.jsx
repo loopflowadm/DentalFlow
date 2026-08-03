@@ -23,25 +23,32 @@ export default function OdontogramView({ patient, onSavePatientData }) {
   // Ref de Timer para Debounce do Salvamento no Supabase (Evita travamentos e excesso de renders)
   const saveTimeoutRef = useRef(null);
 
+  // Helper para obter objeto do odontograma com parse seguro
+  const getOdontoObj = useCallback((pat) => {
+    if (!pat) return {};
+    let mh = pat.medical_history;
+    if (typeof mh === 'string') {
+      try { mh = JSON.parse(mh); } catch (e) { mh = {}; }
+    }
+    return mh?.odontogram || {};
+  }, []);
+
   // Estado das marcações dos dentes
   const [teethData, setTeethData] = useState(() => {
-    const raw = patient?.medical_history?.odontogram?.teethData || patient?.odontogram_data || {};
+    const odontoObj = getOdontoObj(patient);
+    const raw = odontoObj.teethData || patient?.odontogram_data || {};
     return typeof raw === 'string' ? JSON.parse(raw) : raw;
   });
 
   // Periodontograma
-  const [perioData, setPerioData] = useState(() => {
-    return patient?.medical_history?.odontogram?.perioData || {};
-  });
+  const [perioData, setPerioData] = useState(() => getOdontoObj(patient).perioData || {});
 
   // Pontes Fixas
-  const [fixedBridges, setFixedBridges] = useState(() => {
-    return patient?.medical_history?.odontogram?.fixedBridges || [];
-  });
+  const [fixedBridges, setFixedBridges] = useState(() => getOdontoObj(patient).fixedBridges || []);
 
   // Configuração Ortodôntica
   const [orthoConfig, setOrthoConfig] = useState(() => {
-    return patient?.medical_history?.odontogram?.orthoConfig || {
+    return getOdontoObj(patient).orthoConfig || {
       upperActive: false,
       lowerActive: false,
       bracketType: 'metal',
@@ -50,13 +57,11 @@ export default function OdontogramView({ patient, onSavePatientData }) {
   });
 
   // Histórico de Eventos por Dente
-  const [toothHistory, setToothHistory] = useState(() => {
-    return patient?.medical_history?.odontogram?.toothHistory || [];
-  });
+  const [toothHistory, setToothHistory] = useState(() => getOdontoObj(patient).toothHistory || []);
 
   // Observações clínicas gerais
   const [notes, setNotes] = useState(() => {
-    return patient?.medical_history?.odontogram?.notes || patient?.notes || '';
+    return getOdontoObj(patient).notes || patient?.notes || '';
   });
 
   // Pilha de Undo
@@ -89,18 +94,10 @@ export default function OdontogramView({ patient, onSavePatientData }) {
     }, 3000);
   };
 
-  // Sincronizar quando o paciente mudar (com parse seguro de JSON)
+  // Sincronizar quando o paciente ou o medical_history mudar
   useEffect(() => {
     if (patient) {
-      let odontoObj = patient?.medical_history?.odontogram || {};
-      if (typeof patient?.medical_history === 'string') {
-        try {
-          const parsed = JSON.parse(patient.medical_history);
-          odontoObj = parsed.odontogram || {};
-        } catch (e) {
-          odontoObj = {};
-        }
-      }
+      const odontoObj = getOdontoObj(patient);
       setTeethData(odontoObj.teethData || patient?.odontogram_data || {});
       setPerioData(odontoObj.perioData || {});
       setFixedBridges(odontoObj.fixedBridges || []);
@@ -108,7 +105,7 @@ export default function OdontogramView({ patient, onSavePatientData }) {
       setToothHistory(odontoObj.toothHistory || []);
       setNotes(odontoObj.notes || patient?.notes || '');
     }
-  }, [patient?.id]);
+  }, [patient?.id, patient?.medical_history, getOdontoObj]);
 
   // Função Debounced para persistir dados no Supabase / Estado Pai (Evita re-renderizações excessivas e travamento da UI)
   const persistOdontogram = useCallback((

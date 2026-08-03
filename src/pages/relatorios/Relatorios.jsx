@@ -38,14 +38,14 @@ export default function Relatorios({ onNavigateTab }) {
   // 1. CÁLCULOS DINÂMICOS BASEADOS NOS DADOS REAIS
   const completedAppointments = useMemo(() => {
     return appointments.filter(app => 
-      app.status === 'completed' || app.status === 'Concluído'
+      app.status === 'completed' || app.status === 'Concluído' || app.status === 'CONCLUIDO'
     );
   }, [appointments]);
 
   const totalRevenue = useMemo(() => {
-    const appRevenue = completedAppointments.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+    const appRevenue = completedAppointments.reduce((sum, a) => sum + (parseFloat(a.price || a.amount) || 0), 0);
     const transRevenue = financeTransactions
-      .filter(t => t.type === 'receita' || t.type === 'income')
+      .filter(t => t.type === 'receita' || t.type === 'income' || t.type === 'INCOME')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     return Math.max(appRevenue, transRevenue);
   }, [completedAppointments, financeTransactions]);
@@ -111,7 +111,10 @@ export default function Relatorios({ onNavigateTab }) {
 
     return dentists.map((d) => {
       const docApps = completedAppointments.filter(app => 
-        app.doctor_id === d.id || app.doctor_name === d.full_name
+        app.doctor_id === d.id || 
+        app.dentist_id === d.id ||
+        (app.doctor_name && app.doctor_name.toLowerCase() === (d.full_name || '').toLowerCase()) ||
+        (app.dentist_name && app.dentist_name.toLowerCase() === (d.full_name || '').toLowerCase())
       );
       const docRev = docApps.reduce((acc, app) => acc + (parseFloat(app.price) || 0), 0);
       return {

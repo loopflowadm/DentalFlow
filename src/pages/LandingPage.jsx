@@ -4,8 +4,8 @@ import {
   Sparkles, MessageSquare, Calendar, Shield, DollarSign,
   Check, ArrowRight, ChevronDown, Users, FileText, CheckCircle2,
   BarChart3, Clock, X, UserPlus, Search, Bell, Lock, Headphones,
-  Star, Brain, Plug, TrendingUp, ClipboardList, Zap, Heart,
-  Play, Monitor, Smartphone, Tablet, Activity, Award, Phone,
+  Star, Brain, Plug, TrendingUp, ClipboardList, Zap, Heart, Smile,
+  Play, Pause, Volume2, VolumeX, Monitor, Smartphone, Tablet, Activity, Award, Phone,
   Folder, CreditCard, Bot, Link as LinkIcon, ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -83,6 +83,30 @@ export default function LandingPage({ onLogin, onRegister }) {
   const [scrolled, setScrolled] = useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
 
+  const heroVideoRef = useRef(null);
+  const [isHeroMuted, setIsHeroMuted] = useState(true);
+  const [isHeroPlaying, setIsHeroPlaying] = useState(true);
+
+  const toggleHeroPlay = (e) => {
+    e.stopPropagation();
+    if (heroVideoRef.current) {
+      if (isHeroPlaying) {
+        heroVideoRef.current.pause();
+      } else {
+        heroVideoRef.current.play();
+      }
+      setIsHeroPlaying(!isHeroPlaying);
+    }
+  };
+
+  const toggleHeroMute = (e) => {
+    e.stopPropagation();
+    if (heroVideoRef.current) {
+      heroVideoRef.current.muted = !isHeroMuted;
+      setIsHeroMuted(!isHeroMuted);
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -135,308 +159,294 @@ export default function LandingPage({ onLogin, onRegister }) {
     <div className="landing-page">
       {/* ═══════════════ HEADER ═══════════════ */}
       <header className={`landing-header ${scrolled ? 'landing-header--scrolled' : ''}`}>
-        <div className="landing-header__inner">
-          <div className="landing-header__logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+        <div className="landing-header__inner max-w-7xl mx-auto px-4 flex items-center justify-between h-20">
+          <div className="landing-header__logo cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <BrandLogo variant="dark" />
           </div>
 
-          <nav className="landing-header__nav">
-            <button onClick={() => scrollToSection('segunda-feira')}>Rotina</button>
-            <button onClick={() => scrollToSection('beneficios')}>Benefícios</button>
-            <button onClick={() => scrollToSection('demonstracao')}>Demonstração</button>
-            <button onClick={() => scrollToSection('oferta')}>Oferta</button>
-            <button onClick={() => scrollToSection('contato')}>Contato</button>
+          <nav className="landing-header__nav hidden md:flex items-center gap-6">
+            <button onClick={() => scrollToSection('segunda-feira')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Recursos</button>
+            <button onClick={() => scrollToSection('segunda-feira')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Para Clínicas</button>
+            <button onClick={() => scrollToSection('beneficios')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Benefícios</button>
+            <button onClick={() => scrollToSection('demonstracao')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Depoimentos</button>
+            <button onClick={() => scrollToSection('oferta')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Preços</button>
+            <button onClick={() => scrollToSection('contato')} className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">Contato</button>
           </nav>
 
-          <div className="landing-header__actions">
-            <button onClick={onLogin} className="landing-btn--ghost">Entrar</button>
-            <button onClick={() => scrollToSection('oferta')} className="landing-btn--primary landing-btn--sm">
-              Quero Minha Clínica no Automático
+          <div className="landing-header__actions flex items-center gap-3">
+            <button onClick={onLogin} className="text-sm font-semibold text-blue-600 hover:text-blue-700 px-4 py-2 transition-colors">
+              Entrar
+            </button>
+            <button onClick={onRegister} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+              Começar gratuitamente
             </button>
           </div>
         </div>
       </header>
 
       {/* ═══════════════ HERO SECTION ═══════════════ */}
-      <section className="landing-hero">
-        <div className="landing-hero__bg">
+      <section className="landing-hero pt-28 pb-16 overflow-hidden relative min-h-[90vh] flex items-center">
+        {/* Background Video + Glow Backdrop */}
+        <div className="landing-hero__bg absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <video
+            ref={heroVideoRef}
+            src="/video-hero.mp4"
+            autoPlay
+            loop
+            muted={isHeroMuted}
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-60 filter saturate-150"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-50/40 via-slate-50/20 to-slate-50" />
           <div className="landing-hero__orb landing-hero__orb--1" />
           <div className="landing-hero__orb landing-hero__orb--2" />
           <div className="landing-hero__orb landing-hero__orb--3" />
-          <div className="landing-hero__grid-pattern" />
         </div>
 
-        <div className="landing-hero__inner">
-          {/* Left Column Copy */}
+        <div className="landing-hero__inner max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10 w-full">
+          {/* Left Column Copy (5 cols on lg) */}
           <motion.div
-            className="landing-hero__copy"
+            className="landing-hero__copy lg:col-span-5 flex flex-col gap-5 text-left"
             initial="hidden"
             animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
+            variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           >
-            <motion.div variants={fadeUp} className="landing-hero__badge">
-              <Sparkles style={{ width: 14, height: 14, color: '#F59E0B' }} />
-              A nova geração de gestão para clínicas odontológicas
+            <motion.div variants={fadeUp} className="landing-hero__badge flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100/80 px-3.5 py-1.5 rounded-full text-xs font-bold w-fit">
+              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+              <span>A nova geração de gestão para clínicas odontológicas</span>
             </motion.div>
 
-            <motion.h1 variants={fadeUp} className="landing-hero__title">
-              A clínica que{' '}
-              <span className="landing-hero__title-accent">trabalha enquanto você atende.</span>
+            <motion.h1 variants={fadeUp} className="landing-hero__title text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.12]">
+              Mais tempo para sorrisos.<br />
+              <span className="landing-hero__title-accent text-blue-600">Menos tempo para burocracia.</span>
             </motion.h1>
 
-            <motion.p variants={fadeUp} className="landing-hero__subtitle">
-              Chega de confirmações manuais, agendas com furos e planilhas espalhadas. O DentalFlow <strong>automatiza a rotina da sua clínica</strong> para que você e sua equipe possam focar no que realmente importa: <strong>cuidar dos pacientes</strong>.
+            <motion.p variants={fadeUp} className="landing-hero__subtitle text-xs sm:text-sm md:text-base text-slate-600 font-medium leading-relaxed max-w-xl">
+              O DentalFlow cuida da sua clínica nos bastidores para que você possa focar no que realmente importa: <strong>seus pacientes</strong>.
             </motion.p>
 
-            <motion.div variants={fadeUp} className="landing-hero__buttons flex-wrap gap-4">
-              <button onClick={() => scrollToSection('oferta')} className="landing-btn--primary landing-btn--lg">
-                Começar 14 dias grátis
-                <ArrowRight style={{ width: 18, height: 18 }} />
-              </button>
+            {/* 4 Feature Items Grid (2x2) */}
+            <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-1">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Agenda organizada</h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Chega de conflitos e horários perdidos.</p>
+                </div>
+              </div>
 
-              <button onClick={() => scrollToSection('demonstracao')} className="landing-btn--outline landing-btn--lg flex items-center gap-2">
-                <Play style={{ width: 14, height: 14, fill: '#196BFB', color: '#196BFB' }} />
-                Veja funcionando em 2 min
-              </button>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Comunicação automática</h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Confirmações, lembretes e retornos no WhatsApp, sem esforço.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Financeiro no controle</h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Recebimentos, despesas e relatórios sempre em dia.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Shield className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">Conformidade e segurança</h4>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">Dados protegidos e prontuários sempre seguros.</p>
+                </div>
+              </div>
             </motion.div>
 
-            {/* 4 Trust points in 2x2 grid */}
-            <motion.div variants={fadeUp} className="landing-hero__trust-grid grid grid-cols-2 gap-y-2.5 gap-x-4 pt-4 text-xs font-semibold text-slate-400">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-500" />
-                <span>Sem cartão de crédito</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-blue-500" />
-                <span>Ativação em 2 minutos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-500" />
-                <span>Dados protegidos (LGPD)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-blue-500" />
-                <span>Suporte humano no WhatsApp</span>
-              </div>
+            {/* Action Buttons */}
+            <motion.div variants={fadeUp} className="flex items-center gap-3 flex-wrap pt-2">
+              <button onClick={onRegister} className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-3.5 rounded-full shadow-lg shadow-blue-500/25 flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
+                <span>Quero minha clínica no automático</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </motion.div>
           </motion.div>
 
-          {/* Right Column Showcase Mockup */}
+          {/* Right Column Showcase Visual (4 Floating Cards in Red Box Locations Marked by User) */}
           <motion.div
-            className="landing-hero__mockup"
-            initial={{ opacity: 0, x: 50, scale: 0.96 }}
+            className="landing-hero__visual lg:col-span-7 relative w-full min-h-[460px] lg:min-h-[540px] flex items-center justify-center z-10"
+            initial={{ opacity: 0, x: 30, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* Top Right Floating Notification Badge */}
-            <motion.div
-              className="landing-hero__float-notif"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-            >
-              <div className="landing-hero__notif-icon bg-emerald-500/20 text-emerald-500 p-2 rounded-xl">
-                <MessageSquare className="w-5 h-5 fill-emerald-500 text-emerald-500" />
-              </div>
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-slate-800">Paciente confirmou!</span>
-                  <span className="text-[10px] text-slate-400">agora</span>
+            {/* Layout dos cartões flutuantes exatamente nos locais marcados em vermelho */}
+            <div className="w-full relative min-h-[440px] lg:min-h-[500px] flex flex-col sm:grid sm:grid-cols-2 lg:block gap-4">
+              
+              {/* Card 1: Mais tempo para você (REBAIXADO PARA BAIXO) */}
+              <motion.div
+                className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-slate-900/10 flex items-start gap-3.5 text-left transition-all hover:scale-[1.03] hover:border-blue-300 hover:shadow-2xl lg:absolute lg:top-[120px] lg:left-0 lg:max-w-[250px] z-20"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 4.5, delay: 0.3, ease: 'easeInOut' }}
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
-                <span className="text-xs text-slate-600 font-medium block">
-                  Ana Paula confirmou a consulta de amanhã às 14:00
-                </span>
-              </div>
-            </motion.div>
-
-            {/* Laptop App Mockup */}
-            <div className="landing-dashboard">
-              <div className="landing-dashboard__chrome">
-                <div className="landing-dashboard__dots">
-                  <span style={{ background: '#FF5F57' }} />
-                  <span style={{ background: '#FFBD2E' }} />
-                  <span style={{ background: '#28C840' }} />
-                </div>
-                <div className="landing-dashboard__url">dentalflow.app • Resumo da Clínica</div>
-                <div style={{ width: 48 }} />
-              </div>
-
-              <div className="landing-dashboard__content">
-                <div className="landing-dashboard__topbar">
-                  <div className="landing-dashboard__topbar-left">
-                    <div className="landing-dashboard__app-icon">DF</div>
-                    <span className="landing-dashboard__greeting">Resumo da clínica</span>
-                  </div>
-                  <div className="landing-dashboard__topbar-right">
-                    <Search style={{ width: 14, height: 14, color: '#94A3B8' }} />
-                    <Bell style={{ width: 14, height: 14, color: '#94A3B8' }} />
-                  </div>
-                </div>
-
-                <div className="landing-dashboard__stats">
-                  {[
-                    { label: 'Consultas hoje', val: '24', delta: '↑ 12%', positive: true },
-                    { label: 'Confirmadas', val: '21', delta: '↑ 19%', positive: true },
-                    { label: 'Faturamento do mês', val: 'R$ 8.750,00', delta: '↑ 23%', positive: true },
-                    { label: 'Pacientes ativos', val: '842', delta: '↑ 6%', positive: true },
-                  ].map((s, i) => (
-                    <div key={i} className="landing-dashboard__stat-card">
-                      <span className="landing-dashboard__stat-label">{s.label}</span>
-                      <span className="landing-dashboard__stat-value">{s.val}</span>
-                      <span className={`landing-dashboard__stat-delta ${s.positive ? 'positive' : 'negative'}`}>{s.delta}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="landing-dashboard__columns">
-                  <div className="landing-dashboard__panel">
-                    <div className="landing-dashboard__panel-header">
-                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-blue-500" /> Agenda do dia</span>
-                    </div>
-                    {[
-                      { time: '07:00', name: 'Ana Paula Souza', tag: 'Clareamento', color: '#196BFB' },
-                      { time: '08:30', name: 'Célio Eduardo', tag: 'Avaliação', color: '#10B981' },
-                      { time: '10:00', name: 'Vanessa Lima', tag: 'Limpeza', color: '#8B5CF6' },
-                      { time: '14:00', name: 'João Pedro Silva', tag: 'Retorno', color: '#F59E0B' },
-                    ].map((a, i) => (
-                      <div key={i} className="landing-dashboard__agenda-item">
-                        <span className="landing-dashboard__agenda-time">{a.time}</span>
-                        <span className="landing-dashboard__agenda-name">{a.name}</span>
-                        <span className="landing-dashboard__agenda-tag" style={{ background: a.color + '15', color: a.color }}>{a.tag}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="landing-dashboard__panel">
-                    <div className="landing-dashboard__panel-header">
-                      <span className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Confirmações automáticas</span>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-2 border border-slate-100">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Enviadas hoje: <strong className="text-slate-800">48</strong></span>
-                        <span className="text-slate-500">Confirmadas: <strong className="text-slate-800">41</strong></span>
-                      </div>
-                      <div className="h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
-                        <span className="text-[11px] font-bold text-blue-600">Taxa de Confirmação 85.4%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side Floating Phone with WhatsApp Chat */}
-            <div className="landing-hero__phone-whatsapp">
-              <div className="landing-hero__phone-header">
-                <div className="landing-hero__whatsapp-avatar">DF</div>
                 <div>
-                  <span className="landing-hero__whatsapp-name">DentalFlow Clínica</span>
-                  <span className="landing-hero__whatsapp-status">online</span>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Mais tempo para você</h4>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Automatizamos tarefas para você focar no que ama.</p>
                 </div>
-              </div>
-              <div className="landing-hero__whatsapp-body">
-                <div className="landing-hero__wa-msg landing-hero__wa-msg--received">
-                  Olá, Ana Paula! 😊<br />
-                  Sua consulta é amanhã (15/06) às 14:00.<br /><br />
-                  Para confirmar, responda com:<br />
-                  1 - Confirmar<br />
-                  2 - Reagendar<br />
-                  3 - Cancelar
-                  <span className="landing-hero__wa-time">09:42</span>
+              </motion.div>
+
+              {/* Card 2: Pacientes mais satisfeitos (MANTIDO MAIS PRA CIMA E MAIS PRA ESQUERDA) */}
+              <motion.div
+                className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-slate-900/10 flex items-start gap-3.5 text-left transition-all hover:scale-[1.03] hover:border-blue-300 hover:shadow-2xl lg:absolute lg:-top-20 lg:left-[18%] xl:left-[22%] lg:max-w-[250px] z-20"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 4.8, ease: 'easeInOut' }}
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <Smile className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
-                <div className="landing-hero__wa-msg landing-hero__wa-msg--sent">
-                  1
-                  <span className="landing-hero__wa-time">09:43 ✓✓</span>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Pacientes mais satisfeitos</h4>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Atendimento ágil e personalizado em cada etapa.</p>
                 </div>
-                <div className="landing-hero__wa-msg landing-hero__wa-msg--received bg-emerald-50 border-emerald-200 text-emerald-900">
-                  ✅ <strong>Consulta confirmada!</strong><br />
-                  Te esperamos! 😊
-                  <span className="landing-hero__wa-time">09:43</span>
+              </motion.div>
+
+              {/* Card 3: Clínica mais lucrativa (REBAIXADO MAIS PARA BAIXO) */}
+              <motion.div
+                className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-slate-900/10 flex items-start gap-3.5 text-left transition-all hover:scale-[1.03] hover:border-blue-300 hover:shadow-2xl lg:absolute lg:top-[280px] lg:-left-6 lg:max-w-[250px] z-20"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 5, delay: 0.7, ease: 'easeInOut' }}
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
-              </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Clínica mais lucrativa</h4>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Gestão inteligente que aumenta a produtividade e reduz perdas.</p>
+                </div>
+              </motion.div>
+
+              {/* Card 4: Tranquilidade todos os dias (REBAIXADO MAIS PARA A BASE) */}
+              <motion.div
+                className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xl shadow-slate-900/10 flex items-start gap-3.5 text-left transition-all hover:scale-[1.03] hover:border-blue-300 hover:shadow-2xl lg:absolute lg:-bottom-6 lg:left-[28%] xl:left-[32%] lg:max-w-[250px] z-20"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ repeat: Infinity, duration: 5.2, delay: 1, ease: 'easeInOut' }}
+              >
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">Tranquilidade todos os dias</h4>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-relaxed mt-0.5">Tudo funcionando, tudo sob controle, mesmo quando você não está.</p>
+                </div>
+              </motion.div>
+
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ═══════════════ SEÇÃO: MAIS QUE UM SISTEMA ═══════════════ */}
-      <section className="landing-overview-section py-16 bg-slate-50 border-y border-slate-200/80">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="bg-white rounded-3xl p-8 md:p-12 border border-slate-200/90 shadow-xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Left Copy & Checklist */}
-            <AnimatedSection className="lg:col-span-5">
-              <span className="text-xs font-bold text-blue-600 tracking-wider uppercase block mb-2">MAIS QUE UM SISTEMA.</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight mb-4">
-                É uma nova forma de administrar sua clínica.
+      {/* ═══════════════ SEÇÃO 1: MAIS QUE UM SISTEMA ═══════════════ */}
+      <section className="landing-overview-section py-20 bg-slate-50/70 relative border-b border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="bg-white rounded-[32px] p-8 md:p-12 border border-slate-200/80 shadow-xl shadow-slate-900/5 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            {/* Left Copy & 6-Feature Grid */}
+            <AnimatedSection className="lg:col-span-5 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3.5 py-1 rounded-full text-xs font-bold w-fit mb-4">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                <span>MAIS QUE UM SISTEMA.</span>
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight mb-4 tracking-tight">
+                É uma nova forma de administrar <span className="text-blue-600">sua clínica.</span>
               </h2>
-              <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                Enquanto você faz um procedimento, o DentalFlow cuida de toda a operação em segundo plano.
+
+              <p className="text-slate-600 text-sm md:text-base font-medium leading-relaxed mb-8">
+                Enquanto você faz um procedimento, o <strong>DentalFlow</strong> cuida de toda a operação em segundo plano.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 text-xs font-semibold text-slate-700">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+              {/* 6 Feature Items (2 Columns x 3 Rows) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-800">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Confirma consultas</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                    <DollarSign className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Organiza recebimentos</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                    <Bell className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Envia lembretes</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Atualiza a agenda</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-100 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Acompanha orçamentos</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3.5 h-3.5" />
+
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 shadow-xs">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                    <BarChart3 className="w-4 h-4 text-blue-600" />
                   </div>
                   <span>Gera relatórios</span>
                 </div>
               </div>
             </AnimatedSection>
 
-            {/* Right Dashboard Calendar View Mockup */}
+            {/* Right Weekly Schedule View Mockup (6 Color-Tinted Patient Columns with Avatars) */}
             <AnimatedSection delay={0.15} className="lg:col-span-7">
-              <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-lg bg-white">
-                <div className="bg-slate-100 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500 font-medium">
+              <div className="rounded-3xl border border-slate-200 overflow-hidden shadow-2xl bg-white">
+                <div className="bg-slate-100/80 px-4 py-3 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
                   <div className="flex items-center gap-2">
                     <BrandIcon variant="dark" className="w-4 h-4" />
-                    <span className="font-bold text-slate-800">DentalFlow • Agenda Semanal</span>
+                    <span className="font-bold text-slate-900">DentalFlow • Agenda Semanal</span>
                   </div>
-                  <span>12 - 18 de Maio, 2024</span>
+                  <span className="text-slate-500 font-medium">12 - 18 de Maio, 2024</span>
                 </div>
 
-                <div className="p-4 grid grid-cols-6 gap-2 text-[10px] bg-slate-50/50 min-h-[220px]">
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-[10px] bg-slate-50/50 min-h-[300px]">
                   {[
-                    { day: 'Seg 12', time: '07:00', title: 'Ana Paula Souza', tag: 'Clareamento', bg: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
-                    { day: 'Ter 13', time: '09:30', title: 'Vanessa Lima', tag: 'Avaliação', bg: 'bg-rose-100 border-rose-300 text-rose-800' },
-                    { day: 'Qua 14', time: '11:00', time2: '11:00', title: 'Felisberto Alves', tag: 'Limpeza', bg: 'bg-teal-100 border-teal-300 text-teal-800' },
-                    { day: 'Qui 15', time: '08:30', title: 'Juliana Martins', tag: 'Canal', bg: 'bg-red-100 border-red-300 text-red-800' },
-                    { day: 'Sex 16', time: '09:00', title: 'Fernando Rocha', tag: 'Aparelho', bg: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
-                    { day: 'Sáb 17', time: '10:30', title: 'Patrícia Gomes', tag: 'Clareamento', bg: 'bg-blue-100 border-blue-300 text-blue-800' },
+                    { day: 'Seg 12', name: 'Ana Paula Souza', tag: 'Clareamento', img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop', cardStyle: 'bg-emerald-50 border-emerald-200/90 text-emerald-900', tagStyle: 'text-emerald-700 bg-emerald-100/60', iconColor: 'text-emerald-600 bg-emerald-100' },
+                    { day: 'Ter 13', name: 'Vanessa Lima', tag: 'Avaliação', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop', cardStyle: 'bg-rose-50 border-rose-200/90 text-rose-900', tagStyle: 'text-rose-700 bg-rose-100/60', iconColor: 'text-rose-600 bg-rose-100' },
+                    { day: 'Qua 14', name: 'Felisberto Alves', tag: 'Limpeza', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop', cardStyle: 'bg-cyan-50 border-cyan-200/90 text-cyan-900', tagStyle: 'text-cyan-700 bg-cyan-100/60', iconColor: 'text-cyan-600 bg-cyan-100' },
+                    { day: 'Qui 15', name: 'Juliana Martins', tag: 'Canal', img: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&auto=format&fit=crop', cardStyle: 'bg-orange-50 border-orange-200/90 text-orange-900', tagStyle: 'text-orange-700 bg-orange-100/60', iconColor: 'text-orange-600 bg-orange-100' },
+                    { day: 'Sex 16', name: 'Fernando Rocha', tag: 'Aparelho', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop', cardStyle: 'bg-teal-50 border-teal-200/90 text-teal-900', tagStyle: 'text-teal-700 bg-teal-100/60', iconColor: 'text-teal-600 bg-teal-100' },
+                    { day: 'Sáb 17', name: 'Patrícia Gomes', tag: 'Clareamento', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop', cardStyle: 'bg-purple-50 border-purple-200/90 text-purple-900', tagStyle: 'text-purple-700 bg-purple-100/60', iconColor: 'text-purple-600 bg-purple-100' },
                   ].map((col, idx) => (
                     <div key={idx} className="flex flex-col gap-2">
-                      <span className="font-bold text-slate-600 text-center pb-1 border-b border-slate-200">{col.day}</span>
-                      <div className={`p-2 rounded-lg border ${col.bg} flex flex-col justify-between h-20 shadow-xs`}>
-                        <span className="font-extrabold text-[9px] truncate">{col.title}</span>
-                        <span className="opacity-80 text-[8px]">{col.tag}</span>
+                      <span className="font-bold text-slate-600 text-center pb-1 border-b border-slate-200 text-xs">{col.day}</span>
+                      <div className={`p-3 rounded-2xl border ${col.cardStyle} flex flex-col items-center justify-between text-center min-h-[220px] shadow-sm transition-all hover:scale-[1.02]`}>
+                        <img src={col.img} alt={col.name} className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md my-1" />
+                        <span className="font-extrabold text-[11px] leading-tight text-slate-900">{col.name}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${col.tagStyle}`}>{col.tag}</span>
+                        <div className={`w-7 h-7 rounded-full ${col.iconColor} flex items-center justify-center mt-2`}>
+                          <Sparkles className="w-3.5 h-3.5" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -447,59 +457,171 @@ export default function LandingPage({ onLogin, onRegister }) {
         </div>
       </section>
 
-      {/* ═══════════════ SEÇÃO: IMAGINE COMO SERÁ SUA SEGUNDA-FEIRA (STEPPER HORIZONTAL) ═══════════════ */}
-      <section id="segunda-feira" className="landing-timeline-section py-20 bg-white border-b border-slate-200/80">
-        <div className="max-w-6xl mx-auto px-4">
-          <AnimatedSection className="mb-14">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-              Imagine como será sua segunda-feira.
+      {/* ═══════════════ SEÇÃO 2: IMAGINE COMO SERÁ SUA SEGUNDA-FEIRA (VERTICAL TIMELINE FLOW) ═══════════════ */}
+      <section id="segunda-feira" className="landing-timeline-section py-24 bg-slate-50/70 relative border-b border-slate-200/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <AnimatedSection className="text-center mb-16">
+            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 border border-blue-100 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+              ROTINA INTELIGENTE. DIA MAIS LEVE.
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight mb-4">
+              Imagine como será <span className="text-blue-600">sua segunda-feira.</span>
             </h2>
+            <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed max-w-xl mx-auto">
+              O <strong>DentalFlow</strong> trabalha por você do início ao fim do dia.
+            </p>
           </AnimatedSection>
 
-          {/* Horizontal Stepper Line */}
-          <div className="relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-6 left-12 right-12 h-0.5 bg-blue-200 z-0" />
+          {/* Vertical Timeline Stack with Dashed Connecting Line */}
+          <div className="relative flex flex-col gap-12 sm:gap-14">
+            {/* Dashed Connecting Line on Left */}
+            <div className="hidden sm:block absolute top-8 bottom-8 left-[27px] w-0.5 border-l-2 border-dashed border-blue-300 z-0 opacity-80" />
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative z-10">
-              {[
-                {
-                  time: '08:00',
-                  icon: <Calendar className="w-5 h-5 text-white" />,
-                  desc: 'Pacientes confirmam presença automaticamente pelo WhatsApp no domingo.'
-                },
-                {
-                  time: '09:20',
-                  icon: <MessageSquare className="w-5 h-5 text-white" />,
-                  desc: 'Remarcações acontecem e a agenda se reorganiza sozinho.'
-                },
-                {
-                  time: '11:10',
-                  icon: <FileText className="w-5 h-5 text-white" />,
-                  desc: 'Você acessa o prontuário com todo o histórico do paciente.'
-                },
-                {
-                  time: '14:00',
-                  icon: <Phone className="w-5 h-5 text-white" />,
-                  desc: 'O sistema lembra um orçamento parado e o paciente recebe um contato.'
-                },
-                {
-                  time: '17:50',
-                  icon: <TrendingUp className="w-5 h-5 text-white" />,
-                  desc: 'Financeiro atualizado. Relatórios prontos. Dia encerrado com tudo em ordem.'
-                }
-              ].map((step, i) => (
-                <AnimatedSection key={i} delay={i * 0.08} className="flex flex-col items-start md:items-center text-left md:text-center">
-                  <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4 border-4 border-white">
-                    {step.icon}
-                  </div>
-                  <span className="text-lg font-black text-slate-900 mb-2">{step.time}</span>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {step.desc}
+            {/* Item 1: 08:00 */}
+            <AnimatedSection delay={0.05} className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <div className="sm:col-span-5 flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0 border-4 border-white ring-4 ring-blue-100">
+                  <MessageSquare className="w-6 h-6 text-white" />
+                </div>
+                <div className="pt-1">
+                  <span className="text-xl sm:text-2xl font-black text-blue-600 block mb-1">08:00</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-semibold leading-relaxed">
+                    Pacientes confirmam presença automaticamente pelo WhatsApp no domingo.
                   </p>
-                </AnimatedSection>
-              ))}
-            </div>
+                </div>
+              </div>
+              <div className="sm:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 flex items-center justify-between gap-4 overflow-hidden hover:border-blue-300 transition-all">
+                <div className="flex-1">
+                  <div className="bg-blue-600 text-white p-3.5 rounded-xl max-w-[260px] text-xs shadow-md">
+                    <p className="font-bold mb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+                      Lembrete de consulta
+                    </p>
+                    <p className="text-[11px] text-blue-50 leading-tight">Confirmar presença? Domingo, 20:30 ✓</p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-3.5 py-2 rounded-xl text-xs font-bold shrink-0 shadow-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Presença confirmada!</span>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Item 2: 09:20 */}
+            <AnimatedSection delay={0.1} className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <div className="sm:col-span-5 flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0 border-4 border-white ring-4 ring-blue-100">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                <div className="pt-1">
+                  <span className="text-xl sm:text-2xl font-black text-blue-600 block mb-1">09:20</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-semibold leading-relaxed">
+                    Remarcações acontecem e a agenda se reorganiza sozinho.
+                  </p>
+                </div>
+              </div>
+              <div className="sm:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 flex items-center justify-between gap-4 hover:border-blue-300 transition-all">
+                <div className="flex-1 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                    <span className="text-slate-400">09:00</span>
+                    <span className="bg-blue-100/70 text-blue-800 px-2.5 py-1 rounded-lg text-[11px]">Dra. Ana • Consulta</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                    <span className="text-slate-400">10:00</span>
+                    <span className="bg-emerald-100/70 text-emerald-800 px-2.5 py-1 rounded-lg text-[11px]">Horário remanejado automaticamente</span>
+                  </div>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Remarcação realizada!</span>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Item 3: 11:10 */}
+            <AnimatedSection delay={0.15} className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <div className="sm:col-span-5 flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0 border-4 border-white ring-4 ring-blue-100">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="pt-1">
+                  <span className="text-xl sm:text-2xl font-black text-blue-600 block mb-1">11:10</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-semibold leading-relaxed">
+                    Você acessa o prontuário com todo o histórico do paciente.
+                  </p>
+                </div>
+              </div>
+              <div className="sm:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 flex items-center gap-4 hover:border-blue-300 transition-all">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop" alt="Ana Paula Souza" className="w-13 h-13 rounded-full object-cover border-2 border-blue-200 shadow-md shrink-0" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-slate-900 mb-0.5">Ana Paula Souza</h4>
+                  <p className="text-xs text-slate-500 font-medium mb-2">Prontuário Odontológico Completo</p>
+                  <div className="flex gap-1.5 flex-wrap text-[10px] font-bold">
+                    <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full">Clareamento</span>
+                    <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full">Avaliação</span>
+                    <span className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full">Raio-X Digital</span>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Item 4: 14:00 */}
+            <AnimatedSection delay={0.2} className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <div className="sm:col-span-5 flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0 border-4 border-white ring-4 ring-blue-100">
+                  <Phone className="w-6 h-6 text-white" />
+                </div>
+                <div className="pt-1">
+                  <span className="text-xl sm:text-2xl font-black text-blue-600 block mb-1">14:00</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-semibold leading-relaxed">
+                    O sistema lembra um orçamento parado e o paciente recebe um contato.
+                  </p>
+                </div>
+              </div>
+              <div className="sm:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 flex items-center justify-between gap-4 hover:border-blue-300 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <Bell className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">Orçamento pendente</h4>
+                    <p className="text-xs text-slate-500 font-medium">Enviar lembrete para o paciente?</p>
+                  </div>
+                </div>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer shrink-0">
+                  Enviar agora
+                </button>
+              </div>
+            </AnimatedSection>
+
+            {/* Item 5: 17:50 */}
+            <AnimatedSection delay={0.25} className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+              <div className="sm:col-span-5 flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0 border-4 border-white ring-4 ring-blue-100">
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div className="pt-1">
+                  <span className="text-xl sm:text-2xl font-black text-blue-600 block mb-1">17:50</span>
+                  <p className="text-xs sm:text-sm text-slate-700 font-semibold leading-relaxed">
+                    Financeiro atualizado. Relatórios prontos. Dia encerrado com tudo em ordem.
+                  </p>
+                </div>
+              </div>
+              <div className="sm:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xl shadow-slate-900/5 flex items-center justify-between gap-4 hover:border-blue-300 transition-all">
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 mb-1">Resumo financeiro do dia</h4>
+                  <div className="flex items-center gap-3 text-xs font-extrabold flex-wrap">
+                    <span className="text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200/80">Recebimentos: R$ 8.450,00</span>
+                    <span className="text-rose-700 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200/80">Despesas: R$ 2.150,00</span>
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                </div>
+              </div>
+            </AnimatedSection>
+
           </div>
         </div>
       </section>

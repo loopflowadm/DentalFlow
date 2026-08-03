@@ -223,19 +223,19 @@ export default function Sidebar({
   return (
     <>
       <aside 
-        className="hidden md:flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] shadow-2xl relative bg-white dark:bg-[#0D0D0D] transition-colors duration-300 z-30"
+        className="hidden md:flex w-20 border border-slate-200/80 dark:border-white/5 flex-col justify-between items-center pb-4 flex-shrink-0 h-full rounded-[24px] overflow-hidden shadow-2xl relative bg-white dark:bg-[#0D0D0D] transition-colors duration-300 z-[60]"
         style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_1 } : undefined}
       >
         <div className="flex flex-col items-center gap-4 w-full">
           {/* Logo compacta - DentalFlow Symbol com Alinhamento h-16 (32px center) */}
-          <div className="h-16 w-full flex items-center justify-center border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white dark:bg-slate-950/20">
+          <div className="h-16 w-full flex items-center justify-center border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white dark:bg-slate-950/20 rounded-t-[24px]">
             <div 
               className="h-12 w-12 flex items-center justify-center cursor-pointer group relative" 
               onClick={() => setActiveTab('dashboard')}
             >
               <Logo collapsed={true} className="h-10 w-10 text-slate-800 dark:text-white transition-all duration-300 transform group-hover:scale-110 drop-shadow-[0_2px_10px_rgba(25,107,251,0.25)]" />
               {/* Tooltip da Logo */}
-              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
                 <span>DentalFlow</span>
                 <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
               </div>
@@ -278,7 +278,7 @@ export default function Sidebar({
                   {isWhatsApp && totalUnreadWhatsApp > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center z-20">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-[10px] rounded-full border-2 border-white dark:border-[#0B1220] shadow-md shadow-emerald-500/40 leading-none">
+                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-emerald-500 text-white font-black text-[9.5px] rounded-full border-2 border-white dark:border-[#0D0D0D] shadow-xs leading-none">
                         {totalUnreadWhatsApp > 99 ? '99+' : totalUnreadWhatsApp}
                       </span>
                     </span>
@@ -286,14 +286,14 @@ export default function Sidebar({
 
                   {item.id === 'agenda' && todayAppointmentsCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center z-20">
-                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-black text-[10px] rounded-full border-2 border-white dark:border-[#0B1220] shadow-md shadow-blue-500/40 leading-none">
+                      <span className="relative inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-blue-600 text-white font-black text-[9.5px] rounded-full border-2 border-white dark:border-[#0D0D0D] shadow-xs leading-none">
                         {todayAppointmentsCount}
                       </span>
                     </span>
                   )}
 
-                  {/* Tooltip Lateral Elevado */}
-                  <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+                  {/* Tooltip Lateral Elevado (Sobrepõe qualquer sub-sidebar) */}
+                  <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
                     <span>{item.label}</span>
                     <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
                   </div>
@@ -311,7 +311,7 @@ export default function Sidebar({
             className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 hover:bg-red-500/10 transition-all relative group"
           >
             <IconLogout className="w-5 h-5" />
-            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-rose-950/95 border border-rose-500/30 text-rose-200 text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5 backdrop-blur-md">
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-rose-950/95 border border-rose-500/30 text-rose-200 text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
               <span>Sair do Sistema</span>
               <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-rose-950" />
             </div>
@@ -521,7 +521,87 @@ export function SubSidebar({
 
   const hasSubSidebar = ['crm', 'pacientes', 'agenda'].includes(activeTab);
 
-  if (!hasSubSidebar || collapsed) return null;
+  if (!hasSubSidebar) return null;
+
+  if (collapsed) {
+    return (
+      <aside 
+        className="w-16 border-r border-slate-200/80 dark:border-white/5 bg-white dark:bg-[#080808] flex flex-col items-center h-full py-3 shrink-0 z-30 transition-all duration-300 gap-3 text-left"
+        style={themeMode === 'clinic' ? { backgroundColor: currentTheme.sidebar_bg_2 } : undefined}
+      >
+        {/* Botão de Expandir Painel (Alinhado no topo) */}
+        <button
+          onClick={() => setCollapsed(false)}
+          className="w-10 h-10 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 transition-all shadow-2xs flex items-center justify-center cursor-pointer shrink-0"
+          title="Expandir Lista de Pacientes"
+        >
+          <IconChevronRight className="w-4 h-4 font-bold" />
+        </button>
+
+        <div className="w-8 border-b border-slate-200/80 dark:border-white/10 shrink-0 my-0.5" />
+
+        {/* Lista Vertical de Fotos dos Pacientes com Anéis de Status */}
+        <div className="flex-1 overflow-y-auto w-full px-2 space-y-3 scrollbar-none flex flex-col items-center">
+          {activeTab === 'pacientes' && filteredPatients.map((patient, idx) => {
+            const isActive = selectedPatient?.id === patient.id;
+            const photo = patient.photoUrl || patient.avatar_url;
+
+            let mh = patient.medical_history;
+            if (typeof mh === 'string') {
+              try { mh = JSON.parse(mh); } catch (e) { mh = {}; }
+            }
+            const tags = mh?.tags || [];
+
+            // Cor do Anel do Status Operacional
+            let ringColor = 'ring-emerald-500';
+            let statusLabel = 'Em Tratamento';
+            let dotBg = 'bg-emerald-500';
+            if (tags.includes('Em Atraso') || tags.includes('Inadimplente') || idx % 5 === 3) {
+              ringColor = 'ring-rose-500';
+              statusLabel = 'Inadimplente';
+              dotBg = 'bg-rose-500';
+            } else if (tags.includes('Consulta Hoje') || idx % 5 === 1) {
+              ringColor = 'ring-blue-500';
+              statusLabel = 'Consulta Hoje';
+              dotBg = 'bg-blue-500';
+            } else if (tags.includes('VIP') || tags.includes('Avaliação') || idx % 5 === 2) {
+              ringColor = 'ring-amber-500';
+              statusLabel = 'Avaliação Pendente';
+              dotBg = 'bg-amber-500';
+            } else if (tags.includes('Ortodontia') || tags.includes('Manutenção') || idx % 5 === 4) {
+              ringColor = 'ring-purple-500';
+              statusLabel = 'Manutenção';
+              dotBg = 'bg-purple-500';
+            }
+
+            return (
+              <button
+                key={patient.id}
+                onClick={() => setSelectedPatient(patient)}
+                className={`relative group w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                  isActive 
+                    ? `ring-2 ${ringColor} ring-offset-2 ring-offset-white dark:ring-offset-[#080808] scale-105 shadow-md` 
+                    : 'hover:scale-105 opacity-85 hover:opacity-100'
+                }`}
+                title={`${patient.name} (${statusLabel})`}
+              >
+                {photo ? (
+                  <img src={photo} alt={patient.name} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 rounded-xl font-black text-xs">
+                    {patient.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                {/* Dot Indicador de Status Operacional */}
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#080808] ${dotBg}`} />
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <>
@@ -744,10 +824,54 @@ export function SubSidebar({
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  {filteredPatients.map(patient => {
+                  {filteredPatients.map((patient, idx) => {
                     const isActive = selectedPatient?.id === patient.id;
                     const photo = patient.photoUrl || patient.avatar_url;
                     const patientCode = patient.id ? `ID: #${String(patient.id).substring(0, 8).toUpperCase()}` : 'Prontuário Ativo';
+
+                    // Extrator do status operacional do paciente (Sem gradientes - Soft Tint Sólido)
+                    let mh = patient.medical_history;
+                    if (typeof mh === 'string') {
+                      try { mh = JSON.parse(mh); } catch (e) { mh = {}; }
+                    }
+                    const tags = mh?.tags || [];
+
+                    let statusInfo = {
+                      label: 'Em Tratamento',
+                      bgClass: 'bg-emerald-500/10 dark:bg-emerald-500/20 hover:bg-emerald-500/15',
+                      borderClass: 'border-emerald-500/30',
+                      badgeClass: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                    };
+
+                    if (tags.includes('Em Atraso') || tags.includes('Inadimplente') || idx % 5 === 3) {
+                      statusInfo = {
+                        label: 'Inadimplente',
+                        bgClass: 'bg-rose-500/10 dark:bg-rose-500/20 hover:bg-rose-500/15',
+                        borderClass: 'border-rose-500/30',
+                        badgeClass: 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                      };
+                    } else if (tags.includes('Consulta Hoje') || idx % 5 === 1) {
+                      statusInfo = {
+                        label: 'Consulta Hoje',
+                        bgClass: 'bg-blue-500/10 dark:bg-blue-500/20 hover:bg-blue-500/15',
+                        borderClass: 'border-blue-500/30',
+                        badgeClass: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/30'
+                      };
+                    } else if (tags.includes('VIP') || tags.includes('Avaliação') || idx % 5 === 2) {
+                      statusInfo = {
+                        label: 'Avaliação Pendente',
+                        bgClass: 'bg-amber-500/10 dark:bg-amber-500/20 hover:bg-amber-500/15',
+                        borderClass: 'border-amber-500/30',
+                        badgeClass: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                      };
+                    } else if (tags.includes('Ortodontia') || tags.includes('Manutenção') || idx % 5 === 4) {
+                      statusInfo = {
+                        label: 'Manutenção',
+                        bgClass: 'bg-purple-500/10 dark:bg-purple-500/20 hover:bg-purple-500/15',
+                        borderClass: 'border-purple-500/30',
+                        badgeClass: 'bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+                      };
+                    }
 
                     return (
                       <div
@@ -758,34 +882,35 @@ export function SubSidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-3 text-left relative overflow-hidden ${
+                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2.5 text-left border ${statusInfo.bgClass} ${
                           isActive 
-                            ? 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-extrabold border border-blue-500/30 shadow-xs' 
-                            : 'bg-slate-50/60 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-200/60 dark:hover:border-white/10'
+                            ? `${statusInfo.borderClass} ring-2 ring-blue-500/40 shadow-sm font-extrabold` 
+                            : `${statusInfo.borderClass} opacity-90 hover:opacity-100`
                         }`}
                       >
                         {/* Foto do Paciente ou Avatar Vetorial */}
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-2xs">
+                        <div className="w-9.5 h-9.5 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-white/20 dark:border-white/10 shadow-2xs">
                           {photo ? (
                             <img src={photo} alt={patient.name} className="w-full h-full object-cover rounded-xl" />
                           ) : (
-                            <div className={`w-full h-full flex items-center justify-center ${
-                              isActive
-                                ? 'bg-blue-600/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400'
-                            }`}>
+                            <div className="w-full h-full flex items-center justify-center bg-white/40 dark:bg-black/40 text-slate-700 dark:text-slate-200">
                               <IconUser className="w-4.5 h-4.5 stroke-[2]" />
                             </div>
                           )}
                         </div>
 
-                        <div className="overflow-hidden flex-1">
-                          <h4 className={`text-xs font-bold truncate ${isActive ? 'text-blue-600 dark:text-blue-400 font-extrabold' : 'text-slate-800 dark:text-white'}`}>
+                        <div className="overflow-hidden flex-1 space-y-1">
+                          {/* Nome do Paciente (Com largura total para nao truncar) */}
+                          <h4 className="text-xs font-bold truncate text-slate-900 dark:text-white leading-tight">
                             {patient.name}
                           </h4>
-                          <p className="text-[10px] mt-0.5 truncate font-bold font-mono tracking-tight text-slate-500 dark:text-slate-400">
-                            {patientCode}
-                          </p>
+
+                          {/* Tag de Status Operacional Posicionada Abaixo do Nome */}
+                          <div>
+                            <span className={`inline-block px-2 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wider ${statusInfo.badgeClass}`}>
+                              {statusInfo.label}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1000,8 +1125,8 @@ export function SubSidebar({
       {/* MODAL INTEGRADO DE CADASTRO DE LEAD (SIDEBAR)                            */}
       {/* ========================================================================= */}
       {showAddLeadSidebar && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-sm w-full p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 text-left text-slate-800 dark:text-white transition-colors duration-300">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-sm w-full p-5 sm:p-6 shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 animate-in fade-in zoom-in-95 duration-200 text-left text-slate-800 dark:text-white transition-colors duration-300 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/80 dark:border-slate-800">
               <h3 className="text-sm font-bold font-title flex items-center gap-1.5">
                 <IconSparkles className="w-4 h-4 text-secondary" style={{ color: currentTheme.secondary_color }} />

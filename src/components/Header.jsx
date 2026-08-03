@@ -19,13 +19,14 @@ import {
   IconLayoutKanban,
   IconCurrencyDollar,
   IconBrandWhatsapp,
-  IconFilter
+  IconFilter,
+  IconCode
 } from '@tabler/icons-react';
 import Breadcrumbs from './Breadcrumbs';
 import { mockDb } from '../lib/mockDatabase';
 import { isSupabaseConfigured } from '../lib/supabase';
 
-export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette, collapsed, setCollapsed }) {
+export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette, onOpenDevTools, collapsed, setCollapsed }) {
   const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
   const { currentTheme, themeMode, setThemeMode } = useTheme();
   
@@ -242,6 +243,16 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
             </div>
           )}
         </div>
+
+        {/* Botão Opções de Desenvolvedor */}
+        <button
+          onClick={onOpenDevTools}
+          className="h-9 px-2.5 rounded-xl flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+          title="Opções de Desenvolvedor (Dev Tools)"
+        >
+          <IconCode className="w-4 h-4 text-amber-500" />
+          <span className="hidden md:inline">Dev Tools</span>
+        </button>
 
         {/* Alternador de 3 Temas Padronizado (w-9 h-9) */}
         <div className="relative">

@@ -32,4 +32,8 @@ dist-ssr
 # Temporary scratch and coverage
 coverage/
 scratch/
+.ua/intermediate/
+.ua/tmp/
+.agents/node_modules/
+
 

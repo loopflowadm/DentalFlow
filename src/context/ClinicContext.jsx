@@ -105,6 +105,67 @@ export function ClinicProvider({ children }) {
   const [chairs, setChairs] = useState([]);
   const [dentists, setDentists] = useState([]);
 
+  const [clinicHours, setClinicHours] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`clinic_hours_${clinic?.id || 'default'}`);
+      return stored ? JSON.parse(stored) : { start: '08:00', end: '18:00', workDays: [1, 2, 3, 4, 5, 6] };
+    } catch {
+      return { start: '08:00', end: '18:00', workDays: [1, 2, 3, 4, 5, 6] };
+    }
+  });
+
+  const [dentistSchedules, setDentistSchedules] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`dentist_schedules_${clinic?.id || 'default'}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [holidays, setHolidays] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`clinic_holidays_${clinic?.id || 'default'}`);
+      return stored ? JSON.parse(stored) : [
+        { id: 'hol-1', title: 'Independência do Brasil', type: 'CLINIC', date: '2026-09-07' },
+        { id: 'hol-2', title: 'Nossa Senhora Aparecida', type: 'CLINIC', date: '2026-10-12' },
+        { id: 'hol-3', title: 'Finados', type: 'CLINIC', date: '2026-11-02' },
+        { id: 'hol-4', title: 'Proclamação da República', type: 'CLINIC', date: '2026-11-15' },
+        { id: 'hol-5', title: 'Natal', type: 'CLINIC', date: '2026-12-25' }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  const saveClinicHours = (hoursObj) => {
+    setClinicHours(hoursObj);
+    try {
+      localStorage.setItem(`clinic_hours_${clinic?.id || 'default'}`, JSON.stringify(hoursObj));
+    } catch (e) {
+      console.error('Erro ao salvar horário da clínica:', e);
+    }
+  };
+
+  const saveDentistSchedules = (schedulesObj) => {
+    setDentistSchedules(schedulesObj);
+    try {
+      localStorage.setItem(`dentist_schedules_${clinic?.id || 'default'}`, JSON.stringify(schedulesObj));
+    } catch (e) {
+      console.error('Erro ao salvar escala do dentista:', e);
+    }
+  };
+
+  const saveHolidays = (holidaysList) => {
+    setHolidays(holidaysList);
+    try {
+      localStorage.setItem(`clinic_holidays_${clinic?.id || 'default'}`, JSON.stringify(holidaysList));
+    } catch (e) {
+      console.error('Erro ao salvar feriados:', e);
+    }
+  };
+
+
   const loadChatsState = useCallback(async (patList, leadList = []) => {
     const clinicId = clinic.id;
     const patientChats = patList.map(p => {
@@ -386,7 +447,7 @@ export function ClinicProvider({ children }) {
         }
       }
 
-      setAppointments(appData.map(a => {
+      const mappedAppointments = appData.map(a => {
         const p = pData.find(pat => pat.id === a.patient_id);
         const proc = finalProcData.find(pr => pr.id === a.procedure_id);
         return {
@@ -401,17 +462,19 @@ export function ClinicProvider({ children }) {
           returnDays: a.return_days !== undefined ? a.return_days : a.returnDays,
           isRecurring: a.is_recurring !== undefined ? a.is_recurring : a.isRecurring,
         };
-      }));
+      });
+
+      setAppointments(prev => mappedAppointments.length > 0 ? mappedAppointments : prev);
 
       setProcedures(finalProcData);
       setInsurancePlans(planData);
-      setFinanceTransactions(tData);
+      setFinanceTransactions(prev => tData.length > 0 ? tData : prev);
       setAutomations(autData);
       setMarketingCampaigns(mData);
       setSuppliers(supData);
       setAccountsPayable(apData);
-      setToothRecords(toothData);
-      setMedicalRecords(recData);
+      setToothRecords(prev => toothData.length > 0 ? toothData : prev);
+      setMedicalRecords(prev => recData.length > 0 ? recData : prev);
       setPrescriptions(presData);
       let finalLeadData = leadData || [];
 
@@ -510,34 +573,32 @@ export function ClinicProvider({ children }) {
     const matchedLead = crmLeads.find(l => l.phone && l.phone.replace(/\D/g, '') === cleanPhone);
     const resolvedAvatar = newPat.avatar_url || newPat.photoUrl || matchedChat?.avatar || matchedLead?.avatar_url || null;
 
-    const fresh = {
+    const dbPayload = {
       name: newPat.name,
       phone: newPat.phone || '',
       email: newPat.email || null,
-      avatar_url: resolvedAvatar,
-      medical_history: newPat.medical_history || null,
       clinic_id: isValidUUID(clinicId) ? clinicId : null,
       created_at: new Date().toISOString()
     };
 
     let createdPat = null;
 
-    if (fresh.clinic_id) {
+    if (dbPayload.clinic_id) {
       try {
         const { data, error } = await supabase
           .from('patients')
-          .insert([fresh])
+          .insert([dbPayload])
           .select()
           .single();
         if (!error && data) {
           createdPat = { 
             ...data, 
-            cpf: newPat.cpf, 
+            cpf: newPat.cpf || null, 
             notes: newPat.notes || '',
-            photoUrl: data.avatar_url || newPat.avatar_url || newPat.photoUrl || null,
-            avatar_url: data.avatar_url || newPat.avatar_url || newPat.photoUrl || null 
+            medical_history: newPat.medical_history || null,
+            photoUrl: resolvedAvatar,
+            avatar_url: resolvedAvatar 
           };
-          setPatients(prev => [...prev, createdPat]);
         } else if (error) {
           console.warn('[Supabase] Aviso ao cadastrar paciente no Supabase:', error.message || error);
         }
@@ -548,14 +609,15 @@ export function ClinicProvider({ children }) {
 
     if (!createdPat) {
       createdPat = { 
-        id: `p-${Date.now()}`, 
+        id: `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`, 
         ...newPat, 
-        photoUrl: newPat.avatar_url || newPat.photoUrl || null,
-        avatar_url: newPat.avatar_url || newPat.photoUrl || null,
+        photoUrl: resolvedAvatar,
+        avatar_url: resolvedAvatar,
         clinic_id: clinicId 
       };
-      setPatients(prev => [...prev, createdPat]);
     }
+
+    setPatients(prev => [...prev.filter(p => p.id !== createdPat.id), createdPat]);
 
     // Auto-sincronizar no CRM para o paciente aparecer imediatamente no Kanban / Jornada
     try {
@@ -587,13 +649,17 @@ export function ClinicProvider({ children }) {
 
   const updatePatient = async (updatedPat) => {
     if (isValidUUID(updatedPat.id)) {
-      // Sanitização estrita: enviar apenas colunas válidas da tabela 'patients' no Supabase
-      const allowedKeys = ['name', 'phone', 'cpf', 'email', 'avatar_url', 'birth_date', 'address', 'medical_history', 'notes', 'clinic_id'];
+      // Sanitização estrita: enviar apenas colunas estritamente existentes na tabela 'patients' no Supabase
+      const allowedKeys = ['name', 'phone', 'email', 'medical_history', 'clinic_id'];
       const dbPayload = {};
 
       allowedKeys.forEach(key => {
-        if (updatedPat[key] !== undefined) {
-          dbPayload[key] = updatedPat[key];
+        if (updatedPat[key] !== undefined && updatedPat[key] !== null) {
+          if (key === 'medical_history' && typeof updatedPat[key] === 'object') {
+            dbPayload[key] = JSON.stringify(updatedPat[key]);
+          } else {
+            dbPayload[key] = updatedPat[key];
+          }
         }
       });
 
@@ -603,7 +669,7 @@ export function ClinicProvider({ children }) {
             .from('patients')
             .update(dbPayload)
             .eq('id', updatedPat.id);
-          if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error);
+          if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error.message || error);
         }
       } catch (err) {
         console.warn('[Supabase] Erro ao atualizar paciente:', err);
@@ -616,33 +682,37 @@ export function ClinicProvider({ children }) {
   // CRM LEADS (Tabela crm_leads)
   const addCrmLead = async (lead) => {
     const clinicId = lead.clinic_id || clinic?.id;
-    const fresh = {
+    const dbPayload = {
       clinic_id: isValidUUID(clinicId) ? clinicId : null,
       name: lead.name,
       phone: lead.phone || '',
-      avatar: lead.avatar || '👤',
       stage: lead.stage !== undefined ? lead.stage : 0, // Novo Lead
       priority: lead.priority || 'medium',
-      budget_amount: lead.budget_amount || 0.00,
-      procedure_name: lead.procedure_name || 'Consulta Geral',
-      comments: lead.comments || [],
-      checklist: lead.checklist || [],
-      attachments: lead.attachments || [],
-      history: [{ date: new Date().toISOString(), type: 'STATUS', description: 'Lead cadastrado no CRM', user: user?.full_name || 'Profissional' }],
       created_at: new Date().toISOString()
     };
 
     let createdLead = null;
 
-    if (fresh.clinic_id) {
+    if (dbPayload.clinic_id) {
       try {
         const { data, error } = await supabase
           .from('crm_leads')
-          .insert([fresh])
+          .insert([dbPayload])
           .select()
           .single();
         if (!error && data) {
-          createdLead = { ...data, is_patient: lead.is_patient, patient_id: lead.patient_id };
+          createdLead = { 
+            ...data, 
+            avatar: lead.avatar || '👤',
+            budget_amount: lead.budget_amount || 0.00,
+            procedure_name: lead.procedure_name || 'Consulta Geral',
+            comments: lead.comments || [],
+            checklist: lead.checklist || [],
+            attachments: lead.attachments || [],
+            history: [{ date: new Date().toISOString(), type: 'STATUS', description: 'Lead cadastrado no CRM', user: user?.full_name || 'Profissional' }],
+            is_patient: lead.is_patient, 
+            patient_id: lead.patient_id 
+          };
         } else if (error) {
           console.warn('[Supabase] Aviso ao cadastrar crm_lead no Supabase:', error.message || error);
         }
@@ -654,8 +724,15 @@ export function ClinicProvider({ children }) {
     if (!createdLead) {
       createdLead = {
         id: 'lead-' + Date.now(),
-        ...fresh,
+        ...lead,
         clinic_id: clinicId,
+        avatar: lead.avatar || '👤',
+        budget_amount: lead.budget_amount || 0.00,
+        procedure_name: lead.procedure_name || 'Consulta Geral',
+        comments: lead.comments || [],
+        checklist: lead.checklist || [],
+        attachments: lead.attachments || [],
+        history: [{ date: new Date().toISOString(), type: 'STATUS', description: 'Lead cadastrado no CRM', user: user?.full_name || 'Profissional' }],
         is_patient: lead.is_patient || false,
         patient_id: lead.patient_id || null
       };
@@ -900,17 +977,22 @@ export function ClinicProvider({ children }) {
 
 
   const updateAppointment = async (updatedApp) => {
+    const rawPatientId = updatedApp.patient_id || updatedApp.patientId;
+    const rawDoctorId = updatedApp.doctor_id || updatedApp.doctorId;
+    const rawChairId = updatedApp.chair_id || updatedApp.chairId;
+    const rawProcId = updatedApp.procedure_id || updatedApp.procedureId;
+
     const cleanApp = {
       id: updatedApp.id,
-      clinic_id: updatedApp.clinic_id || clinic.id,
-      patient_id: (updatedApp.patient_id && isValidUUID(updatedApp.patient_id)) ? updatedApp.patient_id : ((updatedApp.patientId && isValidUUID(updatedApp.patientId)) ? updatedApp.patientId : null),
-      doctor_id: (updatedApp.doctor_id && isValidUUID(updatedApp.doctor_id)) ? updatedApp.doctor_id : ((updatedApp.doctorId && isValidUUID(updatedApp.doctorId)) ? updatedApp.doctorId : null),
+      clinic_id: updatedApp.clinic_id || clinic?.id,
+      patient_id: isValidUUID(rawPatientId) ? rawPatientId : null,
+      doctor_id: isValidUUID(rawDoctorId) ? rawDoctorId : null,
       start_time: updatedApp.start_time || updatedApp.startTime,
       end_time: updatedApp.end_time || updatedApp.endTime,
       status: updatedApp.status || 'PENDING',
-      chair_id: (updatedApp.chair_id && isValidUUID(updatedApp.chair_id)) ? updatedApp.chair_id : ((updatedApp.chairId && isValidUUID(updatedApp.chairId)) ? updatedApp.chairId : null),
+      chair_id: isValidUUID(rawChairId) ? rawChairId : null,
       room: updatedApp.room || null,
-      procedure_id: (updatedApp.procedure_id && isValidUUID(updatedApp.procedure_id)) ? updatedApp.procedure_id : ((updatedApp.procedureId && isValidUUID(updatedApp.procedureId)) ? updatedApp.procedureId : null),
+      procedure_id: isValidUUID(rawProcId) ? rawProcId : null,
       title: updatedApp.title || null,
       duration: updatedApp.duration || 30,
       observations: updatedApp.observations || null,
@@ -921,35 +1003,40 @@ export function ClinicProvider({ children }) {
       is_recurring: updatedApp.is_recurring !== undefined ? updatedApp.is_recurring : (updatedApp.isRecurring !== undefined ? updatedApp.isRecurring : false),
     };
 
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update(cleanApp)
-        .eq('id', cleanApp.id);
-      
-      if (error) {
-        if (error.code === 'PGRST204' || error.message.includes('column')) {
-          console.warn('[Supabase] Migration columns missing, updated locally only.');
-        } else {
-          throw error;
+    if (isValidUUID(cleanApp.id)) {
+      try {
+        const { error } = await supabase
+          .from('appointments')
+          .update(cleanApp)
+          .eq('id', cleanApp.id);
+        
+        if (error) {
+          if (error.code === 'PGRST204' || error.message?.includes('column')) {
+            console.warn('[Supabase] Migration columns missing, updated locally only.');
+          }
         }
+      } catch (err) {
+        console.warn('[Supabase] Error updating appointment, updated locally only:', err.message || err);
       }
-    } catch (err) {
-      console.warn('[Supabase] Error updating appointment, updated locally only:', err.message || err);
     }
 
-    const p = patients.find(pat => pat.id === cleanApp.patient_id);
-    const proc = procedures.find(pr => pr.id === cleanApp.procedure_id);
+    const p = patients.find(pat => pat.id === rawPatientId || pat.id === cleanApp.patient_id);
+    const proc = procedures.find(pr => pr.id === rawProcId || pr.id === cleanApp.procedure_id);
 
-    setAppointments(prev => prev.map(a => a.id === cleanApp.id ? {
+    setAppointments(prev => prev.map(a => a.id === updatedApp.id ? {
       ...a,
+      ...updatedApp,
       ...cleanApp,
-      patientName: p ? p.name : (cleanApp.type === 'COMPROMISSO' ? '' : 'Paciente Desconhecido'),
-      patientPhone: p ? p.phone : '',
-      procedureName: proc ? proc.name : 'Consulta Geral',
-      color: proc ? proc.color : '#3b82f6',
-      chairId: cleanApp.chair_id,
-      procedureId: cleanApp.procedure_id,
+      patient_id: rawPatientId || a.patient_id,
+      patientName: p ? p.name : (updatedApp.patientName || a.patientName || (cleanApp.type === 'COMPROMISSO' ? '' : 'Paciente')),
+      patientPhone: p ? p.phone : (updatedApp.patientPhone || a.patientPhone || ''),
+      procedureName: proc ? proc.name : (updatedApp.procedureName || a.procedureName || 'Consulta Geral'),
+      color: proc ? proc.color : (updatedApp.color || a.color || '#3b82f6'),
+      chair_id: rawChairId || a.chair_id,
+      chairId: rawChairId || a.chair_id,
+      doctor_id: rawDoctorId || a.doctor_id,
+      procedure_id: rawProcId || a.procedure_id,
+      procedureId: rawProcId || a.procedure_id,
       sendConfirmation: cleanApp.send_confirmation,
       returnDays: cleanApp.return_days,
       isRecurring: cleanApp.is_recurring
@@ -999,6 +1086,20 @@ export function ClinicProvider({ children }) {
     }
 
     setChairs(prev => prev.filter(c => c.id !== id));
+  };
+
+  const updateChair = async (chairObj) => {
+    try {
+      const { error } = await supabase
+        .from('chairs')
+        .update({ name: chairObj.name })
+        .eq('id', chairObj.id);
+      if (error) throw error;
+    } catch (err) {
+      console.warn('[Supabase] Error updating chair, simulating locally:', err.message || err);
+    }
+
+    setChairs(prev => prev.map(c => c.id === chairObj.id ? { ...c, ...chairObj } : c));
   };
 
   const addDentist = (fullName) => {
@@ -1192,26 +1293,42 @@ export function ClinicProvider({ children }) {
 
   // CONFIGURAÇÕES
   const saveProcedures = async (procsList) => {
-    const clinicId = clinic.id;
-
+    const clinicId = clinic?.id || 'default';
+    setProcedures(procsList);
     try {
-      await supabase.from('procedures').delete().eq('clinic_id', clinicId);
-      await supabase.from('procedures').insert(procsList.map(p => ({ ...p, clinic_id: clinicId })));
-      setProcedures(procsList);
-    } catch (err) {
-      console.error('Erro ao atualizar procedimentos no Supabase:', err);
+      localStorage.setItem(`clinic_procedures_${clinicId}`, JSON.stringify(procsList));
+    } catch (e) {}
+
+    if (isValidUUID(clinicId)) {
+      try {
+        await supabase.from('procedures').delete().eq('clinic_id', clinicId);
+        const dbPayload = procsList.map(p => ({
+          name: p.name,
+          category: p.category || 'Geral',
+          price: typeof p.price === 'number' ? p.price : parseFloat(p.price) || 0,
+          clinic_id: clinicId
+        }));
+        await supabase.from('procedures').insert(dbPayload);
+      } catch (err) {}
     }
   };
 
   const saveInsurancePlans = async (plansList) => {
-    const clinicId = clinic.id;
-
+    const clinicId = clinic?.id || 'default';
+    setInsurancePlans(plansList);
     try {
-      await supabase.from('insurance_plans').delete().eq('clinic_id', clinicId);
-      await supabase.from('insurance_plans').insert(plansList.map(p => ({ ...p, clinic_id: clinicId })));
-      setInsurancePlans(plansList);
-    } catch (err) {
-      console.error('Erro ao atualizar convênios no Supabase:', err);
+      localStorage.setItem(`clinic_insurance_plans_${clinicId}`, JSON.stringify(plansList));
+    } catch (e) {}
+
+    if (isValidUUID(clinicId)) {
+      try {
+        await supabase.from('insurance_plans').delete().eq('clinic_id', clinicId);
+        const dbPayload = plansList.map(p => ({
+          name: p.name,
+          clinic_id: clinicId
+        }));
+        await supabase.from('insurance_plans').insert(dbPayload);
+      } catch (err) {}
     }
   };
 
@@ -1674,6 +1791,872 @@ export function ClinicProvider({ children }) {
     return fresh;
   };
 
+  // Seed de Dados de Demonstração Completo e Massivo para Desenvolvimento (100% dos Módulos)
+  const seedDemoData = async () => {
+    const clinicId = clinic?.id || 'clinic-demo';
+
+    const docName = user?.full_name || 'Dr. Alexandre Silva';
+    const mainDentistId = user?.id || 'd-1';
+    const dentist2Id = 'd-2';
+    const dentist2Name = 'Dra. Juliana Costa';
+
+    // 1. Pacientes Clínicos Ricos com Odontograma 100% Compatível com OdontogramView.jsx
+    // 1. Pacientes Clínicos Ricos com Odontograma 100% Compatível com OdontogramView.jsx
+    const demoPatientsData = [
+      { 
+        name: 'Fernando Rocha', 
+        phone: '(83) 98112-2334', 
+        email: 'fernando.rocha@email.com', 
+        cpf: '567.890.123-45',
+        notes: 'Sensibilidade nos dentes sisos. Prefere anestesia sem vasoconstritor.',
+        medical_history: JSON.stringify({
+          notes: 'Paciente relata sensibilidade térmica no quadrante superior direito.',
+          anamnese_estruturada: { has_alergia: 'Sim', has_alergia_detail: 'Penicilina e Dipirona', has_pressao_alta: 'Nao', has_diabetes: 'Nao' },
+          odontogram: {
+            teethData: {
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '14': { conditions: [{ condition: 'carie', status: 'planejado', face: 'mesial' }], surfaces: { mesial: { condition: 'carie', status: 'planejado' } } },
+              '21': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '26': { conditions: [{ condition: 'coroa', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'coroa', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'implante', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'implante', status: 'existente' } } },
+              '48': { conditions: [{ condition: 'extraido', status: 'planejado', face: 'inteiro' }], surfaces: { full: { condition: 'extraido', status: 'planejado' } } }
+            },
+            toothHistory: [
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '10/05/2024' },
+              { toothNumber: '14', condition: 'carie', conditionLabel: 'Cárie Dental Mesial', status: 'planejado', face: 'Mesial', date: '15/05/2024' },
+              { toothNumber: '21', condition: 'faceta', conditionLabel: 'Faceta Estética Cerâmica', status: 'existente', face: 'Vestibular', date: '01/06/2024' },
+              { toothNumber: '26', condition: 'coroa', conditionLabel: 'Coroa Total Zircônia', status: 'existente', face: 'Inteiro', date: '08/06/2024' },
+              { toothNumber: '36', condition: 'canal', conditionLabel: 'Tratamento de Canal Molar', status: 'existente', face: 'Raiz', date: '12/06/2024' },
+              { toothNumber: '46', condition: 'implante', conditionLabel: 'Implante Osseointegrado', status: 'existente', face: 'Inteiro', date: '20/06/2024' },
+              { toothNumber: '48', condition: 'extraido', conditionLabel: 'Exodontia Indicada', status: 'planejado', face: 'Inteiro', date: 'Hoje' }
+            ],
+            notes: 'Sensibilidade nos dentes sisos. Prefere anestesia sem vasoconstritor.'
+          },
+          treatment_plan: {
+            activeStepId: 2,
+            steps: [
+              { id: 1, title: 'Avaliação Inicial', status: 'completed', completionDate: '01/06/2024' },
+              { id: 2, title: 'Procedimentos Clínicos', status: 'active', procedures: [
+                { dente: '16', nome: 'Restauração Resina', status: 'Concluído', dentista: docName, data: '05/06/2024', valor: 350 },
+                { dente: '21', nome: 'Faceta Estética', status: 'Em andamento', dentista: docName, data: '12/06/2024', valor: 1800 },
+                { dente: '48', nome: 'Exodontia Siso', status: 'Agendado', dentista: docName, data: '20/06/2024', valor: 450 }
+              ]},
+              { id: 3, title: 'Manutenção Preventiva', status: 'pending', procedures: [] }
+            ],
+            financialSummary: { total: 2600, paid: 2150 }
+          }
+        })
+      },
+      { 
+        name: 'Ana Paula Souza', 
+        phone: '(83) 98877-6655', 
+        email: 'ana.paula@email.com', 
+        cpf: '123.456.789-01',
+        notes: 'Paciente frequente, prefere atendimentos pela manhã.',
+        medical_history: JSON.stringify({
+          notes: 'Manutenção ortodôntica mensal.',
+          anamnese_estruturada: { has_alergia: 'Nao', has_pressao_alta: 'Nao' },
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'mesial' }], surfaces: { mesial: { condition: 'restauracao', status: 'existente' } } },
+              '15': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '24': { conditions: [{ condition: 'carie', status: 'planejado', face: 'oclusal' }], surfaces: { oclusal: { condition: 'carie', status: 'planejado' } } },
+              '27': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '33': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'restauracao', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'selante', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'selante', status: 'existente' } } },
+              '47': { conditions: [{ condition: 'coroa', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'coroa', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'restauracao', conditionLabel: 'Restauração Resina Mesial', status: 'existente', face: 'Mesial', date: '05/04/2024' },
+              { toothNumber: '15', condition: 'canal', conditionLabel: 'Tratamento de Canal Pré-Molar', status: 'existente', face: 'Raiz', date: '15/05/2024' },
+              { toothNumber: '24', condition: 'carie', conditionLabel: 'Cárie Oclusal Indicada', status: 'planejado', face: 'Oclusal', date: '20/05/2024' },
+              { toothNumber: '27', condition: 'restauracao', conditionLabel: 'Restauração em Resina', status: 'existente', face: 'Oclusal', date: '22/05/2024' },
+              { toothNumber: '33', condition: 'restauracao', conditionLabel: 'Restauração em Resina Estética', status: 'existente', face: 'Vestibular', date: '02/06/2024' },
+              { toothNumber: '36', condition: 'selante', conditionLabel: 'Selante Preventivo Oclusal', status: 'existente', face: 'Oclusal', date: '10/06/2024' },
+              { toothNumber: '47', condition: 'coroa', conditionLabel: 'Coroa Total de Porcelana', status: 'existente', face: 'Inteiro', date: 'Hoje' }
+            ],
+            notes: 'Manutenção ortodôntica mensal realizada sem queixas.'
+          },
+          treatment_plan: {
+            activeStepId: 2,
+            steps: [
+              { id: 1, title: 'Avaliação e Diagnóstico', status: 'completed', completionDate: '10/05/2024' },
+              { id: 2, title: 'Urgências', status: 'active', procedures: [
+                { dente: '15', nome: 'Tratamento de Canal', status: 'Em andamento', dentista: dentist2Name, data: '15/05/2024', valor: 600 },
+                { dente: '33', nome: 'Restauração em Resina', status: 'Agendado', dentista: dentist2Name, data: '22/05/2024', valor: 350 }
+              ]},
+              { id: 3, title: 'Restaurador', status: 'pending', procedures: [] },
+              { id: 4, title: 'Reabilitação', status: 'pending', procedures: [] },
+              { id: 5, title: 'Estética', status: 'pending', procedures: [] },
+              { id: 6, title: 'Manutenção', status: 'pending', procedures: [] }
+            ],
+            financialSummary: { total: 3450, paid: 1200 }
+          }
+        })
+      },
+      { 
+        name: 'Vanessa Lima', 
+        phone: '(83) 99123-4567', 
+        email: 'vanessa.lima@email.com', 
+        cpf: '234.567.890-12',
+        notes: 'Sensibilidade dentinária.',
+        medical_history: JSON.stringify({
+          notes: 'Realizando clareamento combinado.',
+          anamnese_estruturada: { has_alergia: 'Sim', has_alergia_detail: 'Dipirona' },
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '12': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '21': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '22': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '37': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'implante', status: 'planejado', face: 'inteiro' }], surfaces: { full: { condition: 'implante', status: 'planejado' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'faceta', conditionLabel: 'Lente Cerâmica Anterior', status: 'existente', face: 'Vestibular', date: '01/03/2024' },
+              { toothNumber: '12', condition: 'faceta', conditionLabel: 'Lente Cerâmica Lateral', status: 'existente', face: 'Vestibular', date: '01/03/2024' },
+              { toothNumber: '21', condition: 'faceta', conditionLabel: 'Lente Cerâmica Anterior', status: 'existente', face: 'Vestibular', date: '01/03/2024' },
+              { toothNumber: '22', condition: 'faceta', conditionLabel: 'Lente Cerâmica Lateral', status: 'existente', face: 'Vestibular', date: '01/03/2024' },
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '15/04/2024' },
+              { toothNumber: '37', condition: 'canal', conditionLabel: 'Tratamento de Canal', status: 'existente', face: 'Raiz', date: '10/05/2024' },
+              { toothNumber: '46', condition: 'implante', conditionLabel: 'Implante Osseointegrado', status: 'planejado', face: 'Inteiro', date: 'Hoje' }
+            ],
+            notes: 'Sensibilidade leve prévia ao clareamento.'
+          }
+        })
+      },
+      { 
+        name: 'Felisberto Alves', 
+        phone: '(83) 98765-4321', 
+        email: 'felisberto@email.com', 
+        cpf: '345.678.901-23',
+        notes: 'Tratamento ortodôntico em andamento.',
+        medical_history: JSON.stringify({
+          notes: 'Troca de arcos ortodônticos.',
+          anamnese_estruturada: { has_pressao_alta: 'Sim' },
+          odontogram: {
+            teethData: {
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '17': { conditions: [{ condition: 'coroa', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'coroa', status: 'existente' } } },
+              '23': { conditions: [{ condition: 'carie', status: 'planejado', face: 'distal' }], surfaces: { distal: { condition: 'carie', status: 'planejado' } } },
+              '35': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '45': { conditions: [{ condition: 'amalgama', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'amalgama', status: 'existente' } } },
+              '48': { conditions: [{ condition: 'extraido', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'extraido', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '10/02/2024' },
+              { toothNumber: '17', condition: 'coroa', conditionLabel: 'Coroa Total Metalocerâmica', status: 'existente', face: 'Inteiro', date: '18/03/2024' },
+              { toothNumber: '23', condition: 'carie', conditionLabel: 'Cárie Incipiente Distal', status: 'planejado', face: 'Distal', date: '05/04/2024' },
+              { toothNumber: '35', condition: 'canal', conditionLabel: 'Tratamento de Canal', status: 'existente', face: 'Raiz', date: '12/05/2024' },
+              { toothNumber: '45', condition: 'amalgama', conditionLabel: 'Restauração Amálgama', status: 'existente', face: 'Oclusal', date: '20/05/2024' },
+              { toothNumber: '48', condition: 'extraido', conditionLabel: 'Exodontia Realizada', status: 'existente', face: 'Inteiro', date: 'Hoje' }
+            ],
+            notes: 'Hipertensão controlada. Paciente em tratamento de canal dente 35.'
+          }
+        })
+      },
+      { 
+        name: 'Juliana Martins', 
+        phone: '(83) 99887-7665', 
+        email: 'juliana.martins@email.com', 
+        cpf: '456.789.012-34',
+        notes: 'Agendou Clareamento a Laser.',
+        medical_history: JSON.stringify({
+          notes: 'Primeira consulta estética.',
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '12': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '21': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '22': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '26': { conditions: [{ condition: 'amalgama', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'amalgama', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '10/01/2024' },
+              { toothNumber: '12', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '10/01/2024' },
+              { toothNumber: '21', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '10/01/2024' },
+              { toothNumber: '22', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '10/01/2024' },
+              { toothNumber: '26', condition: 'amalgama', conditionLabel: 'Restauração Amálgama', status: 'existente', face: 'Oclusal', date: '15/03/2024' },
+              { toothNumber: '46', condition: 'canal', conditionLabel: 'Tratamento de Canal', status: 'existente', face: 'Raiz', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      { 
+        name: 'Patrícia Gomes', 
+        phone: '(83) 99334-4556', 
+        email: 'patricia.gomes@email.com', 
+        cpf: '678.901.234-56',
+        notes: 'Finalizou canal com sucesso.',
+        medical_history: JSON.stringify({
+          notes: 'Controle de endodontia dente 36.',
+          odontogram: {
+            teethData: {
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '25': { conditions: [{ condition: 'carie', status: 'planejado', face: 'distal' }], surfaces: { distal: { condition: 'carie', status: 'planejado' } } },
+              '36': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '37': { conditions: [{ condition: 'selante', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'selante', status: 'existente' } } },
+              '47': { conditions: [{ condition: 'coroa', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'coroa', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '01/02/2024' },
+              { toothNumber: '25', condition: 'carie', conditionLabel: 'Cárie Dental Distal', status: 'planejado', face: 'Distal', date: '12/03/2024' },
+              { toothNumber: '36', condition: 'canal', conditionLabel: 'Tratamento de Canal', status: 'existente', face: 'Raiz', date: '20/04/2024' },
+              { toothNumber: '37', condition: 'selante', conditionLabel: 'Selante Preventivo', status: 'existente', face: 'Oclusal', date: '05/05/2024' },
+              { toothNumber: '47', condition: 'coroa', conditionLabel: 'Coroa Total', status: 'existente', face: 'Inteiro', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      { 
+        name: 'Carlos Eduardo', 
+        phone: '(83) 98445-5667', 
+        email: 'carlos.eduardo@email.com', 
+        cpf: '789.012.345-67',
+        notes: 'Primeira avaliação na clínica.',
+        medical_history: JSON.stringify({
+          notes: 'Necessita raspagem e restaurações.',
+          odontogram: {
+            teethData: {
+              '18': { conditions: [{ condition: 'extraido', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'extraido', status: 'existente' } } },
+              '28': { conditions: [{ condition: 'extraido', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'extraido', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'implante', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'implante', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'carie', status: 'planejado', face: 'oclusal' }], surfaces: { oclusal: { condition: 'carie', status: 'planejado' } } },
+              '47': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'mesial' }], surfaces: { mesial: { condition: 'restauracao', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '18', condition: 'extraido', conditionLabel: 'Exodontia Siso Superior', status: 'existente', face: 'Inteiro', date: '10/01/2023' },
+              { toothNumber: '28', condition: 'extraido', conditionLabel: 'Exodontia Siso Superior', status: 'existente', face: 'Inteiro', date: '10/01/2023' },
+              { toothNumber: '36', condition: 'implante', conditionLabel: 'Implante Osseointegrado', status: 'existente', face: 'Inteiro', date: '15/02/2024' },
+              { toothNumber: '46', condition: 'carie', conditionLabel: 'Cárie Dental Oclusal', status: 'planejado', face: 'Oclusal', date: '20/04/2024' },
+              { toothNumber: '47', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Mesial', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      { 
+        name: 'Mariana Silva', 
+        phone: '(83) 99556-6778', 
+        email: 'mariana.silva@email.com', 
+        cpf: '890.123.456-78',
+        notes: 'Interesse em Lentes de Contato.',
+        medical_history: JSON.stringify({
+          notes: 'Moldagem inicial de facetas enviada ao laboratório.',
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'faceta', status: 'planejado', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'planejado' } } },
+              '12': { conditions: [{ condition: 'faceta', status: 'planejado', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'planejado' } } },
+              '21': { conditions: [{ condition: 'faceta', status: 'planejado', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'planejado' } } },
+              '22': { conditions: [{ condition: 'faceta', status: 'planejado', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'planejado' } } },
+              '36': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'planejado', face: 'Vestibular', date: '01/05/2024' },
+              { toothNumber: '12', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'planejado', face: 'Vestibular', date: '01/05/2024' },
+              { toothNumber: '21', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'planejado', face: 'Vestibular', date: '01/05/2024' },
+              { toothNumber: '22', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'planejado', face: 'Vestibular', date: '01/05/2024' },
+              { toothNumber: '36', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      {
+        name: 'Lucas Mendes',
+        phone: '(83) 98711-3344',
+        email: 'lucas.mendes@email.com',
+        cpf: '901.234.567-89',
+        notes: 'Atleta, usa protetor bucal sob medida.',
+        medical_history: JSON.stringify({
+          notes: 'Placa de bruxismo entregue e ajustada.',
+          odontogram: {
+            teethData: {
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '26': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'coroa', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'coroa', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '10/01/2024' },
+              { toothNumber: '26', condition: 'restauracao', conditionLabel: 'Restauração Resina', status: 'existente', face: 'Oclusal', date: '15/02/2024' },
+              { toothNumber: '36', condition: 'canal', conditionLabel: 'Tratamento de Canal Molar', status: 'existente', face: 'Raiz', date: '20/03/2024' },
+              { toothNumber: '46', condition: 'coroa', conditionLabel: 'Coroa Metalocerâmica', status: 'existente', face: 'Inteiro', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      {
+        name: 'Renata Albuquerque',
+        phone: '(83) 99622-4455',
+        email: 'renata.alb@email.com',
+        cpf: '012.345.678-90',
+        notes: 'Gengivoplastia agendada.',
+        medical_history: JSON.stringify({
+          notes: 'Sessão de reavaliação periodontal pós-operatória.',
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '21': { conditions: [{ condition: 'faceta', status: 'existente', face: 'vestibular' }], surfaces: { vestibular: { condition: 'faceta', status: 'existente' } } },
+              '14': { conditions: [{ condition: 'carie', status: 'planejado', face: 'oclusal' }], surfaces: { oclusal: { condition: 'carie', status: 'planejado' } } },
+              '24': { conditions: [{ condition: 'carie', status: 'planejado', face: 'oclusal' }], surfaces: { oclusal: { condition: 'carie', status: 'planejado' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '01/02/2024' },
+              { toothNumber: '21', condition: 'faceta', conditionLabel: 'Lente Cerâmica Estética', status: 'existente', face: 'Vestibular', date: '01/02/2024' },
+              { toothNumber: '14', condition: 'carie', conditionLabel: 'Cárie Pré-Molar', status: 'planejado', face: 'Oclusal', date: '10/04/2024' },
+              { toothNumber: '24', condition: 'carie', conditionLabel: 'Cárie Pré-Molar', status: 'planejado', face: 'Oclusal', date: '10/04/2024' }
+            ]
+          }
+        })
+      },
+      {
+        name: 'Thiago Nogueira',
+        phone: '(83) 98533-5566',
+        email: 'thiago.nogueira@email.com',
+        cpf: '112.233.445-56',
+        notes: 'Implante dente 24.',
+        medical_history: JSON.stringify({
+          notes: 'Tomografia computadorizada analisada sem perdas ósseas.',
+          odontogram: {
+            teethData: {
+              '24': { conditions: [{ condition: 'implante', status: 'existente', face: 'inteiro' }], surfaces: { full: { condition: 'implante', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } },
+              '46': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '24', condition: 'implante', conditionLabel: 'Implante Titânio Pré-Molar', status: 'existente', face: 'Inteiro', date: '15/01/2024' },
+              { toothNumber: '36', condition: 'canal', conditionLabel: 'Tratamento de Canal Molar', status: 'existente', face: 'Raiz', date: '20/03/2024' },
+              { toothNumber: '46', condition: 'restauracao', conditionLabel: 'Restauração em Resina', status: 'existente', face: 'Oclusal', date: 'Hoje' }
+            ]
+          }
+        })
+      },
+      {
+        name: 'Beatriz Cavalcanti',
+        phone: '(83) 99444-6677',
+        email: 'beatriz.caval@email.com',
+        cpf: '223.344.556-67',
+        notes: 'Manutenção de aparelho ortodôntico estético.',
+        medical_history: JSON.stringify({ notes: 'Troca de elásticos estéticos e ajuste de torque.' })
+      },
+      {
+        name: 'Gabriel Pinheiro',
+        phone: '(83) 98355-7788',
+        email: 'gabriel.p@email.com',
+        cpf: '334.455.667-78',
+        notes: 'Restauração dente 46.',
+        medical_history: JSON.stringify({ notes: 'Remoção de restauração de amálgama antiga.' })
+      },
+      {
+        name: 'Helena Vasconcelos',
+        phone: '(83) 99266-8899',
+        email: 'helena.v@email.com',
+        cpf: '445.566.778-89',
+        notes: 'Avaliação de harmonização orofacial.',
+        medical_history: JSON.stringify({ notes: 'Aplicação de toxina botulínica para bruxismo em masseter.' })
+      },
+      {
+        name: 'Rodrigo Freitas',
+        phone: '(83) 98177-9900',
+        email: 'rodrigo.freitas@email.com',
+        cpf: '556.677.889-90',
+        notes: 'Consulta preventiva semestral.',
+        medical_history: JSON.stringify({
+          notes: 'Profilaxia e orientações de uso de fio dental.',
+          anamnese_estruturada: { has_alergia: 'Nao' },
+          odontogram: {
+            teethData: {
+              '11': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'mesial' }], surfaces: { mesial: { condition: 'restauracao', status: 'existente' } } },
+              '16': { conditions: [{ condition: 'restauracao', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'restauracao', status: 'existente' } } },
+              '26': { conditions: [{ condition: 'selante', status: 'existente', face: 'oclusal' }], surfaces: { oclusal: { condition: 'selante', status: 'existente' } } },
+              '36': { conditions: [{ condition: 'canal', status: 'existente', face: 'raiz' }], surfaces: { root: { condition: 'canal', status: 'existente' } } }
+            },
+            toothHistory: [
+              { toothNumber: '11', condition: 'restauracao', conditionLabel: 'Restauração Resina Mesial', status: 'existente', face: 'Mesial', date: '10/01/2024' },
+              { toothNumber: '16', condition: 'restauracao', conditionLabel: 'Restauração Resina Oclusal', status: 'existente', face: 'Oclusal', date: '15/02/2024' },
+              { toothNumber: '26', condition: 'selante', conditionLabel: 'Selante Preventivo Oclusal', status: 'existente', face: 'Oclusal', date: '20/03/2024' },
+              { toothNumber: '36', condition: 'canal', conditionLabel: 'Tratamento de Canal Molar', status: 'existente', face: 'Raiz', date: 'Hoje' }
+            ],
+            notes: 'Paciente sem queixas. Profilaxia realizada com sucesso.'
+          }
+        })
+      }
+    ];
+
+    // 2. Leads do CRM Kanban em TODAS as 5 Colunas do Pipeline (12 Leads)
+    const demoLeadsData = [
+      { name: 'Ana Beatriz Ferreira', phone: '(83) 98811-2233', procedure_name: 'Invisalign / Aparelho Invisível', budget_amount: 4500, stage: 0, priority: 'high', origin: 'WhatsApp' },
+      { name: 'Ricardo Siqueira', phone: '(83) 99122-3344', procedure_name: 'Implante Dentário Unitário', budget_amount: 3200, stage: 0, priority: 'medium', origin: 'Instagram' },
+      { name: 'Rodrigo Albuquerque', phone: '(83) 99922-3344', procedure_name: 'Implante Dentário', budget_amount: 3200, stage: 1, priority: 'high', origin: 'Indicação' },
+      { name: 'Fernanda Paes', phone: '(83) 98744-5566', procedure_name: 'Ortodontia Autoligada', budget_amount: 2800, stage: 1, priority: 'medium', origin: 'WhatsApp' },
+      { name: 'Camila Vasconcelos', phone: '(83) 98733-4455', procedure_name: 'Clareamento a Laser', budget_amount: 1200, stage: 2, priority: 'medium', origin: 'Site' },
+      { name: 'Lucas Barbosa', phone: '(83) 99355-6677', procedure_name: 'Harmonização Orofacial', budget_amount: 5400, stage: 2, priority: 'high', origin: 'Instagram' },
+      { name: 'Marcelo Oliveira', phone: '(83) 99644-5566', procedure_name: 'Prótese Protocolo Superior', budget_amount: 8500, stage: 3, priority: 'high', origin: 'WhatsApp' },
+      { name: 'Sabrina Prado', phone: '(83) 98266-7788', procedure_name: 'Lentes de Contato Dental (6 elementos)', budget_amount: 7200, stage: 3, priority: 'high', origin: 'Indicação' },
+      { name: 'Beatriz Mendes', phone: '(83) 98555-6677', procedure_name: 'Lentes de Contato Dental', budget_amount: 6000, stage: 4, priority: 'medium', origin: 'Instagram' },
+      { name: 'Eduardo Castro', phone: '(83) 99477-8899', procedure_name: 'Clareamento Combinado', budget_amount: 1500, stage: 4, priority: 'low', origin: 'WhatsApp' },
+      { name: 'Larissa Torres', phone: '(83) 98688-9900', procedure_name: 'Tratamento de Canal', budget_amount: 950, stage: 4, priority: 'high', origin: 'Site' },
+      { name: 'Otávio Martins', phone: '(83) 99599-0011', procedure_name: 'Extração Siso Incluso', budget_amount: 800, stage: 0, priority: 'low', origin: 'Outros' }
+    ];
+
+    const createdPatients = [];
+    try {
+      for (const pat of demoPatientsData) {
+        const p = await addPatient(pat);
+        if (p) createdPatients.push(p);
+      }
+      setPatients(createdPatients);
+      for (const lead of demoLeadsData) {
+        await addCrmLead(lead);
+      }
+    } catch (e) {
+      console.warn('Aviso ao semear pacientes/leads:', e);
+    }
+
+    const firstPat = createdPatients[0] || { id: 'p-1', name: 'Fernando Rocha' };
+    const secondPat = createdPatients[1] || { id: 'p-2', name: 'Ana Paula Souza' };
+    const thirdPat = createdPatients[2] || { id: 'p-3', name: 'Vanessa Lima' };
+    const fourthPat = createdPatients[3] || { id: 'p-4', name: 'Felisberto Alves' };
+
+    // 3. Evoluções Clínicas do Prontuário (8 Notas de Evolução Assinadas)
+    const demoMedicalRecords = [
+      {
+        id: 'mr-1',
+        clinic_id: clinicId,
+        patient_id: firstPat.id,
+        patient_name: firstPat.name,
+        date: new Date(Date.now() - 86400000 * 2).toISOString(),
+        title: 'Avaliação Inicial & Restauração Estética',
+        description: 'Realizada anamnese completa e exame clínico. Identificada cárie oclusal no dente 16. Efetuada restauração com resina composta Filtek Z350 XT sob anestesia local. Oclusão checada e polimento finalizado.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-2',
+        clinic_id: clinicId,
+        patient_id: firstPat.id,
+        patient_name: firstPat.name,
+        date: new Date(Date.now() - 86400000 * 10).toISOString(),
+        title: 'Profilaxia e Aplicação Tópica de Flúor',
+        description: 'Remoção de tártaro e placa bacteriana por ultrassom. Polimento coronário e aplicação de flúor gel 1,23%. Instruções de higiene oral orientadas ao paciente.',
+        dentist_name: dentist2Name,
+        signed: true
+      },
+      {
+        id: 'mr-3',
+        clinic_id: clinicId,
+        patient_id: secondPat.id,
+        patient_name: secondPat.name,
+        date: new Date(Date.now() - 86400000 * 5).toISOString(),
+        title: 'Manutenção Ortodôntica Mensal',
+        description: 'Troca de ligaduras elásticas e substituição do arco nitinol superior por 0.16. Higienização orientada.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-4',
+        clinic_id: clinicId,
+        patient_id: thirdPat.id,
+        patient_name: thirdPat.name,
+        date: new Date(Date.now() - 86400000 * 1).toISOString(),
+        title: 'Sessão 1 de Clareamento a Laser',
+        description: 'Aplicação de barreira gengival foto e gel de Peróxido de Hidrogênio a 35%. Três sessões de 15 min sob luz LED.',
+        dentist_name: dentist2Name,
+        signed: true
+      },
+      {
+        id: 'mr-5',
+        clinic_id: clinicId,
+        patient_id: fourthPat.id,
+        patient_name: fourthPat.name,
+        date: new Date(Date.now() - 86400000 * 12).toISOString(),
+        title: 'Moldagem de Estudo e Fotografias',
+        description: 'Realizado escaneamento intraoral e registro oclusal em cera para planejamento de reabilitação.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-6',
+        clinic_id: clinicId,
+        patient_id: createdPatients[4]?.id || 'p-5',
+        patient_name: createdPatients[4]?.name || 'Juliana Martins',
+        date: new Date(Date.now() - 86400000 * 4).toISOString(),
+        title: 'Exodontia Simples Dente 48',
+        description: 'Anestesia infiltrativa terminal. Exodontia sem intercorrências. Sutura com fio de seda 3-0. Prescrito analgésico e anti-inflamatório.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-7',
+        clinic_id: clinicId,
+        patient_id: createdPatients[5]?.id || 'p-6',
+        patient_name: createdPatients[5]?.name || 'Patrícia Gomes',
+        date: new Date(Date.now() - 86400000 * 8).toISOString(),
+        title: 'Obturação de Canal Molar Dente 36',
+        description: 'Odontometria eletrônica confirmada. Cones de guta-percha patentes obturados com cimento AH Plus.',
+        dentist_name: dentist2Name,
+        signed: true
+      },
+      {
+        id: 'mr-8',
+        clinic_id: clinicId,
+        patient_id: createdPatients[6]?.id || 'p-7',
+        patient_name: createdPatients[6]?.name || 'Carlos Eduardo',
+        date: new Date(Date.now() - 86400000 * 15).toISOString(),
+        title: 'Raspagem Supragengival de Tártaro',
+        description: 'Raspagem por quadrantes finalizada. Irrigação com clorexidina 0,12%.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-9',
+        clinic_id: clinicId,
+        patient_id: createdPatients[14]?.id || 'p-15',
+        patient_name: createdPatients[14]?.name || 'Rodrigo Freitas',
+        date: new Date(Date.now() - 86400000 * 3).toISOString(),
+        title: 'Profilaxia Preventiva & Raspagem Subgengival',
+        description: 'Paciente retornou para profilaxia semestral. Removido cálculo supragengival nos dentes inferiores. Polimento com taça de borracha e pasta profilática.',
+        dentist_name: docName,
+        signed: true
+      },
+      {
+        id: 'mr-10',
+        clinic_id: clinicId,
+        patient_id: createdPatients[13]?.id || 'p-14',
+        patient_name: createdPatients[13]?.name || 'Helena Vasconcelos',
+        date: new Date(Date.now() - 86400000 * 6).toISOString(),
+        title: 'Aplicação de Toxina Botulínica (Masseter)',
+        description: 'Aplicação de 25 unidades de Botox no músculo masseter bilateral para alívio de dor por bruxismo severo.',
+        dentist_name: dentist2Name,
+        signed: true
+      }
+    ];
+
+    // 4. Registros de Odontograma FDI (12 Marcações nos Dentes)
+    const demoToothRecords = [
+      { id: 'tr-1', clinic_id: clinicId, patient_id: firstPat.id, tooth_number: 16, procedure_name: 'Restauração Resina', status: 'COMPLETED' },
+      { id: 'tr-2', clinic_id: clinicId, patient_id: firstPat.id, tooth_number: 21, procedure_name: 'Faceta Estética', status: 'IN_PROGRESS' },
+      { id: 'tr-3', clinic_id: clinicId, patient_id: firstPat.id, tooth_number: 36, procedure_name: 'Tratamento de Canal', status: 'COMPLETED' },
+      { id: 'tr-4', clinic_id: clinicId, patient_id: firstPat.id, tooth_number: 48, procedure_name: 'Exodontia Indicada', status: 'PLANNED' },
+      { id: 'tr-5', clinic_id: clinicId, patient_id: secondPat.id, tooth_number: 11, procedure_name: 'Restauração Resina', status: 'COMPLETED' },
+      { id: 'tr-6', clinic_id: clinicId, patient_id: secondPat.id, tooth_number: 24, procedure_name: 'Cárie Oclusal', status: 'PLANNED' },
+      { id: 'tr-7', clinic_id: clinicId, patient_id: thirdPat.id, tooth_number: 12, procedure_name: 'Clareamento Dental', status: 'IN_PROGRESS' },
+      { id: 'tr-8', clinic_id: clinicId, patient_id: thirdPat.id, tooth_number: 46, procedure_name: 'Implante Dentário', status: 'PLANNED' },
+      { id: 'tr-9', clinic_id: clinicId, patient_id: fourthPat.id, tooth_number: 35, procedure_name: 'Tratamento de Canal', status: 'COMPLETED' },
+      { id: 'tr-10', clinic_id: clinicId, patient_id: fourthPat.id, tooth_number: 17, procedure_name: 'Prótese Fixa', status: 'IN_PROGRESS' },
+      { id: 'tr-11', clinic_id: clinicId, patient_id: createdPatients[4]?.id || 'p-5', tooth_number: 26, procedure_name: 'Restauração Amálgama', status: 'COMPLETED' },
+      { id: 'tr-12', clinic_id: clinicId, patient_id: createdPatients[5]?.id || 'p-6', tooth_number: 37, procedure_name: 'Selante de Fóssulas', status: 'COMPLETED' }
+    ];
+
+    // 5. Agendamentos, Tarefas e Finanças (1 ANO COMPLETO — 12 Meses de Dados de Jan a Dez)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yestStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const tomStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const nextDaysStr = new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0];
+    const sampleProcedures = [
+      { name: 'Avaliação & Diagnóstico', price: 150, duration: 30, color: '#3b82f6' },
+      { name: 'Restauração em Resina', price: 350, duration: 45, color: '#10b981' },
+      { name: 'Profilaxia (Limpeza) & Flúor', price: 250, duration: 45, color: '#06b6d4' },
+      { name: 'Tratamento de Canal (Endodontia)', price: 850, duration: 60, color: '#8b5cf6' },
+      { name: 'Manutenção Ortodôntica', price: 180, duration: 30, color: '#ec4899' },
+      { name: 'Clareamento a Laser', price: 1200, duration: 60, color: '#f59e0b' },
+      { name: 'Exodontia Simples', price: 300, duration: 45, color: '#ef4444' },
+      { name: 'Cirurgia de Implante Dentário', price: 3200, duration: 90, color: '#6366f1' },
+      { name: 'Prótese Definitiva', price: 2400, duration: 60, color: '#14b8a6' },
+      { name: 'Gengivoplastia Estética', price: 900, duration: 60, color: '#a855f7' }
+    ];
+
+    const sampleTimes = ['08:00', '09:00', '10:30', '14:00', '15:30', '16:30'];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    const fullYearAppointments = [];
+    const fullYearTransactions = [];
+    const fullYearAccountsPayable = [];
+    const fullYearInstallments = [];
+
+    let appIdCounter = 1;
+    let transIdCounter = 1;
+    let apIdCounter = 1;
+    let instIdCounter = 1;
+
+    // Gerar 12 MESES completos (Janeiro a Dezembro do Ano Atual)
+    for (let m = 0; m < 12; m++) {
+      const daysInM = new Date(currentYear, m + 1, 0).getDate();
+
+      for (let day = 1; day <= daysInM; day++) {
+        const dateObj = new Date(currentYear, m, day);
+        const dayOfWeek = dateObj.getDay();
+        if (dayOfWeek === 0) continue; // Pular domingos
+
+        const dateStr = `${currentYear}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isPast = dateObj < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const isToday = dateObj.toDateString() === now.toDateString();
+
+        // 2 a 3 agendamentos por dia útil ao longo de todos os 12 meses
+        const appointmentsCount = ((m + day) % 2) + 2;
+        for (let i = 0; i < appointmentsCount; i++) {
+          const patIndex = (m * 3 + day + i) % createdPatients.length;
+          const pat = createdPatients[patIndex] || firstPat;
+          const proc = sampleProcedures[(m + day + i) % sampleProcedures.length];
+          const time = sampleTimes[i % sampleTimes.length];
+          const chair = (i % 2 === 0) ? { id: 'c-1', name: 'Cadeira 01' } : { id: 'c-2', name: 'Cadeira 02' };
+          const dentist = (i % 2 === 0) ? { id: mainDentistId, name: docName } : { id: dentist2Id, name: dentist2Name };
+
+          let status = 'CONFIRMADO';
+          if (isPast) status = 'CONCLUIDO';
+          else if (isToday) status = (i === 0 ? 'CONCLUIDO' : (i === 1 ? 'EM_ATENDIMENTO' : 'CONFIRMADO'));
+
+          const [h, min] = time.split(':');
+          const startIso = `${dateStr}T${h}:${min}:00`;
+          const endHour = String(parseInt(h) + (proc.duration >= 60 ? 1 : 0)).padStart(2, '0');
+          const endMin = proc.duration % 60 === 0 ? min : '30';
+          const endIso = `${dateStr}T${endHour}:${endMin}:00`;
+
+          fullYearAppointments.push({
+            id: `app-yr-${appIdCounter++}`,
+            clinic_id: clinicId,
+            patient_id: pat.id,
+            patientName: pat.name,
+            date: dateStr,
+            time: time,
+            start_time: startIso,
+            end_time: endIso,
+            status: status,
+            procedure_name: proc.name,
+            procedureName: proc.name,
+            price: proc.price,
+            amount: proc.price,
+            dentist_name: dentist.name,
+            dentist_id: dentist.id,
+            chair_id: chair.id,
+            chair_name: chair.name,
+            color: proc.color,
+            duration: proc.duration,
+            type: 'CONSULTA'
+          });
+
+          // Transações Financeiras (Receita gerada pela consulta concluída/realizada)
+          if (isPast || isToday) {
+            fullYearTransactions.push({
+              id: `t-yr-inc-${transIdCounter++}`,
+              clinic_id: clinicId,
+              description: `Recebimento - ${proc.name} (${pat.name})`,
+              amount: proc.price,
+              type: 'INCOME',
+              category: proc.name.includes('Clareamento') ? 'Estética' : proc.name.includes('Canal') ? 'Tratamentos' : proc.name.includes('Ortodôntica') ? 'Ortodontia' : 'Tratamentos',
+              date: dateStr,
+              payment_method: ((day + i) % 2 === 0) ? 'PIX' : 'Cartão de Crédito',
+              patient_name: pat.name
+            });
+          }
+        }
+
+        // Adicionar despesas operacionais periódicas no mês
+        if (day % 5 === 0) {
+          const expAmount = (day === 5) ? 1200.00 : (day === 10) ? 850.00 : (day === 15) ? 2400.00 : (day === 20) ? 600.00 : 900.00;
+          const expCategory = (day === 5) ? 'Insumos Clínicos' : (day === 10) ? 'Utilitários' : (day === 15) ? 'Laboratório' : (day === 20) ? 'Manutenção' : 'Marketing';
+          const expDesc = (day === 5) ? 'Despesa - Material Dental (Dental Cremer)' : (day === 10) ? 'Despesa - Energia & Saneamento' : (day === 15) ? 'Despesa - Laboratório ProEsthetic' : (day === 20) ? 'Despesa - Manutenção de Equipamentos' : 'Despesa - Marketing Meta Ads';
+
+          if (isPast || isToday) {
+            fullYearTransactions.push({
+              id: `t-yr-exp-${transIdCounter++}`,
+              clinic_id: clinicId,
+              description: expDesc,
+              amount: expAmount,
+              type: 'EXPENSE',
+              category: expCategory,
+              date: dateStr,
+              payment_method: 'PIX'
+            });
+          }
+        }
+
+        // Contas a Pagar e Parcelas mensais
+        if (day % 7 === 0) {
+          fullYearAccountsPayable.push({
+            id: `ap-yr-${apIdCounter++}`,
+            clinic_id: clinicId,
+            description: `Fatura de Insumos & Laboratório (Mês ${m + 1})`,
+            supplier_id: 'sup-1',
+            supplier_name: 'Dental Cremer Produtos Odontológicos',
+            amount: 950.00 + (day * 20),
+            due_date: dateStr,
+            status: isPast ? 'PAID' : 'PENDING',
+            category: 'Insumos Clínicos'
+          });
+        }
+
+        if (day % 3 === 0) {
+          fullYearInstallments.push({
+            id: `inst-yr-${instIdCounter++}`,
+            clinic_id: clinicId,
+            patient_id: pat.id,
+            patientName: pat.name,
+            description: `Tratamento Odontológico (Parcela ${(day % 6) + 1}/6)`,
+            amount: 380.00,
+            due_date: dateStr,
+            status: isPast ? 'PAID' : 'PENDING',
+            installment_number: (day % 6) + 1,
+            total_installments: 6
+          });
+        }
+      }
+
+      // Aluguel Fixo Mensal no dia 5 de cada mês dos 12 meses
+      const rentDateStr = `${currentYear}-${String(m + 1).padStart(2, '0')}-05`;
+      const isRentPast = new Date(currentYear, m, 5) < now;
+      if (isRentPast) {
+        fullYearTransactions.push({
+          id: `t-rent-${m}`,
+          clinic_id: clinicId,
+          description: `Despesa - Aluguel do Consultório (Mês ${m + 1})`,
+          amount: 3500.00,
+          type: 'EXPENSE',
+          category: 'Fixas',
+          date: rentDateStr,
+          payment_method: 'Transferência'
+        });
+      }
+    }
+
+    const demoAppointments = fullYearAppointments;
+    const demoTransactions = fullYearTransactions;
+
+    // 7. Corpo Clínico, Cadeiras, Procedimentos e Convênios para Configurações
+    const demoDentists = [
+      { id: mainDentistId, name: docName, full_name: docName, cro: 'CRO-PB 12345', specialty: 'Ortodontia & Estética', email: 'dr.alexandre@odonto.com', phone: '(83) 99888-1122', active: true },
+      { id: dentist2Id, name: dentist2Name, full_name: dentist2Name, cro: 'CRO-PB 67890', specialty: 'Endodontia & Implantodontia', email: 'dra.juliana@odonto.com', phone: '(83) 99777-2233', active: true },
+      { id: 'd-3', name: 'Dr. Roberto Vasconcelos', full_name: 'Dr. Roberto Vasconcelos', cro: 'CRO-PB 34567', specialty: 'Cirurgia & Traumatologia', email: 'dr.roberto@odonto.com', phone: '(83) 99666-3344', active: true }
+    ];
+
+    const demoChairs = [
+      { id: 'c-1', name: 'Cadeira 01 - Master VIP', location: 'Consultório 1', status: 'AVAILABLE', active: true, color: '#3B82F6' },
+      { id: 'c-2', name: 'Cadeira 02 - Ortodontia', location: 'Consultório 2', status: 'AVAILABLE', active: true, color: '#10B981' },
+      { id: 'c-3', name: 'Cadeira 03 - Implante & Cirurgia', location: 'Bloco Cirúrgico', status: 'MAINTENANCE', active: true, color: '#8B5CF6' }
+    ];
+
+    const demoProcedures = [
+      { id: 'pr-1', name: 'Avaliação & Diagnóstico Inicial', category: 'Consultas', price: 150.00, duration: 30, active: true },
+      { id: 'pr-2', name: 'Profilaxia (Limpeza) & Flúor', category: 'Prevenção', price: 250.00, duration: 45, active: true },
+      { id: 'pr-3', name: 'Restauração em Resina Composta', category: 'Dentística', price: 350.00, duration: 45, active: true },
+      { id: 'pr-4', name: 'Tratamento de Canal (Endodontia Molar)', category: 'Endodontia', price: 850.00, duration: 60, active: true },
+      { id: 'pr-5', name: 'Clareamento Dental a Laser', category: 'Estética', price: 1200.00, duration: 60, active: true },
+      { id: 'pr-6', name: 'Manutenção Ortodôntica Mensal', category: 'Ortodontia', price: 180.00, duration: 30, active: true },
+      { id: 'pr-7', name: 'Exodontia Simples', category: 'Cirurgia', price: 300.00, duration: 45, active: true },
+      { id: 'pr-8', name: 'Cirurgia de Implante Dentário', category: 'Implantes', price: 3200.00, duration: 90, active: true }
+    ];
+
+    const demoAgreements = [
+      { id: 'ag-1', name: 'Particular / Sem Convênio', active: true, discount: 0 },
+      { id: 'ag-2', name: 'Amil Dental', active: true, discount: 15 },
+      { id: 'ag-3', name: 'Bradesco Dental', active: true, discount: 20 },
+      { id: 'ag-4', name: 'Unimed Odonto', active: true, discount: 10 },
+      { id: 'ag-5', name: 'SulAmérica Odonto', active: true, discount: 15 }
+    ];
+    const demoInsurancePlans = demoAgreements;
+
+    // 8. Fornecedores, Contas a Pagar e Parcelamentos (1 ANO COMPLETO)
+    const demoSuppliers = [
+      { id: 'sup-1', name: 'Dental Cremer Produtos Odontológicos', cnpj: '61.416.216/0001-44', phone: '(11) 4003-2121', email: 'vendas@dentalcremer.com.br', category: 'Material Odontológico', active: true },
+      { id: 'sup-2', name: 'Laboratório ProEsthetic Próteses', cnpj: '12.345.678/0001-99', phone: '(83) 99111-2233', email: 'contato@proesthetic.com', category: 'Próteses & Moldagens', active: true },
+      { id: 'sup-3', name: 'Imobiliária Prime Empreendimentos', cnpj: '45.678.901/0001-22', phone: '(83) 3244-1122', email: 'financeiro@imobiliariaprime.com', category: 'Aluguel & Imóveis', active: true },
+      { id: 'sup-4', name: 'Meta Ads & Marketing Digital', cnpj: '98.765.432/0001-33', phone: '(11) 3003-9988', email: 'ads@meta.com', category: 'Publicidade', active: true }
+    ];
+
+    const demoAccountsPayable = fullYearAccountsPayable;
+    const demoInstallments = fullYearInstallments;
+
+    // 9. Campanhas de Marketing & Automações
+    const demoMarketingCampaigns = [
+      { id: 'mc-1', name: 'Campanha Lentes de Contato VIP', views: 1420, leads: 48, budget: 1200, conversion: 14.5, source: 'Instagram Ads' },
+      { id: 'mc-2', name: 'Reativação de Pacientes Inativos', views: 890, leads: 32, budget: 450, conversion: 22.0, source: 'WhatsApp Disparo' },
+      { id: 'mc-3', name: 'Invisalign & Estética Dental', views: 2300, leads: 65, budget: 1800, conversion: 12.8, source: 'Google Ads' }
+    ];
+
+    const demoAutomations = [
+      { id: 'aut-1', name: 'Lembrete de Consulta 24h Antes', trigger: 'Agendamento', actions: ['Enviar WhatsApp', 'Notificar equipe'], is_active: true, runs_count: 142 },
+      { id: 'aut-2', name: 'Pesquisa NPS Pós-Atendimento', trigger: 'Conclusão de Consulta', actions: ['Enviar WhatsApp'], is_active: true, runs_count: 89 },
+      { id: 'aut-3', name: 'Mensagem de Aniversário Automática', trigger: 'Aniversário', actions: ['Enviar WhatsApp'], is_active: true, runs_count: 34 }
+    ];
+
+    setMedicalRecords(demoMedicalRecords);
+    setToothRecords(demoToothRecords);
+    setAppointments(demoAppointments);
+    setFinanceTransactions(demoTransactions);
+    setDentists(demoDentists);
+    setChairs(demoChairs);
+    saveProcedures(demoProcedures);
+    saveInsurancePlans(demoInsurancePlans);
+    setSuppliers(demoSuppliers);
+    setAccountsPayable(demoAccountsPayable);
+    setInstallments(demoInstallments);
+    setMarketingCampaigns(demoMarketingCampaigns);
+    setAutomations(demoAutomations);
+
+    try {
+      localStorage.setItem(`patient_notes_${firstPat.id}`, 'Paciente relata sensibilidade ao mastigar gelado no dente 16.');
+      localStorage.setItem(`patient_notes_${secondPat.id}`, 'Troca de borrachinhas ortodônticas realizada.');
+    } catch (e) {}
+  };
+
+  const clearAllData = async () => {
+    const clinicId = clinic?.id;
+
+    // 1. Zera IMEDIATAMENTE todos os estados locais do React (resposta instantânea na UI!)
+    setPatients([]);
+    setAppointments([]);
+    setCrmLeads([]);
+    setFinanceTransactions([]);
+    setMedicalRecords([]);
+    setToothRecords([]);
+    setPrescriptions([]);
+    setWhatsappChats([]);
+    setDentists([]);
+    setChairs([]);
+    saveProcedures([]);
+    saveInsurancePlans([]);
+    setSuppliers([]);
+    setAccountsPayable([]);
+    setInstallments([]);
+    setMarketingCampaigns([]);
+    setAutomations([]);
+
+    // 2. Limpar localStorage de anotações, tags, procedimentos e convênios
+    try {
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('patient_notes_') || key.startsWith('chat_tags_') || key.startsWith('clinic_procedures_') || key.startsWith('clinic_insurance_plans_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {}
+
+    // 3. Deletar tabelas remotas no Supabase em ordem de dependência (chaves estrangeiras)
+    if (clinicId && isValidUUID(clinicId)) {
+      const tablesInOrder = [
+        'appointments', 
+        'crm_leads', 
+        'chat_messages', 
+        'chat_sessions', 
+        'medical_records', 
+        'tooth_records', 
+        'prescriptions', 
+        'transactions', 
+        'patients'
+      ];
+
+      for (const tbl of tablesInOrder) {
+        try {
+          await supabase.from(tbl).delete().eq('clinic_id', clinicId);
+        } catch (err) {
+          console.warn(`[Supabase Clear] Aviso ao deletar ${tbl}:`, err);
+        }
+      }
+    }
+  };
+
   return (
     <ClinicContext.Provider value={{
       patients,
@@ -1693,9 +2676,19 @@ export function ClinicProvider({ children }) {
       toothRecords,
       chairs,
       dentists,
+      clinicHours,
+      saveClinicHours,
+      dentistSchedules,
+      saveDentistSchedules,
+      holidays,
+      saveHolidays,
+      seedDemoData,
+      clearAllData,
+      loadData,
 
       addPatient,
       addChair,
+      updateChair,
       deleteChair,
       addDentist,
       updatePatient,
@@ -1713,7 +2706,6 @@ export function ClinicProvider({ children }) {
       addTransaction,
       saveProcedures,
       saveInsurancePlans,
-      aiConfig,
       saveAiConfig,
       addAutomation,
       updateAutomationStatus,
@@ -1737,5 +2729,30 @@ export function ClinicProvider({ children }) {
 }
 
 export function useClinic() {
-  return useContext(ClinicContext);
+  const context = useContext(ClinicContext);
+  if (!context) {
+    return {
+      patients: [],
+      appointments: [],
+      crmLeads: [],
+      whatsappChats: [],
+      financeTransactions: [],
+      procedures: [],
+      insurancePlans: [],
+      chairs: [],
+      dentists: [],
+      medicalRecords: [],
+      toothRecords: [],
+      loading: false,
+      addPatient: async () => {},
+      addCrmLead: async () => {},
+      addAppointment: async () => {},
+      addChair: async () => {},
+      addDentist: async () => {},
+      seedDemoData: async () => {},
+      clearAllData: async () => {},
+      loadData: async () => {}
+    };
+  }
+  return context;
 }

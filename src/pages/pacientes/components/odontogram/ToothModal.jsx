@@ -50,13 +50,13 @@ export default function ToothModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`max-w-lg w-full rounded-2xl border p-5 space-y-4 shadow-2xl ${
+          className={`my-auto max-w-lg w-full rounded-2xl border p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin ${
             isDarkMode 
               ? 'bg-[#111726] border-white/10 text-white' 
               : 'bg-white border-slate-200 text-slate-800'
