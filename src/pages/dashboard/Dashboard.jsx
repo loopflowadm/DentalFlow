@@ -176,72 +176,81 @@ export default function Dashboard({ onNavigateTab }) {
     }).sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, patients, selectedDateStr]);
 
-  // Métricas do Painel Executivo (5 Cards KPI Dinâmicos)
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayAppointments = appointments.filter(app => {
-    const rawDate = app.start_time || app.appointment_date || app.date;
-    if (!rawDate) return false;
-    const appDateStr = rawDate.split('T')[0];
-    return appDateStr === todayStr;
-  });
+  // Métricas do Painel Executivo (5 Cards KPI Dinâmicos - Memoizado para Alta Performance)
+  const { todayAppointments, todayAppointmentsCount, waitingPatientsCount, monthlyRevenueSum, formattedRevenueStr, executiveStats } = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayApps = appointments.filter(app => {
+      const rawDate = app.start_time || app.appointment_date || app.date;
+      if (!rawDate) return false;
+      const appDateStr = rawDate.split('T')[0];
+      return appDateStr === todayStr;
+    });
 
-  const activePatientsCount = patients.length;
-  const todayAppointmentsCount = todayAppointments.length;
-  const waitingPatientsCount = todayAppointments.filter(a => a.status === 'aguardando' || a.status === 'em_atendimento' || a.status === 'WAITING').length;
-  const crmLeadsCount = crmLeads.length;
+    const activePatientsCount = patients.length;
+    const todayCount = todayApps.length;
+    const waitingCount = todayApps.filter(a => a.status === 'aguardando' || a.status === 'em_atendimento' || a.status === 'WAITING').length;
+    const crmLeadsCount = crmLeads.length;
 
-  const monthlyRevenueSum = useMemo(() => {
-    return appointments
+    const revSum = appointments
       .filter(a => a.status === 'CONCLUIDO' || a.status === 'completed' || a.status === 'Concluído')
       .reduce((acc, a) => acc + (parseFloat(a.price || a.amount) || 0), 0);
-  }, [appointments]);
 
-  const formattedRevenueStr = monthlyRevenueSum > 0 
-    ? `R$ ${monthlyRevenueSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : 'R$ 0,00';
+    const revStr = revSum > 0 
+      ? `R$ ${revSum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : 'R$ 0,00';
 
-  const executiveStats = [
-    { 
-      label: 'CONSULTAS HOJE', 
-      value: todayAppointmentsCount.toString(), 
-      detail: todayAppointmentsCount > 0 ? '+12% vs ontem' : 'Nenhuma consulta hoje', 
-      isPositive: true,
-      icon: <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
-      iconBg: 'bg-blue-50 border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/50'
-    },
-    { 
-      label: 'PACIENTES NA ESPERA', 
-      value: waitingPatientsCount.toString(), 
-      detail: waitingPatientsCount > 0 ? 'Fila ativa' : 'Recepção livre', 
-      isPositive: true,
-      icon: <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
-      iconBg: 'bg-amber-50 border-amber-100 dark:bg-amber-950/40 dark:border-amber-900/50'
-    },
-    { 
-      label: 'LEADS NO CRM', 
-      value: crmLeadsCount.toString(), 
-      detail: crmLeadsCount > 0 ? 'Em negociação' : 'Nenhum lead novo', 
-      isPositive: true,
-      icon: <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
-      iconBg: 'bg-blue-50 border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/50'
-    },
-    { 
-      label: 'PACIENTES ATIVOS', 
-      value: activePatientsCount.toString(), 
-      detail: activePatientsCount > 0 ? 'Cadastrados na base' : 'Base limpa', 
-      isPositive: true,
-      icon: <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
-      iconBg: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/50'
-    },
-    { 
-      label: 'FATURAMENTO DO MÊS', 
-      value: formattedRevenueStr, 
-      detail: monthlyRevenueSum > 0 ? 'Consolidado' : 'Sem receitas lançadas', 
-      isPositive: true,
-      icon: <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />,
-      iconBg: 'bg-purple-50 border-purple-100 dark:bg-purple-950/40 dark:border-purple-900/50'
-    }
-  ];
+    const stats = [
+      { 
+        label: 'CONSULTAS HOJE', 
+        value: todayCount.toString(), 
+        detail: todayCount > 0 ? '+12% vs ontem' : 'Nenhuma consulta hoje', 
+        isPositive: true,
+        icon: <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
+        iconBg: 'bg-blue-50 border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/50'
+      },
+      { 
+        label: 'PACIENTES NA ESPERA', 
+        value: waitingCount.toString(), 
+        detail: waitingCount > 0 ? 'Fila ativa' : 'Recepção livre', 
+        isPositive: true,
+        icon: <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
+        iconBg: 'bg-amber-50 border-amber-100 dark:bg-amber-950/40 dark:border-amber-900/50'
+      },
+      { 
+        label: 'LEADS NO CRM', 
+        value: crmLeadsCount.toString(), 
+        detail: crmLeadsCount > 0 ? 'Em negociação' : 'Nenhum lead novo', 
+        isPositive: true,
+        icon: <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
+        iconBg: 'bg-blue-50 border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/50'
+      },
+      { 
+        label: 'PACIENTES ATIVOS', 
+        value: activePatientsCount.toString(), 
+        detail: activePatientsCount > 0 ? 'Cadastrados na base' : 'Base limpa', 
+        isPositive: true,
+        icon: <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
+        iconBg: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/50'
+      },
+      { 
+        label: 'FATURAMENTO DO MÊS', 
+        value: revStr, 
+        detail: revSum > 0 ? 'Consolidado' : 'Sem receitas lançadas', 
+        isPositive: true,
+        icon: <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />,
+        iconBg: 'bg-purple-50 border-purple-100 dark:bg-purple-950/40 dark:border-purple-900/50'
+      }
+    ];
+
+    return {
+      todayAppointments: todayApps,
+      todayAppointmentsCount: todayCount,
+      waitingPatientsCount: waitingCount,
+      monthlyRevenueSum: revSum,
+      formattedRevenueStr: revStr,
+      executiveStats: stats
+    };
+  }, [appointments, patients.length, crmLeads.length]);
 
   // Dados do gráfico Donut: Distribuição de Consultas (Calculados Dinamicamente)
   const consultationDistributionData = useMemo(() => {
@@ -327,31 +336,32 @@ export default function Dashboard({ onNavigateTab }) {
     return list;
   }, [crmLeads, appointments]);
 
-  // Gerar dados do gráfico dinamicamente com base nas consultas reais dos últimos 6 meses
-  const monthsAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  
-  const appointmentVolumeChartData = Array.from({ length: 6 }).map((_, idx) => {
-    const targetMonthIdx = (currentMonthIdx - 5 + idx + 12) % 12;
-    const monthName = monthsAbbr[targetMonthIdx];
-    
-    const monthApps = appointments.filter(app => {
-      const rawDate = app.start_time || app.appointment_date || app.date;
-      if (!rawDate) return false;
-      const appDate = new Date(rawDate);
-      return appDate.getMonth() === targetMonthIdx && appDate.getFullYear() === currentYear;
+  // Gerar dados do gráfico dinamicamente com base nas consultas reais dos últimos 6 meses (Memoizado)
+  const appointmentVolumeChartData = useMemo(() => {
+    const monthsAbbr = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return Array.from({ length: 6 }).map((_, idx) => {
+      const targetMonthIdx = (currentMonthIdx - 5 + idx + 12) % 12;
+      const monthName = monthsAbbr[targetMonthIdx];
+      
+      const monthApps = appointments.filter(app => {
+        const rawDate = app.start_time || app.appointment_date || app.date;
+        if (!rawDate) return false;
+        const appDate = new Date(rawDate);
+        return appDate.getMonth() === targetMonthIdx && appDate.getFullYear() === currentYear;
+      });
+
+      const completed = monthApps.filter(app => app.status === 'completed' || app.status === 'Concluído' || app.status === 'CONCLUIDO').length;
+      const confirmed = monthApps.filter(app => app.status === 'confirmed' || app.status === 'Confirmado' || app.status === 'CONFIRMADO' || app.status === 'scheduled').length;
+      const canceled = monthApps.filter(app => app.status === 'canceled' || app.status === 'Cancelado' || app.status === 'CANCELLED').length;
+
+      return {
+        month: monthName,
+        realizadas: completed,
+        confirmadas: confirmed,
+        faltas: canceled
+      };
     });
-
-    const completed = monthApps.filter(app => app.status === 'completed' || app.status === 'Concluído' || app.status === 'CONCLUIDO').length;
-    const confirmed = monthApps.filter(app => app.status === 'confirmed' || app.status === 'Confirmado' || app.status === 'CONFIRMADO' || app.status === 'scheduled').length;
-    const canceled = monthApps.filter(app => app.status === 'canceled' || app.status === 'Cancelado' || app.status === 'CANCELLED').length;
-
-    return {
-      month: monthName,
-      realizadas: completed,
-      confirmadas: confirmed,
-      faltas: canceled
-    };
-  });
+  }, [appointments, currentMonthIdx, currentYear]);
 
   // Formatar a saudação de forma inteligente
   const getGreetingName = () => {

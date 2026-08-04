@@ -3,6 +3,7 @@ import Sidebar, { SubSidebar } from '../components/Sidebar';
 import Header from '../components/Header';
 import CommandPalette from '../components/ui/CommandPalette';
 import DeveloperOptionsModal from '../components/DeveloperOptionsModal';
+import DevBreakpointBadge from '../components/devtools/DevBreakpointBadge';
 
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -73,6 +74,7 @@ export default function ClinicApp() {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isCmdPaletteOpen, setIsCmdPaletteOpen] = useState(false);
   const [isDevToolsOpen, setIsDevToolsOpen] = useState(false);
+  const [showBreakpointBadge, setShowBreakpointBadge] = useState(false);
 
   // Estados compartilhados da Agenda
   const [agendaDate, setAgendaDate] = useState(() => new Date());
@@ -87,6 +89,9 @@ export default function ClinicApp() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsCmdPaletteOpen(prev => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'd') {
+        e.preventDefault();
+        setIsDevToolsOpen(prev => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -342,6 +347,14 @@ export default function ClinicApp() {
       <DeveloperOptionsModal 
         isOpen={isDevToolsOpen} 
         onClose={() => setIsDevToolsOpen(false)} 
+        showBreakpointBadge={showBreakpointBadge}
+        setShowBreakpointBadge={setShowBreakpointBadge}
+      />
+
+      {/* Indicador Flutuante de Breakpoint Tailwind */}
+      <DevBreakpointBadge 
+        isVisible={showBreakpointBadge} 
+        onToggle={() => setShowBreakpointBadge(false)} 
       />
     </div>
   );

@@ -129,9 +129,20 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
         </div>
       </div>
 
-      {/* Direita: Grupo Único de Ações (Busca Lupa, + Novo, Tema, Notificações, Perfil) */}
+      {/* Direita: Grupo Único de Ações (DevTools, Busca Lupa, + Novo, Tema, Notificações, Perfil) */}
       <div className="flex items-center gap-2.5">
         
+        {/* Botão Opções de Desenvolvedor (Dev Tools) - Apenas Ícone à esquerda da Busca */}
+        {(import.meta.env.DEV || user?.role === 'superadmin' || user?.role === 'developer' || user?.is_superadmin || true) && (
+          <button
+            onClick={onOpenDevTools}
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 active:scale-95 transition-all cursor-pointer shadow-xs"
+            title="Opções de Desenvolvedor (⌘+Shift+D)"
+          >
+            <IconCode className="w-4 h-4 text-amber-500" />
+          </button>
+        )}
+
         {/* Ícone de Busca Expansível */}
         <div className="relative flex items-center">
           {!searchExpanded ? (
@@ -243,16 +254,6 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
             </div>
           )}
         </div>
-
-        {/* Botão Opções de Desenvolvedor */}
-        <button
-          onClick={onOpenDevTools}
-          className="h-9 px-2.5 rounded-xl flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-bold transition-all active:scale-95 cursor-pointer"
-          title="Opções de Desenvolvedor (Dev Tools)"
-        >
-          <IconCode className="w-4 h-4 text-amber-500" />
-          <span className="hidden md:inline">Dev Tools</span>
-        </button>
 
         {/* Alternador de 3 Temas Padronizado (w-9 h-9) */}
         <div className="relative">

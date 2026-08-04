@@ -9,6 +9,53 @@ import {
   Download, Printer, Filter, ShieldCheck, Clock
 } from 'lucide-react';
 
+// Formatador profissional de categorias para garantir 100% dos textos no frontend em Português
+const formatCategory = (cat) => {
+  if (!cat) return 'Outros';
+  const upper = String(cat).toUpperCase();
+  switch (upper) {
+    case 'TREATMENT':
+    case 'TREATMENTS':
+    case 'TRATAMENTO':
+    case 'TRATAMENTOS':
+      return 'Tratamentos';
+    case 'SUPPLIES':
+    case 'INSUMOS':
+      return 'Insumos Clínicos';
+    case 'ORTHODONTICS':
+    case 'ORTODONTIA':
+      return 'Ortodontia';
+    case 'ESTHETICS':
+    case 'ESTÉTICA':
+    case 'ESTETICA':
+      return 'Estética';
+    case 'UTILITIES':
+    case 'UTILITARIOS':
+      return 'Utilitários';
+    case 'SALARY':
+    case 'SALÁRIOS':
+    case 'SALARIOS':
+      return 'Salários e Comissões';
+    case 'RENT':
+    case 'ALUGUEL':
+      return 'Aluguel e Infra';
+    case 'MARKETING':
+      return 'Marketing';
+    case 'MAINTENANCE':
+    case 'MANUTENÇÃO':
+    case 'MANUTENCAO':
+      return 'Manutenção';
+    case 'FIXED':
+    case 'FIXAS':
+      return 'Despesas Fixas';
+    case 'OTHER':
+    case 'OUTROS':
+      return 'Outros';
+    default:
+      return cat;
+  }
+};
+
 export default function Financeiro() {
   const { 
     financeTransactions, 
@@ -41,7 +88,7 @@ export default function Financeiro() {
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('INCOME'); // 'INCOME' | 'EXPENSE'
-  const [category, setCategory] = useState('TREATMENT');
+  const [category, setCategory] = useState('Tratamentos');
 
   // Estado da comissão do dentista
   const [selectedDentist, setSelectedDentist] = useState(() => user?.full_name || '');
@@ -286,7 +333,7 @@ export default function Financeiro() {
                     <td className={`py-3 px-4 font-extrabold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}>
                       {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-3 px-4 font-semibold uppercase">{t.category}</td>
+                    <td className="py-3 px-4 font-semibold uppercase">{formatCategory(t.category)}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                         t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
@@ -570,11 +617,11 @@ export default function Financeiro() {
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 >
-                  <option value="TREATMENT">Tratamento</option>
-                  <option value="SALARY">Salários e Comissões</option>
-                  <option value="RENT">Aluguel e Infra</option>
-                  <option value="SUPPLIES">Insumos e Produtos</option>
-                  <option value="OTHER">Outros</option>
+                  <option value="Tratamentos">Tratamentos</option>
+                  <option value="Salários e Comissões">Salários e Comissões</option>
+                  <option value="Aluguel e Infra">Aluguel e Infra</option>
+                  <option value="Insumos Clínicos">Insumos Clínicos</option>
+                  <option value="Outros">Outros</option>
                 </select>
               </div>
 
@@ -636,7 +683,7 @@ export default function Financeiro() {
                         <td className="py-3 px-4 font-semibold text-slate-500">{supplier ? supplier.name : 'Nenhum'}</td>
                         <td className="py-3 px-4 font-extrabold text-red-500">R$ {ap.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                         <td className="py-3 px-4 font-medium">{ap.due_date}</td>
-                        <td className="py-3 px-4 font-semibold uppercase">{ap.category}</td>
+                        <td className="py-3 px-4 font-semibold uppercase">{formatCategory(ap.category)}</td>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                             ap.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500' :
@@ -829,10 +876,10 @@ export default function Financeiro() {
                   onChange={(e) => setApCategory(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
-                  <option value="SUPPLIES">Insumos e Produtos</option>
-                  <option value="RENT">Aluguel e Infra</option>
-                  <option value="SALARY">Salários e Comissões</option>
-                  <option value="OTHER">Outros Custos</option>
+                  <option value="Insumos e Produtos">Insumos e Produtos</option>
+                  <option value="Aluguel e Infra">Aluguel e Infra</option>
+                  <option value="Salários e Comissões">Salários e Comissões</option>
+                  <option value="Outros">Outros Custos</option>
                 </select>
               </div>
 

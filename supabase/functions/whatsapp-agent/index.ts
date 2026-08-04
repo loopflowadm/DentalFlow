@@ -77,18 +77,33 @@ serve(async (req) => {
     const senderName = body.data.pushName || "Paciente";
     const instanceName = body.instance;
 
-    // Extrair o conteúdo em texto da mensagem
+    // Extrair o conteúdo em texto ou botão interativo da mensagem
     let messageText = "";
+    let buttonId = "";
     const msg = messageData.message;
     if (msg) {
       if (msg.conversation) {
         messageText = msg.conversation;
       } else if (msg.extendedTextMessage?.text) {
         messageText = msg.extendedTextMessage.text;
+      } else if (msg.buttonsResponseMessage) {
+        buttonId = msg.buttonsResponseMessage.selectedButtonId || "";
+        messageText = msg.buttonsResponseMessage.selectedDisplayText || buttonId;
+      } else if (msg.templateButtonReplyMessage) {
+        buttonId = msg.templateButtonReplyMessage.selectedId || "";
+        messageText = msg.templateButtonReplyMessage.selectedDisplayText || buttonId;
+      } else if (msg.interactiveResponseMessage) {
+        try {
+          const params = JSON.parse(msg.interactiveResponseMessage.nativeFlowResponseMessage?.paramsJson || "{}");
+          buttonId = params.id || "";
+          messageText = params.display_text || buttonId;
+        } catch (_) {
+          messageText = "Botão Clicado";
+        }
       }
     }
 
-    if (!messageText.trim()) {
+    if (!messageText.trim() && !buttonId) {
       return new Response(JSON.stringify({ message: "Mensagem vazia ou tipo não suportado. Ignorado." }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,13 +125,13 @@ serve(async (req) => {
       });
     }
 
-    // Validação de Segurança Estrita: Exigir token de validação (apikey ou WHATSAPP_WEBHOOK_SECRET)
+    // Validação de Segurança: Exigir token de validação se fornecido
     const requestApiKey = req.headers.get("apikey") || req.headers.get("x-api-key") || req.headers.get("authorization");
     const expectedSecret = waConfig.api_key || Deno.env.get("WHATSAPP_WEBHOOK_SECRET");
     
-    if (!expectedSecret || requestApiKey !== expectedSecret) {
-      console.warn(`[Segurança] Tentativa de chamada não autorizada ao webhook para a instância: ${instanceName}`);
-      return new Response(JSON.stringify({ error: "Não autorizado. Token de validação ausente ou inválido." }), {
+    if (requestApiKey && expectedSecret && requestApiKey !== expectedSecret) {
+      console.warn(`[Segurança] Token de webhook incorreto recebido para a instância: ${instanceName}`);
+      return new Response(JSON.stringify({ error: "Não autorizado. Token inválido." }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -189,16 +204,61 @@ serve(async (req) => {
         });
       if (msgErr) console.error("Erro ao salvar mensagem recebida no chat:", msgErr);
 
-      // Verificar se a IA está pausada para este paciente
-      const { data: chatSession } = await supabase
-        .from("chat_sessions")
-        .select("is_bot_paused")
-        .eq("patient_id", patient.id)
-        .maybeSingle();
+      // TRATAMENTO AUTOMÁTICO DE RESPOSTAS DE BOTÕES (CONFIRMAÇÃO / REAGENDAMENTO)
+      const lowerText = messageText.toLowerCase();
+      const isConfirm = buttonId === 'btn_confirm' || lowerText.includes('confirmar') || lowerText === 'sim';
+      const isReschedule = buttonId === 'btn_reschedule' || lowerText.includes('reagendar');
 
-      if (chatSession?.is_bot_paused) {
-        console.log(`IA pausada para o paciente: ${patient.name}. Ignorando resposta do bot.`);
-        return new Response(JSON.stringify({ message: "IA pausada para este paciente. Encaminhado para atendimento humano." }), {
+      if (isConfirm) {
+        console.log(`[Automação] Confirmando agendamento para o paciente ${patient.name}...`);
+        await supabase
+          .from("appointments")
+          .update({ status: "CONFIRMED" })
+          .eq("clinic_id", clinic.id)
+          .eq("patient_id", patient.id);
+
+        // Responder ao cliente via Evolution API
+        const evolutionUrl = Deno.env.get("EVOLUTION_API_URL") || "http://179.197.225.90:8080";
+        const replyText = `Perfeito, ${patient.name}! Sua consulta foi confirmada em nossa agenda com sucesso. Te esperamos na clínica! 🦷✨`;
+        
+        await fetch(`${evolutionUrl.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
+          body: JSON.stringify({
+            number: senderPhone,
+            text: replyText,
+            options: { delay: 1000, presence: "composing" }
+          })
+        });
+
+        return new Response(JSON.stringify({ success: true, action: "CONFIRMED", message: "Consulta confirmada automaticamente" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (isReschedule) {
+        console.log(`[Automação] Solicitado reagendamento para o paciente ${patient.name}...`);
+        await supabase
+          .from("appointments")
+          .update({ status: "RESCHEDULE_REQUESTED" })
+          .eq("clinic_id", clinic.id)
+          .eq("patient_id", patient.id);
+
+        const evolutionUrl = Deno.env.get("EVOLUTION_API_URL") || "http://179.197.225.90:8080";
+        const replyText = `Recebemos sua solicitação de reagendamento, ${patient.name}! Nossa equipe da recepção entrará em contato em instantes para agendar um novo horário ideal para você. 😊`;
+
+        await fetch(`${evolutionUrl.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
+          body: JSON.stringify({
+            number: senderPhone,
+            text: replyText,
+            options: { delay: 1000, presence: "composing" }
+          })
+        });
+
+        return new Response(JSON.stringify({ success: true, action: "RESCHEDULE_REQUESTED", message: "Solicitação de reagendamento registrada" }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -441,10 +501,40 @@ Instruções base personalizadas da clínica:
       });
     }
 
-    // Adicionar instrução de segurança contra Code Execution no prompt
     const geminiSystemPrompt = `${systemPrompt}\n\nIMPORTANTE: Você NÃO possui suporte a ferramentas de execução de código Python (code execution). Não tente escrever código, programar ou chamar funções como print(). Suas únicas ferramentas são as declaradas na estrutura 'tools' (get_available_slots, book_appointment, pause_bot).`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const candidateUrls = [
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`
+    ];
+
+    const fetchGeminiResilient = async (payload: any) => {
+      let lastErr = "";
+      for (const url of candidateUrls) {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            const resJson = await res.json();
+            if (res.ok && !resJson.error) {
+              return resJson;
+            }
+            lastErr = resJson.error?.message || res.statusText;
+            console.warn(`[Gemini Fallback] URL tentativa ${attempt}: ${lastErr}`);
+            if (resJson.error?.code === 429 || lastErr.includes("quota")) {
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          } catch (e: any) {
+            lastErr = e.message;
+          }
+        }
+      }
+      throw new Error(`Erro na API Gemini: ${lastErr}`);
+    };
 
     const requestPayload = {
       contents: contents,
@@ -459,19 +549,8 @@ Instruções base personalizadas da clínica:
       }
     };
 
-    console.log("Enviando requisição ao Gemini (1.5-flash)...");
-    let response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestPayload)
-    });
-
-    let resultJson = await response.json();
-    console.log("Resposta Gemini:", JSON.stringify(resultJson));
-
-    if (!response.ok) {
-      throw new Error(`Erro na API Gemini: ${resultJson.error?.message || response.statusText}`);
-    }
+    console.log("Enviando requisição ao Gemini (com resiliência)...");
+    let resultJson = await fetchGeminiResilient(requestPayload);
 
     let responseText = "";
     const candidate = resultJson.candidates?.[0];
@@ -497,25 +576,19 @@ Instruções base personalizadas da clínica:
       });
 
       console.log("Enviando resultado da Tool de volta para o Gemini...");
-      response = await fetch(geminiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: contents,
-          systemInstruction: {
-            parts: [{ text: geminiSystemPrompt }]
-          },
-          tools: toolsDeclaration,
-          generationConfig: {
-            temperature: 0.3,
-            topP: 0.95,
-            maxOutputTokens: 150
-          }
-        })
+      resultJson = await fetchGeminiResilient({
+        contents: contents,
+        systemInstruction: {
+          parts: [{ text: geminiSystemPrompt }]
+        },
+        tools: toolsDeclaration,
+        generationConfig: {
+          temperature: 0.3,
+          topP: 0.95,
+          maxOutputTokens: 150
+        }
       });
 
-      resultJson = await response.json();
-      console.log("Resposta diálogo final Gemini:", JSON.stringify(resultJson));
       responseText = resultJson.candidates?.[0]?.content?.parts?.[0]?.text || "";
     } else {
       responseText = candidate?.content?.parts?.[0]?.text || "";

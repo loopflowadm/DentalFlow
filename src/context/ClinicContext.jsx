@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../lib/supabase';
 import { mockDb } from '../lib/mockDatabase';
@@ -324,7 +324,13 @@ export function ClinicProvider({ children }) {
     if (!clinic) return;
     setLoading(true);
 
-    const clinicId = clinic.id;
+    const isUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const rawId = clinic.id || clinic.clinic_id;
+    const clinicId = isUuid(rawId) 
+      ? rawId 
+      : rawId === 'clinic-filial-cg' ? '00000000-0000-0000-0000-000000000002'
+      : rawId === 'clinic-sp-01' ? '00000000-0000-0000-0000-000000000003'
+      : '00000000-0000-0000-0000-000000000001';
 
     try {
       const results = await Promise.allSettled([
@@ -1256,6 +1262,40 @@ export function ClinicProvider({ children }) {
     }
   };
 
+  const sendWhatsAppButtons = async (targetPhoneOrId, title, description, footerText, buttonsArray) => {
+    const clinicId = clinic.id;
+    const savedUrl = localStorage.getItem(`evolution_url_${clinicId}`) || 'http://179.197.225.90:8080';
+    const savedInstance = localStorage.getItem(`evolution_instance_${clinicId}`) || 'dentalflow-prod';
+    const savedToken = localStorage.getItem(`evolution_token_${clinicId}`) || 'dentalflow_key_secure_123456';
+
+    const pat = patients.find(p => p.id === targetPhoneOrId);
+    let phoneNumber = pat ? pat.phone.replace(/\D/g, '') : targetPhoneOrId.replace(/\D/g, '');
+    if (phoneNumber && !phoneNumber.startsWith('55') && phoneNumber.length <= 11) {
+      phoneNumber = '55' + phoneNumber;
+    }
+
+    try {
+      const response = await fetch(`${savedUrl.replace(/\/$/, '')}/message/sendButtons/${savedInstance}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': savedToken
+        },
+        body: JSON.stringify({
+          number: phoneNumber,
+          title: title,
+          description: description,
+          footer: footerText || 'OdontoCRM - Odontologia Especializada',
+          buttons: buttonsArray
+        })
+      });
+      return await response.json();
+    } catch (err) {
+      console.error('[Evolution API] Erro ao enviar botões interativos:', err);
+      return null;
+    }
+  };
+
   const updateChatNotes = async (patientId, notes) => {
     setWhatsappChats(prev => prev.map(c => c.patientId === patientId ? { ...c, notes } : c));
     setPatients(prev => prev.map(p => p.id === patientId ? { ...p, notes } : p));
@@ -1315,22 +1355,49 @@ export function ClinicProvider({ children }) {
     ));
   };
 
-  // FINANCEIRO
+  // FINANCEIRO (Lançamento Otimista e Instantâneo)
   const addTransaction = async (t) => {
-    const clinicId = clinic.id;
+    const rawClinicId = clinic?.id || clinic?.clinic_id;
+    const clinicId = isValidUUID(rawClinicId) ? rawClinicId : null;
+
     const fresh = {
-      ...t,
+      id: t.id || 'trans-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       clinic_id: clinicId,
-      date: t.date || new Date().toISOString().split('T')[0]
+      description: t.description || 'Lançamento',
+      amount: typeof t.amount === 'number' ? t.amount : parseFloat(t.amount) || 0,
+      type: t.type || 'INCOME',
+      category: t.category || 'Tratamentos',
+      date: t.date || new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setFinanceTransactions(prev => [data, ...prev]);
+    // 1. Atualização instantânea na UI (0ms de atraso)
+    setFinanceTransactions(prev => [fresh, ...prev]);
+
+    // 2. Persistência remota em segundo plano se houver UUID de clínica válido
+    if (clinicId) {
+      try {
+        const { data, error } = await supabase
+          .from('transactions')
+          .insert([{
+            clinic_id: clinicId,
+            description: fresh.description,
+            amount: fresh.amount,
+            type: fresh.type,
+            category: fresh.category,
+            date: fresh.date
+          }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          setFinanceTransactions(prev => prev.map(item => item.id === fresh.id ? { ...item, id: data.id } : item));
+        }
+      } catch (err) {
+        console.warn('[Supabase] Erro ao persistir transação remota:', err);
+      }
+    }
+    return fresh;
   };
 
   // CONFIGURAÇÕES
@@ -1835,7 +1902,9 @@ export function ClinicProvider({ children }) {
 
   // Seed de Dados de Demonstração Completo e Massivo para Desenvolvimento (100% dos Módulos)
   const seedDemoData = async () => {
-    const clinicId = clinic?.id || 'clinic-demo';
+    const isUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const rawId = clinic?.id || clinic?.clinic_id;
+    const clinicId = isUuid(rawId) ? rawId : '00000000-0000-0000-0000-000000000001';
 
     const docName = user?.full_name || 'Dr. Alexandre Silva';
     const mainDentistId = user?.id || 'd-1';
@@ -2659,25 +2728,8 @@ export function ClinicProvider({ children }) {
       }));
     } catch (e) {}
 
-    // Sincronizar em segundo plano com as tabelas do Supabase caso a clínica tenha conexão remota
-    if (clinicId && isValidUUID(clinicId)) {
-      try {
-        const prepareForDb = (arr) => arr.map(({ id, patientName, procedureName, ...item }) => ({
-          ...item,
-          clinic_id: clinicId
-        }));
-
-        Promise.allSettled([
-          supabase.from('appointments').insert(prepareForDb(demoAppointments)),
-          supabase.from('transactions').insert(prepareForDb(demoTransactions)),
-          supabase.from('medical_records').insert(prepareForDb(demoMedicalRecords)),
-          supabase.from('suppliers').insert(prepareForDb(demoSuppliers)),
-          supabase.from('accounts_payable').insert(prepareForDb(demoAccountsPayable)),
-          supabase.from('marketing_campaigns').insert(prepareForDb(demoMarketingCampaigns)),
-          supabase.from('automations').insert(prepareForDb(demoAutomations))
-        ]).catch(err => console.warn('Sincronização remota em segundo plano:', err));
-      } catch (err) {}
-    }
+    // Dados de demonstração armazenados com sucesso no estado local e localStorage para desenvolvimento resiliente
+    console.log('[DevTools] Sistema populado com dados de demonstração completos!');
   };
 
   const clearAllData = async () => {
@@ -2735,72 +2787,99 @@ export function ClinicProvider({ children }) {
     }
   };
 
-  return (
-    <ClinicContext.Provider value={{
-      patients,
-      appointments,
-      crmLeads,
-      whatsappChats,
-      financeTransactions,
-      automations,
-      marketingCampaigns,
-      procedures,
-      insurancePlans,
-      aiConfig,
-      loading,
-      suppliers,
-      accountsPayable,
-      installments,
-      toothRecords,
-      chairs,
-      dentists,
-      clinicHours,
-      saveClinicHours,
-      dentistSchedules,
-      saveDentistSchedules,
-      holidays,
-      saveHolidays,
-      seedDemoData,
-      clearAllData,
-      loadData,
+  const contextValue = useMemo(() => ({
+    patients,
+    appointments,
+    crmLeads,
+    whatsappChats,
+    financeTransactions,
+    automations,
+    marketingCampaigns,
+    procedures,
+    insurancePlans,
+    aiConfig,
+    loading,
+    suppliers,
+    accountsPayable,
+    installments,
+    toothRecords,
+    chairs,
+    dentists,
+    clinicHours,
+    saveClinicHours,
+    dentistSchedules,
+    saveDentistSchedules,
+    holidays,
+    saveHolidays,
+    seedDemoData,
+    clearAllData,
+    loadData,
 
-      addPatient,
-      addChair,
-      updateChair,
-      deleteChair,
-      addDentist,
-      updatePatient,
-      deletePatient,
-      addAppointment,
-      updateAppointment,
-      addCrmLead,
-      updateCrmLead,
-      deleteCrmLead,
-      convertLeadToPatient,
-      sendWhatsAppMessage,
-      updateChatNotes,
-      updateChatTags,
-      toggleBotSilence,
-      addTransaction,
-      saveProcedures,
-      saveInsurancePlans,
-      saveAiConfig,
-      addAutomation,
-      updateAutomationStatus,
-      addSupplier,
-      addAccountsPayable,
-      approveAccountsPayable,
-      payAccountsPayable,
-      payInstallment,
-      checkPatientInadimplente,
-      medicalRecords,
-      prescriptions,
-      addMedicalRecord,
-      addPrescription,
-      generateAiEvolution,
-      sendPrescriptionWhatsapp,
-      updateToothRecord
-    }}>
+    addPatient,
+    addChair,
+    updateChair,
+    deleteChair,
+    addDentist,
+    updatePatient,
+    deletePatient,
+    addAppointment,
+    updateAppointment,
+    addCrmLead,
+    updateCrmLead,
+    deleteCrmLead,
+    convertLeadToPatient,
+    sendWhatsAppMessage,
+    sendWhatsAppButtons,
+    updateChatNotes,
+    updateChatTags,
+    toggleBotSilence,
+    addTransaction,
+    saveProcedures,
+    saveInsurancePlans,
+    saveAiConfig,
+    addAutomation,
+    updateAutomationStatus,
+    addSupplier,
+    addAccountsPayable,
+    approveAccountsPayable,
+    payAccountsPayable,
+    payInstallment,
+    checkPatientInadimplente,
+    medicalRecords,
+    prescriptions,
+    addMedicalRecord,
+    addPrescription,
+    generateAiEvolution,
+    sendPrescriptionWhatsapp,
+    updateToothRecord
+  }), [
+    patients,
+    appointments,
+    crmLeads,
+    whatsappChats,
+    financeTransactions,
+    automations,
+    marketingCampaigns,
+    procedures,
+    insurancePlans,
+    aiConfig,
+    loading,
+    suppliers,
+    accountsPayable,
+    installments,
+    toothRecords,
+    chairs,
+    dentists,
+    clinicHours,
+    dentistSchedules,
+    holidays,
+    medicalRecords,
+    prescriptions,
+    loadData
+  ]);
+
+  return (
+    <ClinicContext.Provider value={contextValue}>
       {children}
     </ClinicContext.Provider>
   );
