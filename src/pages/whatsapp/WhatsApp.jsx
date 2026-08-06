@@ -317,26 +317,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
         addLog(`ℹ️ Edge Proxy indisponível, tentando conexão direta à VPS...`);
       }
 
-      // 2. Fallback direto à VPS caso o proxy falhe
-      if (!qrFound && evolutionUrl && evolutionInstance && evolutionToken) {
-        try {
-          const res = await fetch(`${evolutionUrl}/instance/connect/${evolutionInstance}`, {
-            headers: { apikey: evolutionToken }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.instance?.state === 'open' || data.status === 'CONNECTED') {
-              setEvolutionStatus('CONNECTED');
-              setQrCode('');
-              addLog(`WhatsApp da clínica já está 🟢 Conectado!`);
-              setIsConnecting(false);
-              return;
-            }
-            qrFound = data.base64 || data.qrcode?.base64 || null;
-          }
-        } catch (vpsErr) {
-          addLog(`⚠️ Conexão direta bloqueada por CORS no navegador.`);
-        }
+      // Se o proxy não retornou QR Code nem indicou conexão ativa
+      if (!qrFound) {
+        addLog(`ℹ️ Tentando sincronizar com a instância...`);
       }
 
       if (qrFound) {
