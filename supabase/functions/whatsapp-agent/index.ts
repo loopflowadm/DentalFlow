@@ -205,60 +205,93 @@ serve(async (req) => {
       if (msgErr) console.error("Erro ao salvar mensagem recebida no chat:", msgErr);
 
       // TRATAMENTO AUTOMÁTICO DE RESPOSTAS DE BOTÕES (CONFIRMAÇÃO / REAGENDAMENTO)
-      const lowerText = messageText.toLowerCase();
-      const isConfirm = buttonId === 'btn_confirm' || lowerText.includes('confirmar') || lowerText === 'sim';
-      const isReschedule = buttonId === 'btn_reschedule' || lowerText.includes('reagendar');
+      // O buttonId de confirmação vem como: btn_confirm|YYYY-MM-DD|HH:MM
+      const isConfirm = buttonId.startsWith('btn_confirm');
+      const isReschedule = buttonId === 'btn_reschedule' || messageText.toLowerCase().includes('reagendar') || messageText === '2';
 
       if (isConfirm) {
-        console.log(`[Automação] Confirmando agendamento para o paciente ${patient.name}...`);
-        await supabase
-          .from("appointments")
-          .update({ status: "CONFIRMED" })
-          .eq("clinic_id", clinic.id)
-          .eq("patient_id", patient.id);
+        const parts = buttonId.split('|');
+        const apptDate = parts[1]; // YYYY-MM-DD
+        const apptHour = parts[2]; // HH:MM
 
-        // Responder ao cliente via Evolution API
-        const evolutionUrl = Deno.env.get("EVOLUTION_API_URL") || "http://179.197.225.90:8080";
-        const replyText = `Perfeito, ${patient.name}! Sua consulta foi confirmada em nossa agenda com sucesso. Te esperamos na clínica! 🦷✨`;
-        
-        await fetch(`${evolutionUrl.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
+        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+        let replyText = `Perfeito, ${patient.name}! Sua consulta foi confirmada. Te esperamos! 🦷`;
+
+        // Criar agendamento no banco se temos data e hora
+        if (apptDate && apptHour) {
+          const startTime = new Date(`${apptDate}T${apptHour}:00-03:00`);
+          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+          const { data: newAppt, error: apptErr } = await supabase
+            .from("appointments")
+            .insert({
+              clinic_id: clinic.id,
+              patient_id: patient.id,
+              title: `Consulta — ${patient.name}`,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              status: "CONFIRMED",
+              notes: "Confirmado pelo paciente via botão no WhatsApp."
+            })
+            .select("id")
+            .single();
+
+          if (apptErr) {
+            console.error("[Botão Confirmar] Erro ao criar agendamento:", apptErr);
+          } else {
+            console.log(`[Botão Confirmar] Agendamento criado: ${newAppt?.id}`);
+            // Formatar data para exibição
+            const [year, month, day] = apptDate.split('-');
+            replyText = `Marcado! Consulta confirmada para ${day}/${month} às ${apptHour}. Te esperamos! 🦷`;
+          }
+        }
+
+        await fetch(`${evolutionBase.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
           body: JSON.stringify({
             number: senderPhone,
             text: replyText,
-            options: { delay: 1000, presence: "composing" }
+            options: { delay: 800, presence: "composing" }
           })
         });
 
-        return new Response(JSON.stringify({ success: true, action: "CONFIRMED", message: "Consulta confirmada automaticamente" }), {
+        // Salvar no histórico
+        await supabase.from("chat_messages").insert({
+          clinic_id: clinic.id,
+          patient_id: patient.id,
+          sender: "BOT",
+          message_text: replyText
+        });
+
+        return new Response(JSON.stringify({ success: true, action: "CONFIRMED", responseText: replyText }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       if (isReschedule) {
-        console.log(`[Automação] Solicitado reagendamento para o paciente ${patient.name}...`);
-        await supabase
-          .from("appointments")
-          .update({ status: "RESCHEDULE_REQUESTED" })
-          .eq("clinic_id", clinic.id)
-          .eq("patient_id", patient.id);
+        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+        const replyText = `Sem problema! Qual data e horário prefere para reagendar? 😊`;
 
-        const evolutionUrl = Deno.env.get("EVOLUTION_API_URL") || "http://179.197.225.90:8080";
-        const replyText = `Recebemos sua solicitação de reagendamento, ${patient.name}! Nossa equipe da recepção entrará em contato em instantes para agendar um novo horário ideal para você. 😊`;
-
-        await fetch(`${evolutionUrl.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
+        await fetch(`${evolutionBase.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
           body: JSON.stringify({
             number: senderPhone,
             text: replyText,
-            options: { delay: 1000, presence: "composing" }
+            options: { delay: 800, presence: "composing" }
           })
         });
 
-        return new Response(JSON.stringify({ success: true, action: "RESCHEDULE_REQUESTED", message: "Solicitação de reagendamento registrada" }), {
+        await supabase.from("chat_messages").insert({
+          clinic_id: clinic.id,
+          patient_id: patient.id,
+          sender: "BOT",
+          message_text: replyText
+        });
+
+        return new Response(JSON.stringify({ success: true, action: "RESCHEDULE_REQUESTED", responseText: replyText }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -275,29 +308,37 @@ serve(async (req) => {
     }
 
     // 5. Módulo do Agente de IA: Chamar Gemini com suporte a Function Calling
-    const systemPrompt = `
-Você é a Sofia, assistente virtual da clínica "${clinic.name}".
-Seu objetivo é interagir com o paciente de forma extremamente profissional, acolhedora, humana e prestativa via WhatsApp.
-Seu foco principal é auxiliar com agendamentos, confirmações ou cancelamentos de consultas odontológicas.
+    const nowBR = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const todayISO = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })).toISOString().split("T")[0];
+    const tomorrowISO = new Date(new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })).getTime() + 86400000).toISOString().split("T")[0];
 
-Instruções Operacionais e de Tom de Voz:
-- O nome do paciente é "${patient?.name || senderName}". Trate-o com respeito e de forma personalizada.
-- A data e hora atual do servidor é: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Fuso São Paulo). Use isso como referência para responder sobre "amanhã", "depois de amanhã", dias da semana, etc.
-- Horário de funcionamento da clínica: Segunda a Sexta, das 08:00h às 18:00h.
-- A clínica trabalha com intervalos de 1 hora por consulta (slots cheios, ex: 08:00, 09:00, 10:00, 14:00, 15:00, 16:00, 17:00).
-- Tom de Voz: Seja extremamente profissional, polida, prestativa e calorosa. Evite expressões excessivamente formais ou robóticas, mas mantenha um tom de atendimento sênior e acolhedor.
-- Emojis: Use emojis com extrema moderação. No máximo 1 emoji discreto por mensagem (ex: 🦷 ou 😊) para dar um toque amigável sem poluir visualmente o texto. Nunca use vários emojis na mesma mensagem.
-- Clareza: Seja concisa nas respostas, respondendo diretamente ao que foi solicitado e mantendo as mensagens curtas para facilitar a leitura no celular.
+    const systemPrompt = `Você é a Sofia, assistente de agendamento da clínica ${clinic.name} via WhatsApp.
 
-Fluxo de Coleta de Dados e Agendamento:
-1. Confirmação de Cadastro: Se o cadastro inicial estiver com um nome incompleto, apelido ou for a primeira vez que fala com o número, confirme gentilmente o nome completo do paciente para cadastro no CRM.
-2. Consulta de Horários: Se o paciente solicitar horários livres, chame "get_available_slots" para a data correspondente e informe de forma organizada quais estão disponíveis.
-3. Confirmação do Slot: Assim que o paciente escolher um horário e uma data livres, confirme os dados com ele antes de realizar a reserva.
-4. Agendamento: Quando ele der o aceite explícito (ex: "pode marcar", "confirmado"), chame a função "book_appointment" para registrar a consulta na agenda do CRM e confirme informando que o agendamento foi concluído com sucesso.
+REGRAS ABSOLUTAS DE COMUNICAÇÃO — NUNCA QUEBRE ESTAS REGRAS:
+1. MENSAGENS CURTAS: Máximo 2 frases por resposta. WhatsApp não é e-mail.
+2. UMA PERGUNTA POR VEZ: Nunca faça mais de uma pergunta na mesma mensagem.
+3. SEM LISTAS: Nunca use "1. 2. 3." nem bullets. Escreva como uma pessoa conversando.
+4. EMOJIS: No máximo 1 por mensagem, só quando natural.
+5. SEM FORMALIDADES EXCESSIVAS: Não use "Prezado(a)", "Informo que", "Segue abaixo". Fale como um humano.
 
-Instruções base personalizadas da clínica:
-"${waConfig.agent_prompt}"
-`;
+EXEMPLOS DE RESPOSTA CORRETA:
+✅ "Para amanhã temos 09h, 14h e 16h. Qual prefere?"
+✅ "Às 14h está disponível! Confirmo sua limpeza para amanhã às 14h?"
+
+EXEMPLOS DE RESPOSTA ERRADA (NUNCA FAÇA):
+❌ "Olá! Fico feliz em ajudá-lo. Temos os seguintes horários disponíveis: 1. 09h00 2. 14h00 3. 16h00. Qual seria de sua preferência?"
+
+FLUXO OBRIGATÓRIO DE AGENDAMENTO:
+- Passo 1: Paciente pede horário → chame get_available_slots para a data pedida → responda só os horários livres em 1 frase.
+- Passo 2: Paciente escolhe horário → chame send_confirmation_buttons (data + hora escolhidas). NUNCA peça confirmação em texto.
+- Passo 3: Paciente clica no botão de confirmar → chame book_appointment.
+
+CONTEXTO:
+- Paciente: ${patient?.name || senderName}
+- Agora: ${nowBR}
+- Hoje (ISO): ${todayISO} | Amanhã (ISO): ${tomorrowISO}
+- Funcionamento: Seg-Sex, 08h às 18h. Intervalos de 1h (08, 09, 10, 11, 14, 15, 16, 17).
+${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}` : ""}`;
 
     // Lógica das Ferramentas executadas localmente pela Edge Function
     const executeTool = async (name: string, args: any) => {
@@ -345,45 +386,104 @@ Instruções base personalizadas da clínica:
         };
       }
 
-      if (name === "book_appointment") {
-        const { date, hour } = args; // YYYY-MM-DD e HH:MM
+      if (name === "send_confirmation_buttons") {
+        const { date, hour, display_date } = args;
         if (!date || !hour) return { error: "Parâmetros 'date' e 'hour' são obrigatórios." };
 
-        const startTime = new Date(`${date}T${hour}:00`);
-        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hora
+        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+        const label = display_date || `${date} às ${hour}`;
 
-        // Executar a RPC de orquestração autônoma no banco de dados (Cascata Zero-UI)
-        const { data: cascadeResult, error: cascadeErr } = await supabase.rpc(
-          "fn_process_whatsapp_incoming_event",
-          {
-            p_clinic_id: clinic.id,
-            p_phone: senderPhone,
-            p_name: patient.name,
-            p_intent: {
-              start_time: startTime.toISOString(),
-              end_time: endTime.toISOString(),
-              complaint: messageText,
-              procedure: "Consulta Odontológica Agendada",
-              estimated_amount: 150.00,
-              is_ambiguous: false
-            }
-          }
-        );
+        const btnPayload = {
+          number: senderPhone,
+          title: `🦷 ${clinic.name}`,
+          description: `Confirma sua consulta para ${label}?`,
+          footer: "Responda com um dos botões abaixo:",
+          buttons: [
+            { type: "reply", displayText: "✅ Confirmar", id: `btn_confirm|${date}|${hour}` },
+            { type: "reply", displayText: "🔄 Outro horário", id: "btn_reschedule" }
+          ]
+        };
 
-        if (cascadeErr) {
-          console.error("Erro na RPC de cascata autônoma:", cascadeErr);
-          return { error: "Não foi possível registrar o agendamento nos módulos no momento." };
+        let btnSent = false;
+        try {
+          const btnRes = await fetch(`${evolutionBase}/message/sendButtons/${instanceName}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
+            body: JSON.stringify(btnPayload)
+          });
+          const btnJson = await btnRes.json();
+          console.log("[Botões] Resposta Evolution:", JSON.stringify(btnJson));
+          btnSent = btnRes.ok || btnJson.key?.id;
+        } catch (e: any) {
+          console.warn("[Botões] Falha ao enviar botões, usando texto:", e.message);
         }
 
+        // Fallback: se botões falharem, envia texto simples com as opções
+        if (!btnSent) {
+          const fallbackText = `Confirma sua consulta para ${label}?\n\nResponda:\n*1* - Confirmar ✅\n*2* - Ver outro horário 🔄`;
+          await fetch(`${evolutionBase}/message/sendText/${instanceName}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "apikey": waConfig.api_key },
+            body: JSON.stringify({ number: senderPhone, text: fallbackText, options: { delay: 800 } })
+          });
+        }
+
+        // Salvar no chat e encerrar — não precisamos de texto do Gemini
+        if (patient) {
+          await supabase.from("chat_messages").insert({
+            clinic_id: clinic.id,
+            patient_id: patient.id,
+            sender: "BOT",
+            message_text: `[Botões enviados] Confirma consulta para ${label}?`
+          });
+        }
+
+        // Sinaliza para a Edge Function que deve retornar sem chamar Gemini de novo
+        throw new DOMException(`__BUTTONS_SENT__:${label}`, "AbortError");
+      }
+
+      if (name === "book_appointment") {
+        const { date, hour } = args;
+        if (!date || !hour) return { error: "Parâmetros 'date' e 'hour' são obrigatórios." };
+
+        // Normalizar hora — aceita "14:00" ou "14h" ou "14"
+        const hourClean = hour.replace("h", ":").replace(/:$/, ":00").padEnd(5, "0:0").substring(0, 5);
+        const hourPadded = hourClean.includes(":") ? hourClean : `${hourClean}:00`;
+
+        // Construir datas no fuso de São Paulo convertidas para UTC
+        const startLocalStr = `${date}T${hourPadded}:00`;
+        const startTime = new Date(startLocalStr + "-03:00"); // BRT = UTC-3
+        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+        // INSERT direto e confiável na tabela appointments
+        const { data: newAppt, error: apptErr } = await supabase
+          .from("appointments")
+          .insert({
+            clinic_id: clinic.id,
+            patient_id: patient?.id || null,
+            title: `Consulta — ${patient?.name || senderName}`,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            status: "CONFIRMED",
+            notes: `Agendado via WhatsApp pela Sofia. Procedimento: Consulta Odontológica.`
+          })
+          .select("id")
+          .single();
+
+        if (apptErr) {
+          console.error("[book_appointment] Erro ao criar agendamento:", apptErr);
+          return { error: `Não foi possível registrar o agendamento: ${apptErr.message}` };
+        }
+
+        console.log(`[book_appointment] Agendamento criado com ID: ${newAppt?.id}`);
         return {
           success: true,
-          cascade_result: cascadeResult,
-          message: `Agendamento efetuado com sucesso em todos os módulos (CRM, Agenda, Prontuário, Financeiro) para ${patient.name} em ${date} às ${hour}.`
+          appointment_id: newAppt?.id,
+          message: `Consulta confirmada para ${patient?.name || senderName} em ${date} às ${hourPadded}.`
         };
       }
 
       if (name === "pause_bot") {
-        // Atualizar is_bot_paused para true na tabela chat_sessions
         const { error } = await supabase
           .from("chat_sessions")
           .upsert({
@@ -391,19 +491,14 @@ Instruções base personalizadas da clínica:
             patient_id: patient.id,
             is_bot_paused: true,
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: "patient_id"
-          });
+          }, { onConflict: "patient_id" });
 
         if (error) {
-          console.error("Erro ao pausar o bot no banco:", error);
-          return { error: "Não foi possível pausar o atendimento automatizado." };
+          console.error("Erro ao pausar o bot:", error);
+          return { error: "Não foi possível pausar o atendimento." };
         }
 
-        return {
-          success: true,
-          message: "O bot de atendimento foi pausado com sucesso. Um atendente humano assumirá o contato em instantes."
-        };
+        return { success: true, message: "Bot pausado. Um atendente humano assumirá em instantes." };
       }
 
       return { error: "Função não encontrada." };
@@ -415,31 +510,53 @@ Instruções base personalizadas da clínica:
         functionDeclarations: [
           {
             name: "get_available_slots",
-            description: "Retorna a lista de horários (HH:MM) que estão livres para agendamento em uma data específica (no formato YYYY-MM-DD).",
+            description: "Busca os horários livres em uma data específica. Use sempre que o paciente mencionar uma data ou pedir horários disponíveis.",
             parameters: {
               type: "OBJECT",
               properties: {
                 date: {
                   type: "STRING",
-                  description: "A data a ser pesquisada (ex: 2026-07-09)."
+                  description: "A data no formato YYYY-MM-DD. Ex: se hoje é 2026-08-05 e paciente diz 'amanhã', use 2026-08-06."
                 }
               },
               required: ["date"]
             }
           },
           {
-            name: "book_appointment",
-            description: "Registra uma nova consulta confirmada na agenda para este paciente. Chame apenas quando o paciente aceitar explicitamente o horário e data.",
+            name: "send_confirmation_buttons",
+            description: "Envia uma mensagem interativa com botões 'Confirmar' e 'Outro horário' para o paciente. Use OBRIGATORIAMENTE quando o paciente escolher um horário específico — NUNCA peça confirmação em texto livre.",
             parameters: {
               type: "OBJECT",
               properties: {
                 date: {
                   type: "STRING",
-                  description: "A data escolhida pelo paciente no formato YYYY-MM-DD."
+                  description: "Data escolhida no formato YYYY-MM-DD."
                 },
                 hour: {
                   type: "STRING",
-                  description: "O horário escolhido pelo paciente no formato HH:MM (ex: 14:00)."
+                  description: "Hora escolhida no formato HH:MM (ex: 14:00)."
+                },
+                display_date: {
+                  type: "STRING",
+                  description: "Texto legível para exibir ao paciente. Ex: 'amanhã (6/ago) às 14h'."
+                }
+              },
+              required: ["date", "hour", "display_date"]
+            }
+          },
+          {
+            name: "book_appointment",
+            description: "Cria o agendamento confirmado no sistema. Use APENAS quando o paciente clicar no botão de confirmação (id começa com btn_confirm). NUNCA use sem confirmação explícita.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                date: {
+                  type: "STRING",
+                  description: "Data no formato YYYY-MM-DD."
+                },
+                hour: {
+                  type: "STRING",
+                  description: "Hora no formato HH:MM (ex: 14:00)."
                 }
               },
               required: ["date", "hour"]
@@ -447,7 +564,7 @@ Instruções base personalizadas da clínica:
           },
           {
             name: "pause_bot",
-            description: "Pausa o bot de atendimento inteligente para este paciente, encaminhando a conversa para atendimento humano. Chame quando o paciente demonstrar dor forte, urgência odontológica, irritação/descontentamento grave ou solicitar falar com um humano.",
+            description: "Pausa o atendimento automático e transfere para um humano. Use quando o paciente pedir para falar com atendente, demonstrar urgência ou dor forte.",
             parameters: {
               type: "OBJECT",
               properties: {}
@@ -560,8 +677,20 @@ Instruções base personalizadas da clínica:
       const toolName = functionCall.name;
       const toolArgs = functionCall.args;
 
-      // Executar a ação de banco de dados
-      const toolResult = await executeTool(toolName, toolArgs);
+      let toolResult: any;
+      try {
+        toolResult = await executeTool(toolName, toolArgs);
+      } catch (e: any) {
+        // send_confirmation_buttons lança AbortError quando botões são enviados
+        if (e instanceof DOMException && e.message.startsWith("__BUTTONS_SENT__")) {
+          const label = e.message.replace("__BUTTONS_SENT__:", "");
+          return new Response(JSON.stringify({ success: true, action: "buttons_sent", responseText: `Botões de confirmação enviados para ${label}` }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw e;
+      }
 
       // Alimentar o resultado de volta para o Gemini gerar o diálogo final
       contents.push(candidate.content);
@@ -585,7 +714,7 @@ Instruções base personalizadas da clínica:
         generationConfig: {
           temperature: 0.3,
           topP: 0.95,
-          maxOutputTokens: 150
+          maxOutputTokens: 120
         }
       });
 
@@ -595,7 +724,7 @@ Instruções base personalizadas da clínica:
     }
 
     if (!responseText) {
-      responseText = "Desculpe, tive um probleminha para processar sua mensagem agora. Pode tentar novamente em alguns instantes? 🦷";
+      responseText = "Desculpe, tive um probleminha aqui. Pode repetir? 🦷";
     }
 
     // Salvar a mensagem gerada pela IA na tabela chat_messages
@@ -612,17 +741,17 @@ Instruções base personalizadas da clínica:
     }
 
     // 6. Enviar a resposta final de volta via Evolution API
-    const evolutionApiBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://localhost:8080";
+    const evolutionApiBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
     const evolutionApiKey = waConfig.api_key;
-    const sendUrl = `${evolutionApiBase}/message/sendText/${instanceName}`;
+    const sendUrl = `${evolutionApiBase.replace(/\/$/, "")}/message/sendText/${instanceName}`;
 
-    console.log("Enviando resposta via Evolution API para:", sendUrl);
+    console.log("Enviando resposta via Evolution API:", sendUrl, "| Texto:", responseText.substring(0, 80));
 
     const messagePayload = {
-      number: remoteJid,
+      number: senderPhone,
       text: responseText,
       options: {
-        delay: 1000,
+        delay: 800,
         presence: "composing"
       }
     };
