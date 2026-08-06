@@ -21,9 +21,93 @@ serve(async (req) => {
     // Inicializar cliente admin do Supabase
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Ler corpo da requisição do Webhook da Evolution API
+    // Ler corpo da requisição
     const body = await req.json();
-    console.log("Recebido Webhook do WhatsApp:", JSON.stringify(body));
+
+    // Ação auxiliar: Gerar QR Code via Proxy (Evita erros de CORS no navegador)
+    if (body.action === "get_qrcode") {
+      const targetInstance = body.instance || "odonto-crm";
+      const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+      const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "dentalflow_key_secure_123456";
+      const baseUrl = evolutionBase.replace(/\/$/, "");
+
+      try {
+        // 1. Verificar estado atual da instância
+        const stateRes = await fetch(`${baseUrl}/instance/connectionState/${targetInstance}`, {
+          headers: { apikey: evolutionKey }
+        });
+        const stateData = await stateRes.json();
+        const currentState = stateData.instance?.state || stateData.state;
+
+        if (currentState === "open") {
+          return new Response(JSON.stringify({ success: true, state: "CONNECTED", base64: null }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // 2. Se estiver travado em 'connecting', fazer um logout para resetar a sessão presa
+        if (currentState === "connecting") {
+          console.log("[QR Proxy] Instância travada em 'connecting'. Efetuando reset de sessão (logout)...");
+          await fetch(`${baseUrl}/instance/logout/${targetInstance}`, {
+            method: "DELETE",
+            headers: { apikey: evolutionKey }
+          }).catch(() => {});
+          await new Promise(r => setTimeout(r, 1000));
+        }
+
+        // 3. Requisitar QR Code atualizado
+        const connRes = await fetch(`${baseUrl}/instance/connect/${targetInstance}`, {
+          headers: { apikey: evolutionKey }
+        });
+        const connData = await connRes.json();
+
+        const qrBase64 = connData.base64 || connData.qrcode?.base64 || null;
+
+        return new Response(JSON.stringify({
+          success: true,
+          state: connData.instance?.state || currentState || "DISCONNECTED",
+          base64: qrBase64,
+          raw: connData
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // Ação auxiliar: Verificar Status da Conexão
+    if (body.action === "check_status") {
+      const targetInstance = body.instance || "odonto-crm";
+      const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+      const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "dentalflow_key_secure_123456";
+
+      try {
+        const stateRes = await fetch(`${evolutionBase.replace(/\/$/, "")}/instance/connectionState/${targetInstance}`, {
+          headers: { apikey: evolutionKey }
+        });
+        const stateData = await stateRes.json();
+        const state = stateData.instance?.state || stateData.state || "DISCONNECTED";
+
+        return new Response(JSON.stringify({
+          success: true,
+          state: state === "open" ? "CONNECTED" : state
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message, state: "DISCONNECTED" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
 
     // Validar se é um evento de mensagem recebida
     if (body.event !== "messages.upsert") {

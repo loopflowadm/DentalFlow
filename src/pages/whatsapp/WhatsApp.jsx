@@ -239,22 +239,43 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   const handleConnectWhatsApp = async () => {
     setIsConnecting(true);
     setQrCode('');
-    addLog(`Conectando à VPS: ${evolutionUrl}...`);
+    addLog(`Conectando e gerando QR Code para a instância ${evolutionInstance}...`);
     try {
       let qrFound = null;
-      let networkError = null;
 
-      if (evolutionUrl && evolutionInstance && evolutionToken) {
+      // 1. Tentar via Edge Function do Supabase (Zero CORS, reset automático de sessão presa)
+      try {
+        const edgeRes = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+          body: JSON.stringify({ action: 'get_qrcode', instance: evolutionInstance })
+        });
+        if (edgeRes.ok) {
+          const edgeData = await edgeRes.json();
+          if (edgeData.state === 'CONNECTED') {
+            setEvolutionStatus('CONNECTED');
+            setQrCode('');
+            addLog(`WhatsApp da clínica já está 🟢 Conectado e Operacional!`);
+            setIsConnecting(false);
+            return;
+          }
+          if (edgeData.base64) {
+            qrFound = edgeData.base64;
+            addLog(`✅ QR Code obtido via Edge Function com sucesso!`);
+          }
+        }
+      } catch (edgeErr) {
+        addLog(`ℹ️ Edge Proxy indisponível, tentando conexão direta à VPS...`);
+      }
+
+      // 2. Fallback direto à VPS caso o proxy falhe
+      if (!qrFound && evolutionUrl && evolutionInstance && evolutionToken) {
         try {
           const res = await fetch(`${evolutionUrl}/instance/connect/${evolutionInstance}`, {
             headers: { apikey: evolutionToken }
           });
-
           if (res.ok) {
             const data = await res.json();
-            addLog(`✅ Resposta da API recebida. Buscando QR Code...`);
-
-            // Verifica se já está conectado
             if (data.instance?.state === 'open' || data.status === 'CONNECTED') {
               setEvolutionStatus('CONNECTED');
               setQrCode('');
@@ -262,42 +283,23 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
               setIsConnecting(false);
               return;
             }
-
-            // data.code é um código de pareamento em texto (ex: "1@abc,def"), NÃO é base64 de imagem
             qrFound = data.base64 || data.qrcode?.base64 || null;
-
-            if (!qrFound) {
-              addLog(`⚠️ API respondeu mas sem QR Code. Resposta: ${JSON.stringify(data).substring(0, 120)}`);
-            }
-          } else {
-            const errData = await res.json().catch(() => ({}));
-            addLog(`❌ Erro HTTP ${res.status}: ${JSON.stringify(errData.message || errData).substring(0, 120)}`);
           }
-        } catch (e) {
-          networkError = e;
-          if (e.name === 'TypeError' && e.message.includes('fetch')) {
-            addLog(`❌ Falha de rede/CORS: Não foi possível alcançar a VPS em ${evolutionUrl}.`);
-            addLog(`💡 Para gerar o QR Code, abra o arquivo whatsapp-manager.html diretamente no navegador (ele não tem restrição de CORS).`);
-          } else {
-            addLog(`❌ Erro inesperado: ${e.message}`);
-          }
+        } catch (vpsErr) {
+          addLog(`⚠️ Conexão direta bloqueada por CORS no navegador.`);
         }
-      } else {
-        addLog(`⚠️ Preencha a URL da VPS, nome da instância e token antes de gerar o QR.`);
       }
 
       if (qrFound) {
         const formatted = qrFound.startsWith('data:') ? qrFound : `data:image/png;base64,${qrFound}`;
         setQrCode(formatted);
         setEvolutionStatus('DISCONNECTED');
-        addLog(`🟡 QR Code carregado! Abra o WhatsApp no celular da clínica e escaneie.`);
-      } else if (!networkError) {
-        // API respondeu mas sem QR (pode ser que a instância precise ser criada)
-        addLog(`💡 Se não gerou QR, tente primeiro "Criar Instância" no whatsapp-manager.html.`);
+        addLog(`🟡 QR Code gerado! Abra o WhatsApp no celular da clínica e escaneie o código.`);
+      } else {
+        addLog(`❌ Não foi possível obter o QR Code no momento. Verifique a instância.`);
       }
-      // Se houve networkError, não mostrar QR falso — a mensagem de erro já foi logada
     } catch (err) {
-      addLog(`❌ Erro crítico: ${err.message}`);
+      addLog(`❌ Erro crítico ao conectar: ${err.message}`);
     } finally {
       setIsConnecting(false);
     }
