@@ -1339,7 +1339,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
               {activeChat.badge || 'Paciente Clínico'}
             </span>
 
-            <div className={`mt-3 w-full space-y-1 text-[11px] text-left pt-2 border-t ${
+            <div className={`mt-3 w-full space-y-2 text-[11px] text-left pt-2 border-t ${
               isDarkMode ? 'text-slate-400 border-[#1f2c34]/60' : 'text-[#667781] border-[#e9edef]'
             }`}>
               <div className="flex items-center gap-2">
@@ -1349,6 +1349,28 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
               <div className="flex items-center gap-2">
                 <User className="w-3.5 h-3.5 opacity-60" />
                 <span>Paciente desde {activeChat.since || '12/04/2024'}</span>
+              </div>
+
+              {/* Controle de Pausar IA no Paciente Específico */}
+              <div className={`mt-2 pt-2 border-t flex items-center justify-between ${
+                isDarkMode ? 'border-[#1f2c34]' : 'border-slate-200'
+              }`}>
+                <div className="flex items-center gap-1.5">
+                  <Bot className={`w-3.5 h-3.5 ${activeChat.isBotPaused ? 'text-amber-400' : 'text-[#00a884]'}`} />
+                  <span className={`text-[10px] font-bold ${activeChat.isBotPaused ? 'text-amber-400' : isDarkMode ? 'text-slate-300' : 'text-[#111b21]'}`}>
+                    {activeChat.isBotPaused ? 'IA Pausada' : 'Atendimento por IA'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleTogglePauseBot(activeChat.patientId)}
+                  className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border transition-all cursor-pointer ${
+                    activeChat.isBotPaused
+                      ? 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
+                      : 'bg-emerald-500/15 text-[#00a884] border-[#00a884]/30 hover:bg-emerald-500/25'
+                  }`}
+                >
+                  {activeChat.isBotPaused ? 'Retomar IA' : 'Pausar IA'}
+                </button>
               </div>
             </div>
           </div>

@@ -477,27 +477,41 @@ export default function AIModule({ onClose }) {
 
         <div className="flex items-center gap-3">
           <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-xl border transition-all ${
-            isDarkMode ? 'bg-[#182730] border-[#1f2c34] text-slate-300' : 'bg-slate-100 border-slate-200 text-[#111b21]'
+            isActive 
+              ? isDarkMode ? 'bg-[#00a884]/20 border-[#00a884]/40 text-[#00a884]' : 'bg-[#00a884]/10 border-[#00a884]/30 text-[#00a884]' 
+              : isDarkMode ? 'bg-[#182730] border-[#1f2c34] text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
           }`}>
-            <span className="text-[11px] font-bold">Automação Ativa</span>
+            <span className="text-[11px] font-bold">{isActive ? 'Automação Ativa' : 'Automação Desativada'}</span>
             <input 
               type="checkbox" 
               checked={isActive} 
-              onChange={(e) => setIsActive(e.target.checked)}
+              onChange={(e) => {
+                const nextActive = e.target.checked;
+                setIsActive(nextActive);
+                // Salva a alteração do status de automação imediatamente no Supabase e no Context
+                saveAiConfig({
+                  prompt,
+                  personality,
+                  operatingHours: operatingHoursMode,
+                  isActive: nextActive,
+                  autoSilence,
+                  knowledgeBase: kb,
+                  aiProvider,
+                  apiKey
+                }).catch(console.error);
+              }}
               className="w-4 h-4 accent-[#00a884] rounded cursor-pointer"
             />
           </label>
 
-          {activeTab !== 'flow_builder' && (
-            <button 
-              onClick={handleSaveConfigs}
-              disabled={isSaving}
-              className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Salvando...' : 'Salvar'}</span>
-            </button>
-          )}
+          <button 
+            onClick={handleSaveConfigs}
+            disabled={isSaving}
+            className="px-4 py-1.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>{isSaving ? 'Salvando...' : 'Salvar Fluxo'}</span>
+          </button>
         </div>
       </div>
 
