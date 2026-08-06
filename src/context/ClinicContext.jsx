@@ -332,6 +332,15 @@ export function ClinicProvider({ children }) {
       : rawId === 'clinic-sp-01' ? '00000000-0000-0000-0000-000000000003'
       : '00000000-0000-0000-0000-000000000001';
 
+    // UUID falso/mapeado localmente — não tem correspondência real no banco.
+    // Nunca tentar INSERT com esses IDs: o RLS rejeita com 401 pois o JWT não confirma esse clinic_id.
+    const FAKE_UUIDS = [
+      '00000000-0000-0000-0000-000000000001',
+      '00000000-0000-0000-0000-000000000002',
+      '00000000-0000-0000-0000-000000000003',
+    ];
+    const isMappedFakeId = FAKE_UUIDS.includes(clinicId);
+
     try {
       const results = await Promise.allSettled([
         supabase.from('patients').select('*').eq('clinic_id', clinicId),
@@ -359,7 +368,12 @@ export function ClinicProvider({ children }) {
           if (res.value.error) {
             const isFetchErr = res.value.error.message?.includes('fetch') || res.value.error.details?.includes('fetch');
             const isDemoErr = res.value.error.message?.includes('Modo Demo');
-            if (!isFetchErr && !isDemoErr) {
+            // Silencia erros de autorização/RLS (401, 403, código 42501) — esperados quando clinicId local não bate com JWT
+            const isAuthErr = res.value.error.code === '42501' || res.value.error.status === 401 || 
+                              res.value.error.message?.includes('permission denied') || 
+                              res.value.error.message?.includes('Unauthorized') ||
+                              res.value.error.message?.includes('JWT');
+            if (!isFetchErr && !isDemoErr && !isAuthErr) {
               console.warn('[ClinicContext] Aviso ao carregar tabela Supabase:', res.value.error.message || res.value.error);
             }
             return defaultValue;
@@ -369,6 +383,7 @@ export function ClinicProvider({ children }) {
           return defaultValue;
         }
       };
+
 
       const pData = getValue(results[0]);
       const appData = getValue(results[1]);
@@ -395,24 +410,27 @@ export function ClinicProvider({ children }) {
       let finalPatients = pData || [];
       setPatients(finalPatients);
 
-      // Fallback/auto-seeding robusto para Cadeiras
+      // Auto-seeding de Cadeiras
+      // Se o clinicId é um UUID falso/mapeado: usa fallback local DIRETO (sem chamar o Supabase)
+      // Se o clinicId é real mas veio vazio: tenta inserir padrões no banco
       if (chairData.length === 0) {
-        try {
-          const defaultChairs = [
-            { name: 'Cadeira 01', clinic_id: clinicId },
-            { name: 'Cadeira 02', clinic_id: clinicId }
-          ];
-          const { data, error } = await supabase.from('chairs').insert(defaultChairs).select();
-          if (!error && data && data.length > 0) {
-            setChairs(data);
-          } else {
+        const defaultChairs = [
+          { name: 'Cadeira 01', clinic_id: clinicId },
+          { name: 'Cadeira 02', clinic_id: clinicId }
+        ];
+        if (isMappedFakeId) {
+          setChairs(defaultChairs.map((c, idx) => ({ id: `c-${idx + 1}`, ...c })));
+        } else {
+          try {
+            const { data, error } = await supabase.from('chairs').insert(defaultChairs).select();
+            if (!error && data && data.length > 0) {
+              setChairs(data);
+            } else {
+              setChairs(defaultChairs.map((c, idx) => ({ id: `c-${idx + 1}`, ...c })));
+            }
+          } catch {
             setChairs(defaultChairs.map((c, idx) => ({ id: `c-${idx + 1}`, ...c })));
           }
-        } catch (err) {
-          setChairs([
-            { id: 'c-1', name: 'Cadeira 01', clinic_id: clinicId },
-            { id: 'c-2', name: 'Cadeira 02', clinic_id: clinicId }
-          ]);
         }
       } else {
         setChairs(chairData);
@@ -431,25 +449,30 @@ export function ClinicProvider({ children }) {
         setDentists(dentistData);
       }
 
-      // Auto-seeding robusto para Procedimentos
+      // Auto-seeding de Procedimentos
+      // Mesma lógica: pula o INSERT se o clinicId é um UUID falso/mapeado localmente
       let finalProcData = procData;
       if (procData.length === 0) {
-        try {
-          const defaultProcs = [
-            { name: 'Consulta Geral / Avaliação', price: 150.00, category: 'Diagnóstico', color: '#10b981', clinic_id: clinicId },
-            { name: 'Profilaxia (Limpeza)', price: 200.00, category: 'Prevenção', color: '#3b82f6', clinic_id: clinicId },
-            { name: 'Restauração de Resina', price: 250.00, category: 'Dentística', color: '#f59e0b', clinic_id: clinicId },
-            { name: 'Tratamento de Canal (Endodontia)', price: 800.00, category: 'Endodontia', color: '#ef4444', clinic_id: clinicId },
-            { name: 'Exodontia Simples', price: 300.00, category: 'Cirurgia', color: '#ec4899', clinic_id: clinicId }
-          ];
-          const { data, error } = await supabase.from('procedures').insert(defaultProcs).select();
-          if (!error && data && data.length > 0) {
-            finalProcData = data;
-          } else {
+        const defaultProcs = [
+          { name: 'Consulta Geral / Avaliação', price: 150.00, category: 'Diagnóstico', color: '#10b981', clinic_id: clinicId },
+          { name: 'Profilaxia (Limpeza)', price: 200.00, category: 'Prevenção', color: '#3b82f6', clinic_id: clinicId },
+          { name: 'Restauração de Resina', price: 250.00, category: 'Dentística', color: '#f59e0b', clinic_id: clinicId },
+          { name: 'Tratamento de Canal (Endodontia)', price: 800.00, category: 'Endodontia', color: '#ef4444', clinic_id: clinicId },
+          { name: 'Exodontia Simples', price: 300.00, category: 'Cirurgia', color: '#ec4899', clinic_id: clinicId }
+        ];
+        if (isMappedFakeId) {
+          finalProcData = defaultProcs.map((p, idx) => ({ id: `p-${idx + 1}`, ...p }));
+        } else {
+          try {
+            const { data, error } = await supabase.from('procedures').insert(defaultProcs).select();
+            if (!error && data && data.length > 0) {
+              finalProcData = data;
+            } else {
+              finalProcData = defaultProcs.map((p, idx) => ({ id: `p-${idx + 1}`, ...p }));
+            }
+          } catch {
             finalProcData = defaultProcs.map((p, idx) => ({ id: `p-${idx + 1}`, ...p }));
           }
-        } catch (err) {
-          console.warn('Erro ao auto-semear procedimentos:', err);
         }
       }
 

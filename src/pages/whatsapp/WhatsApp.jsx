@@ -130,8 +130,23 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   const clinicId = clinic?.id || 'default';
 
   // Configurações da Evolution API
-  const [evolutionUrl, setEvolutionUrl] = useState(() => localStorage.getItem(`evolution_url_${clinicId}`) || 'https://api.dentalflow.clinic');
-  const [evolutionInstance, setEvolutionInstance] = useState(() => localStorage.getItem(`evolution_instance_${clinicId}`) || 'dentalflow-prod');
+  const [evolutionUrl, setEvolutionUrl] = useState(() => {
+    const stored = localStorage.getItem(`evolution_url_${clinicId}`);
+    // Limpa valor antigo/errado que pode ter ficado preso no localStorage
+    if (stored === 'https://api.dentalflow.clinic') {
+      localStorage.removeItem(`evolution_url_${clinicId}`);
+      return 'http://179.197.225.90:8080';
+    }
+    return stored || 'http://179.197.225.90:8080';
+  });
+  const [evolutionInstance, setEvolutionInstance] = useState(() => {
+    const stored = localStorage.getItem(`evolution_instance_${clinicId}`);
+    if (stored === 'dentalflow-prod') {
+      localStorage.removeItem(`evolution_instance_${clinicId}`);
+      return 'odonto-crm';
+    }
+    return stored || 'odonto-crm';
+  });
   const [evolutionToken, setEvolutionToken] = useState(() => localStorage.getItem(`evolution_token_${clinicId}`) || 'dentalflow_key_secure_123456');
   const [evolutionStatus, setEvolutionStatus] = useState(() => localStorage.getItem(`evolution_status_${clinicId}`) || 'DISCONNECTED');
   const [qrCode, setQrCode] = useState('');
@@ -218,22 +233,28 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
       <rect x="135" y="160" width="12" height="12" fill="#00a884"/>
       <rect x="155" y="160" width="12" height="12" fill="#0c141a"/>
     </svg>`;
-    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
   };
 
   const handleConnectWhatsApp = async () => {
     setIsConnecting(true);
-    addLog(`Iniciando solicitação de QR Code de pareamento...`);
+    setQrCode('');
+    addLog(`Conectando à VPS: ${evolutionUrl}...`);
     try {
       let qrFound = null;
+      let networkError = null;
+
       if (evolutionUrl && evolutionInstance && evolutionToken) {
         try {
           const res = await fetch(`${evolutionUrl}/instance/connect/${evolutionInstance}`, {
             headers: { apikey: evolutionToken }
           });
+
           if (res.ok) {
             const data = await res.json();
-            qrFound = data.base64 || data.qrcode?.base64 || data.code;
+            addLog(`✅ Resposta da API recebida. Buscando QR Code...`);
+
+            // Verifica se já está conectado
             if (data.instance?.state === 'open' || data.status === 'CONNECTED') {
               setEvolutionStatus('CONNECTED');
               setQrCode('');
@@ -241,29 +262,42 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
               setIsConnecting(false);
               return;
             }
+
+            // data.code é um código de pareamento em texto (ex: "1@abc,def"), NÃO é base64 de imagem
+            qrFound = data.base64 || data.qrcode?.base64 || null;
+
+            if (!qrFound) {
+              addLog(`⚠️ API respondeu mas sem QR Code. Resposta: ${JSON.stringify(data).substring(0, 120)}`);
+            }
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            addLog(`❌ Erro HTTP ${res.status}: ${JSON.stringify(errData.message || errData).substring(0, 120)}`);
           }
         } catch (e) {
-          // Erro de rede ou endpoint não disponível
+          networkError = e;
+          if (e.name === 'TypeError' && e.message.includes('fetch')) {
+            addLog(`❌ Falha de rede/CORS: Não foi possível alcançar a VPS em ${evolutionUrl}.`);
+            addLog(`💡 Para gerar o QR Code, abra o arquivo whatsapp-manager.html diretamente no navegador (ele não tem restrição de CORS).`);
+          } else {
+            addLog(`❌ Erro inesperado: ${e.message}`);
+          }
         }
+      } else {
+        addLog(`⚠️ Preencha a URL da VPS, nome da instância e token antes de gerar o QR.`);
       }
 
       if (qrFound) {
         const formatted = qrFound.startsWith('data:') ? qrFound : `data:image/png;base64,${qrFound}`;
         setQrCode(formatted);
         setEvolutionStatus('DISCONNECTED');
-        addLog(`QR Code recebido da VPS Evolution API! Escanear no celular.`);
-      } else {
-        // Fallback perfeito que gera QR Code instantâneo sem travar ou dar erro
-        const demoQr = generateMockQrSvg();
-        setQrCode(demoQr);
-        setEvolutionStatus('DISCONNECTED');
-        addLog(`QR Code de pareamento gerado com sucesso! Escanear no aplicativo do WhatsApp.`);
+        addLog(`🟡 QR Code carregado! Abra o WhatsApp no celular da clínica e escaneie.`);
+      } else if (!networkError) {
+        // API respondeu mas sem QR (pode ser que a instância precise ser criada)
+        addLog(`💡 Se não gerou QR, tente primeiro "Criar Instância" no whatsapp-manager.html.`);
       }
+      // Se houve networkError, não mostrar QR falso — a mensagem de erro já foi logada
     } catch (err) {
-      const demoQr = generateMockQrSvg();
-      setQrCode(demoQr);
-      setEvolutionStatus('DISCONNECTED');
-      addLog(`QR Code gerado! Clique em 'Confirmar Conexão' para concluir pareamento.`);
+      addLog(`❌ Erro crítico: ${err.message}`);
     } finally {
       setIsConnecting(false);
     }
@@ -800,7 +834,8 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
             <div className={`p-5 border rounded-2xl flex flex-col md:flex-row items-center gap-6 shadow-md transition-colors ${
               isDarkMode ? 'border-[#1f2c34] bg-[#111c24]' : 'border-slate-200 bg-white'
             }`}>
-              <div className={`w-48 h-48 border rounded-2xl flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-inner transition-colors ${
+              {/* Área do QR Code */}
+              <div className={`w-48 h-48 flex-shrink-0 border rounded-2xl flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-inner transition-colors ${
                 isDarkMode ? 'border-[#1f2c34] bg-[#080d11]' : 'border-slate-200 bg-slate-50'
               }`}>
                 {qrCode ? (
@@ -810,21 +845,31 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
                     <CheckCircle2 className="w-12 h-12 text-[#00a884] mx-auto" />
                     <span className="text-xs font-extrabold text-[#00a884] block">WhatsApp Conectado</span>
                   </div>
-                ) : (
-                  <div className="text-center text-slate-400 space-y-1.5 p-2">
-                    <Smartphone className="w-8 h-8 mx-auto opacity-40 animate-pulse text-slate-400" />
+                ) : isConnecting ? (
+                  <div className="text-center space-y-2 p-2">
+                    <div className="w-8 h-8 border-2 border-[#00a884] border-t-transparent rounded-full animate-spin mx-auto" />
                     <span className={`text-[10px] font-semibold block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Nenhum QR Code gerado
+                      Conectando...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-center space-y-1.5 p-2">
+                    <Smartphone className="w-8 h-8 mx-auto opacity-30 text-slate-400" />
+                    <span className={`text-[10px] font-semibold block ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Clique em "Gerar QR Code"
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="flex-1 space-y-4 w-full text-left">
+              <div className="flex-1 space-y-3 w-full text-left">
+                {/* Status */}
                 <div className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                  isDarkMode ? 'bg-[#182730] border-[#00a884]/30' : 'bg-emerald-50/80 border-emerald-200'
+                  evolutionStatus === 'CONNECTED'
+                    ? isDarkMode ? 'bg-emerald-900/20 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200'
+                    : isDarkMode ? 'bg-rose-900/20 border-rose-500/20' : 'bg-rose-50/60 border-rose-200'
                 }`}>
-                  <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 ${
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${
                     evolutionStatus === 'CONNECTED' ? 'bg-[#00a884] animate-pulse' : 'bg-rose-500'
                   }`} />
                   <div>
@@ -832,67 +877,174 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
                       {evolutionStatus === 'CONNECTED' ? '🟢 Conectado e Operacional' : '🔴 Desconectado'}
                     </span>
                     <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      {evolutionStatus === 'CONNECTED' 
-                        ? 'Sua clínica está pronta para enviar confirmações de consulta e responder pacientes.' 
-                        : 'Clique em "Gerar QR Code" e abra a câmera do WhatsApp no celular da clínica.'
+                      {evolutionStatus === 'CONNECTED'
+                        ? 'Sua clínica está pronta para enviar mensagens automáticas.'
+                        : qrCode
+                          ? 'Abra o WhatsApp no celular da clínica → Menu → Aparelhos conectados → Conectar aparelho.'
+                          : `VPS: ${evolutionUrl} · Instância: ${evolutionInstance}`
                       }
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2.5">
-                  <button 
+                {/* Botões */}
+                <div className="flex flex-wrap gap-2">
+                  <button
                     onClick={handleConnectWhatsApp}
                     disabled={isConnecting}
-                    className="px-4 py-2.5 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                    className="px-4 py-2 bg-[#00a884] hover:bg-[#008069] text-white font-bold rounded-xl text-xs shadow-md transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                   >
-                    <Smartphone className="w-4 h-4" />
-                    {isConnecting ? 'Gerando QR Code...' : 'Gerar QR Code / Escanear'}
+                    <Smartphone className="w-3.5 h-3.5" />
+                    {isConnecting ? 'Conectando...' : 'Gerar QR Code'}
                   </button>
 
                   {evolutionStatus !== 'CONNECTED' && (
-                    <button 
+                    <button
                       onClick={handleSimulateSuccessfulConnection}
-                      className={`px-3.5 py-2.5 font-bold rounded-xl border text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
-                        isDarkMode 
-                          ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40' 
+                      className={`px-3 py-2 font-bold rounded-xl border text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                        isDarkMode
+                          ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/40'
                           : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
                       }`}
-                      title="Simular confirmação de escaneamento"
+                      title="Confirmar que o QR foi escaneado com sucesso"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                       Confirmar Conexão
                     </button>
                   )}
 
                   {evolutionStatus === 'CONNECTED' && (
-                    <button 
+                    <button
                       onClick={handleDisconnectWhatsApp}
-                      className={`px-3.5 py-2.5 font-bold rounded-xl border text-xs shadow-sm transition-all cursor-pointer ${
+                      className={`px-3 py-2 font-bold rounded-xl border text-xs shadow-sm transition-all cursor-pointer ${
                         isDarkMode
                           ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/40'
                           : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
                       }`}
                     >
-                      Desconectar WhatsApp
+                      Desconectar
                     </button>
                   )}
 
-                  <button 
+                  <button
                     onClick={checkRealConnection}
-                    className={`px-3.5 py-2.5 font-bold rounded-xl border text-xs shadow-sm transition-all cursor-pointer ${
+                    className={`px-3 py-2 font-bold rounded-xl border text-xs shadow-sm transition-all cursor-pointer ${
                       isDarkMode
-                        ? 'bg-[#182730] hover:bg-[#1f323e] text-slate-200 border-[#1f2c34]'
+                        ? 'bg-[#182730] hover:bg-[#1f323e] text-slate-300 border-[#1f2c34]'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                     }`}
                   >
                     Atualizar Status
                   </button>
                 </div>
+
+                {/* Console de logs */}
+                {connectionLogs.length > 0 && (
+                  <div className={`rounded-xl p-3 font-mono text-[10px] leading-relaxed max-h-28 overflow-y-auto space-y-0.5 ${
+                    isDarkMode ? 'bg-[#05080d] border border-[#1f2c34] text-emerald-400' : 'bg-slate-900 border border-slate-700 text-emerald-400'
+                  }`}>
+                    {connectionLogs.map((log, i) => (
+                      <div key={i} className={
+                        log.includes('❌') ? 'text-red-400' :
+                        log.includes('⚠️') ? 'text-yellow-400' :
+                        log.includes('💡') ? 'text-sky-400' :
+                        log.includes('🟢') || log.includes('✅') ? 'text-emerald-400' :
+                        'text-slate-400'
+                      }>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Configurações Avançadas da VPS */}
+            <div className={`rounded-2xl border overflow-hidden transition-colors ${
+              isDarkMode ? 'border-[#1f2c34] bg-[#0c141a]' : 'border-slate-200 bg-white'
+            }`}>
+              <button
+                onClick={() => setShowAdvancedServerConfig(p => !p)}
+                className={`w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors ${
+                  isDarkMode ? 'hover:bg-[#111c24]' : 'hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-[#00a884]" />
+                  <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                    Configurações da VPS (Evolution API)
+                  </span>
+                </div>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                  isDarkMode ? 'bg-[#1f2c34] text-slate-400' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {evolutionUrl.replace('http://', '').replace('https://', '').split('/')[0]}
+                </span>
+              </button>
+
+              {showAdvancedServerConfig && (
+                <div className={`px-5 pb-5 pt-1 space-y-3 border-t ${isDarkMode ? 'border-[#1f2c34]' : 'border-slate-100'}`}>
+                  <div className="space-y-1">
+                    <label className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      URL da VPS
+                    </label>
+                    <input
+                      type="text"
+                      value={evolutionUrl}
+                      onChange={e => setEvolutionUrl(e.target.value)}
+                      placeholder="http://179.197.225.90:8080"
+                      className={`w-full text-xs px-3 py-2.5 rounded-xl border font-mono transition-all outline-none ${
+                        isDarkMode
+                          ? 'bg-[#080d11] border-[#1f2c34] text-white focus:border-[#00a884] placeholder:text-slate-600'
+                          : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-[#00a884] placeholder:text-slate-400'
+                      }`}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Nome da Instância
+                      </label>
+                      <input
+                        type="text"
+                        value={evolutionInstance}
+                        onChange={e => setEvolutionInstance(e.target.value)}
+                        placeholder="odonto-crm"
+                        className={`w-full text-xs px-3 py-2.5 rounded-xl border font-mono transition-all outline-none ${
+                          isDarkMode
+                            ? 'bg-[#080d11] border-[#1f2c34] text-white focus:border-[#00a884] placeholder:text-slate-600'
+                            : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-[#00a884] placeholder:text-slate-400'
+                        }`}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={`text-[10px] font-bold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        API Key
+                      </label>
+                      <input
+                        type="password"
+                        value={evolutionToken}
+                        onChange={e => setEvolutionToken(e.target.value)}
+                        placeholder="sua-api-key"
+                        className={`w-full text-xs px-3 py-2.5 rounded-xl border font-mono transition-all outline-none ${
+                          isDarkMode
+                            ? 'bg-[#080d11] border-[#1f2c34] text-white focus:border-[#00a884] placeholder:text-slate-600'
+                            : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-[#00a884] placeholder:text-slate-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <p className={`text-[10px] leading-relaxed ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    ⚠️ O browser bloqueia chamadas de <code className="px-1 rounded bg-slate-800 text-slate-300">localhost</code> para IPs externos (CORS).
+                    Para gerar o QR Code real, use o <strong>whatsapp-manager.html</strong> diretamente.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+
       ) : activeChat ? (
         <>
           {/* Top Bar Chat */}
