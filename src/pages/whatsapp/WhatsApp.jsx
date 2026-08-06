@@ -102,6 +102,26 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   const [isRecording, setIsRecording] = useState(false);
   const [showMobileList, setShowMobileList] = useState(true);
 
+  // Auto-verifica o status real ao abrir o painel de conexão
+  useEffect(() => {
+    if (showEvolutionSettings) {
+      // Chama silenciosamente para atualizar o status sem logs
+      fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+        body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.state === 'CONNECTED') {
+            setEvolutionStatus('CONNECTED');
+            setQrCode('');
+          }
+        })
+        .catch(() => {});
+    }
+  }, [showEvolutionSettings]);
+
   // ESTADOS DOS MODAIS DAS AÇÕES RÁPIDAS NO CHAT
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -162,23 +182,52 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
 
   const addLog = (msg) => setConnectionLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
-  const checkRealConnection = async () => {
-    if (!evolutionUrl || !evolutionInstance || !evolutionToken) return;
+  // Verifica conexão via Edge Function (sem CORS) — usado no polling e no botão "Atualizar Status"
+  const checkRealConnection = async (silent = false) => {
     try {
-      const response = await fetch(`${evolutionUrl}/instance/connectionState/${evolutionInstance}`, {
-        headers: { apikey: evolutionToken }
+      const res = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+        body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
       });
-      const data = await response.json();
-      if (response.ok && data.instance?.state === 'open') {
+      const data = await res.json();
+      if (data.state === 'CONNECTED') {
         setEvolutionStatus('CONNECTED');
         setQrCode('');
+        if (!silent) addLog('🟢 WhatsApp está Conectado e Operacional!');
       } else {
-        setEvolutionStatus('DISCONNECTED');
+        if (!silent) {
+          setEvolutionStatus('DISCONNECTED');
+          addLog(`Status atual: ${data.state || 'Desconectado'}`);
+        }
       }
     } catch (e) {
-      setEvolutionStatus('DISCONNECTED');
+      if (!silent) setEvolutionStatus('DISCONNECTED');
     }
   };
+
+  // Polling automático: enquanto o QR Code estiver visível, verifica a cada 3s se o usuário escaneou
+  useEffect(() => {
+    if (!qrCode) return; // Só faz polling quando QR está na tela
+    addLog('👀 Aguardando leitura do QR Code... (verificando a cada 3s)');
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+          body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
+        });
+        const data = await res.json();
+        if (data.state === 'CONNECTED') {
+          setEvolutionStatus('CONNECTED');
+          setQrCode('');
+          addLog('🎉 WhatsApp conectado com sucesso! QR Code escaneado.');
+          clearInterval(interval);
+        }
+      } catch (_) {}
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [qrCode, evolutionInstance]);
 
   const generateMockQrSvg = () => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
