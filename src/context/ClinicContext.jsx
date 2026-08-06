@@ -267,7 +267,7 @@ export function ClinicProvider({ children }) {
         });
       }
     } catch (err) {
-      console.error('Erro ao carregar mensagens do Supabase:', err);
+      console.error('Erro ao carregar mensagens do Supabase:');
     }
 
     setWhatsappChats(defaultChats);
@@ -287,7 +287,7 @@ export function ClinicProvider({ children }) {
           table: 'chat_messages',
           filter: `clinic_id=eq.${clinic.id}`
         },
-        (payload) => {
+        async (payload) => {
           const newMsg = payload.new;
           if (!newMsg) return;
 
@@ -299,20 +299,59 @@ export function ClinicProvider({ children }) {
             type: 'text'
           };
 
-          setWhatsappChats(prev => prev.map(chat => {
-            if (chat.patientId === newMsg.patient_id) {
-              if (chat.messages.some(m => m.id === newMsg.id)) return chat;
-              return {
-                ...chat,
-                unreadCount: newMsg.sender === 'PATIENT' ? (chat.unreadCount || 0) + 1 : chat.unreadCount,
-                messages: [...chat.messages, formattedMsg]
-              };
+          setWhatsappChats(prev => {
+            const existingChat = prev.find(c => c.patientId === newMsg.patient_id);
+
+            if (existingChat) {
+              // Paciente já existe na lista — só adiciona a mensagem
+              if (existingChat.messages.some(m => m.id === newMsg.id)) return prev;
+              return prev.map(chat => {
+                if (chat.patientId !== newMsg.patient_id) return chat;
+                return {
+                  ...chat,
+                  status: 'online',
+                  unreadCount: newMsg.sender === 'PATIENT' ? (chat.unreadCount || 0) + 1 : chat.unreadCount,
+                  messages: [...chat.messages, formattedMsg]
+                };
+              });
+            } else {
+              // Paciente novo — busca dados e adiciona chat em tempo real
+              // Fazemos o fetch assíncrono e depois atualizamos o estado
+              supabase
+                .from('patients')
+                .select('id, name, phone, created_at')
+                .eq('id', newMsg.patient_id)
+                .single()
+                .then(({ data: pat }) => {
+                  if (!pat) return;
+                  setWhatsappChats(prev2 => {
+                    // Checa novamente para evitar duplicata
+                    if (prev2.some(c => c.patientId === pat.id)) return prev2;
+                    const newChat = {
+                      patientId: pat.id,
+                      name: pat.name || 'Novo Contato',
+                      phone: pat.phone || '',
+                      status: 'online',
+                      unreadCount: newMsg.sender === 'PATIENT' ? 1 : 0,
+                      tags: ['Paciente'],
+                      notes: '',
+                      isBotPaused: false,
+                      since: pat.created_at ? new Date(pat.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+                      type: 'Paciente',
+                      badge: 'Paciente Clínico',
+                      messages: [formattedMsg]
+                    };
+                    return [newChat, ...prev2];
+                  });
+                });
+              return prev; // retorna sem mudança por ora
             }
-            return chat;
-          }));
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Realtime] Status da assinatura chat_messages:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
