@@ -593,7 +593,7 @@ export function ClinicProvider({ children }) {
       });
       setInstallments(formattedInstallments);
 
-      const cachedAiConfig = mockDb.get('odonto_crm_ai_config_' + clinicId);
+      const cachedAiConfig = mockDb.get('odonto_crm_ai_config_' + clinicId, {});
 
       setAiConfig({
         prompt: waData?.agent_prompt || cachedAiConfig?.prompt || '',

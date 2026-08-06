@@ -102,10 +102,14 @@ const initialWhatsApp = [
 ];
 
 // Helper para ler/escrever LocalStorage
-const get = (key, fallback) => {
+const get = (key, fallback = null) => {
   const data = localStorage.getItem(key);
-  if (!data) {
-    localStorage.setItem(key, JSON.stringify(fallback));
+  if (!data || data === 'undefined' || data === 'null') {
+    if (fallback !== undefined && fallback !== null) {
+      localStorage.setItem(key, JSON.stringify(fallback));
+    } else {
+      localStorage.removeItem(key);
+    }
     return fallback;
   }
   let parsed;
