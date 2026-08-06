@@ -618,36 +618,63 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
       });
     }
 
-    const geminiSystemPrompt = `${systemPrompt}\n\nIMPORTANTE: Você NÃO possui suporte a ferramentas de execução de código Python (code execution). Não tente escrever código, programar ou chamar funções como print(). Suas únicas ferramentas são as declaradas na estrutura 'tools' (get_available_slots, book_appointment, pause_bot).`;
+    const geminiSystemPrompt = `${systemPrompt}\n\nIMPORTANTE: Você NÃO possui suporte a execução de código Python. Suas únicas ferramentas são: get_available_slots, send_confirmation_buttons, book_appointment, pause_bot.`;
 
+    // Usar exclusivamente gemini-flash-latest (modelo com cota ativa)
     const candidateUrls = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiApiKey}`
     ];
 
     const fetchGeminiResilient = async (payload: any) => {
       let lastErr = "";
       for (const url of candidateUrls) {
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          try {
-            const res = await fetch(url, {
+        // Timeout de 8s por chamada para evitar travamento
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          const resJson = await res.json();
+
+          if (res.ok && !resJson.error) {
+            console.log(`[Gemini] Sucesso com: ${url.split('/models/')[1]?.split(':')[0]}`);
+            return resJson;
+          }
+
+          lastErr = resJson.error?.message || res.statusText;
+          console.warn(`[Gemini Fallback] ${url.split('/models/')[1]?.split(':')[0]}: ${lastErr.substring(0, 100)}`);
+
+          // Se o modelo não existe (404) ou não é suportado, não tente de novo — vá para o próximo
+          if (res.status === 404 || lastErr.includes("not found") || lastErr.includes("not supported")) {
+            continue;
+          }
+
+          // Para erro de quota, esperar antes de tentar novamente
+          if (res.status === 429 || lastErr.includes("quota")) {
+            await new Promise(r => setTimeout(r, 2000));
+            // Tentar mais uma vez o mesmo modelo após aguardar
+            const retry = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
             });
-            const resJson = await res.json();
-            if (res.ok && !resJson.error) {
-              return resJson;
-            }
-            lastErr = resJson.error?.message || res.statusText;
-            console.warn(`[Gemini Fallback] URL tentativa ${attempt}: ${lastErr}`);
-            if (resJson.error?.code === 429 || lastErr.includes("quota")) {
-              await new Promise(r => setTimeout(r, 2000));
-            }
-          } catch (e: any) {
-            lastErr = e.message;
+            const retryJson = await retry.json();
+            if (retry.ok && !retryJson.error) return retryJson;
+            lastErr = retryJson.error?.message || "Quota retry failed";
           }
+        } catch (e: any) {
+          clearTimeout(timeoutId);
+          if (e.name === 'AbortError') {
+            lastErr = `Timeout (8s) na URL ${url.split('/models/')[1]?.split(':')[0]}`;
+            console.warn(`[Gemini] ${lastErr}`);
+            continue; // Tenta próximo modelo
+          }
+          lastErr = e.message;
         }
       }
       throw new Error(`Erro na API Gemini: ${lastErr}`);
@@ -695,7 +722,7 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
       // Alimentar o resultado de volta para o Gemini gerar o diálogo final
       contents.push(candidate.content);
       contents.push({
-        role: "function",
+        role: "user",
         parts: [{
           functionResponse: {
             name: toolName,
