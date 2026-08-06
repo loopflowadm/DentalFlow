@@ -504,9 +504,9 @@ Instruções base personalizadas da clínica:
     const geminiSystemPrompt = `${systemPrompt}\n\nIMPORTANTE: Você NÃO possui suporte a ferramentas de execução de código Python (code execution). Não tente escrever código, programar ou chamar funções como print(). Suas únicas ferramentas são as declaradas na estrutura 'tools' (get_available_slots, book_appointment, pause_bot).`;
 
     const candidateUrls = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`
     ];
 
     const fetchGeminiResilient = async (payload: any) => {
