@@ -347,7 +347,17 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
                         if (onOpenWhatsApp) onOpenWhatsApp();
                         setShowNotifications(false);
                       }}
-                      className={`p-2.5 rounded-xl transition-all border text-xs text-left relative cursor-pointer hover:border-[#00a884]/50 active:scale-[0.99] ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          if (onOpenWhatsApp) onOpenWhatsApp();
+                          setShowNotifications(false);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Abrir notificação: ${n.title || ''}`}
+                      className={`p-2.5 rounded-xl transition-all border text-xs text-left relative cursor-pointer hover:border-[#00a884]/50 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 ${
                         n.read 
                           ? 'bg-transparent border-transparent text-slate-500 dark:text-slate-400' 
                           : 'bg-emerald-500/10 border-emerald-500/20 text-slate-800 dark:text-slate-200'

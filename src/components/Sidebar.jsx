@@ -200,8 +200,17 @@ export default function Sidebar({
           {/* Logo compacta - DentalFlow Symbol com Alinhamento h-16 (32px center) */}
           <div className="h-16 w-full flex items-center justify-center border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white dark:bg-black/20 rounded-t-[24px]">
             <div 
-              className="h-12 w-12 flex items-center justify-center cursor-pointer group relative" 
+              className="h-12 w-12 flex items-center justify-center cursor-pointer group relative rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#196BFB]" 
               onClick={() => setActiveTab('dashboard')}
+              role="button"
+              tabIndex={0}
+              aria-label="Ir para o Dashboard"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveTab('dashboard');
+                }
+              }}
             >
               <Logo collapsed={true} className="h-10 w-10 text-slate-800 dark:text-white transition-all duration-300 transform group-hover:scale-110 drop-shadow-[0_2px_10px_rgba(25,107,251,0.25)]" />
               {/* Tooltip da Logo */}
@@ -736,7 +745,19 @@ export function SubSidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-3 rounded-xl cursor-pointer relative transition-all border group text-left ${
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedLead(lead);
+                            if (window.innerWidth < 768) {
+                              setCollapsed(true);
+                            }
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Selecionar lead ${lead.name || ''}`}
+                        className={`p-3 rounded-xl cursor-pointer relative transition-all border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 ${
                           isActive 
                             ? 'bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/40 text-blue-600 dark:text-blue-400 shadow-xs font-extrabold ring-1 ring-blue-500/20' 
                             : 'bg-white dark:bg-[#0D0D0D] hover:bg-slate-100 dark:hover:bg-[#18181B] border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 shadow-2xs hover:border-slate-300 dark:hover:border-white/20'
@@ -882,7 +903,19 @@ export function SubSidebar({
                             setCollapsed(true);
                           }
                         }}
-                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2.5 text-left border ${statusInfo.bgClass} ${
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedPatient(patient);
+                            if (window.innerWidth < 768) {
+                              setCollapsed(true);
+                            }
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Selecionar paciente ${patient.name || ''}`}
+                        className={`p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2.5 text-left border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 ${statusInfo.bgClass} ${
                           isActive 
                             ? `${statusInfo.borderClass} ring-2 ring-blue-500/40 shadow-sm font-extrabold` 
                             : `${statusInfo.borderClass} opacity-90 hover:opacity-100`

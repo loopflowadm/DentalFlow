@@ -1663,7 +1663,7 @@ export default function Configuracoes() {
                   placeholder="ex: Dr. Carlos Souza"
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -1675,7 +1675,7 @@ export default function Configuracoes() {
                   placeholder="carlos@sorriso.com"
                   value={newStaffEmail}
                   onChange={(e) => setNewStaffEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -1684,7 +1684,7 @@ export default function Configuracoes() {
                 <select
                   value={newStaffRole}
                   onChange={(e) => setNewStaffRole(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="DOCTOR">Dentista (DOCTOR)</option>
                   <option value="RECEPTIONIST">Secretária (RECEPTIONIST)</option>
@@ -1727,7 +1727,7 @@ export default function Configuracoes() {
                   placeholder="ex: Canal Endodôntico Molar"
                   value={newProcName}
                   onChange={(e) => setNewProcName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -1740,7 +1740,7 @@ export default function Configuracoes() {
                   placeholder="ex: 450.00"
                   value={newProcPrice}
                   onChange={(e) => setNewProcPrice(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -1749,7 +1749,7 @@ export default function Configuracoes() {
                 <select
                   value={newProcCategory}
                   onChange={(e) => setNewProcCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="CLINICAL">Clínico Geral (CLINICAL)</option>
                   <option value="SURGERY">Cirurgia (SURGERY)</option>
@@ -1764,7 +1764,7 @@ export default function Configuracoes() {
                 <select
                   value={newProcColor}
                   onChange={(e) => setNewProcColor(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="#a78bfa">Roxo (#a78bfa)</option>
                   <option value="#f87171">Vermelho (#f87171)</option>
@@ -1818,7 +1818,7 @@ export default function Configuracoes() {
                   placeholder="URL da API (ex: https://api.whatsapp.com)"
                   value={evolutionUrl}
                   onChange={(e) => setEvolutionUrl(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none focus:border-secondary"
                 />
                 <button
                   type="button"
@@ -1896,7 +1896,7 @@ export default function Configuracoes() {
                 <input
                   type="password"
                   placeholder="Chave Secreta Stripe (sk_live_...)"
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none focus:border-secondary font-mono text-slate-400"
                 />
                 <button
                   type="button"
@@ -1929,7 +1929,7 @@ export default function Configuracoes() {
                 <input
                   type="url"
                   placeholder="URL do Webhook (https://n8n.suaclinica.com/webhook/...)"
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none focus:border-secondary"
                 />
                 <button
                   type="button"
@@ -1962,7 +1962,7 @@ export default function Configuracoes() {
                 <input
                   type="password"
                   placeholder="Chave de API (AIzaSy... ou sk-...)"
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none focus:border-secondary font-mono text-slate-400"
                 />
                 <button
                   type="button"
@@ -1999,7 +1999,7 @@ export default function Configuracoes() {
                   placeholder="ex: Bradesco Dental"
                   value={newInsuranceName}
                   onChange={(e) => setNewInsuranceName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -2013,7 +2013,7 @@ export default function Configuracoes() {
                   placeholder="ex: 15"
                   value={newInsuranceDiscount}
                   onChange={(e) => setNewInsuranceDiscount(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 

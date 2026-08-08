@@ -1498,7 +1498,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
                     setIsEditingNotes(false);
                   }
                 }}
-                className="w-full h-20 bg-transparent text-slate-300 text-xs focus:outline-none resize-none font-normal leading-relaxed"
+                className={`w-full h-20 bg-transparent text-xs focus:outline-none resize-none font-normal leading-relaxed ${isDarkMode ? 'text-slate-200' : 'text-[#111b21]'}`}
               />
             </div>
           </div>

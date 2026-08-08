@@ -228,7 +228,7 @@ export default function FlowInspectorModal({ isOpen, onClose }) {
                 readOnly
                 rows={16}
                 value={compiledPrompt}
-                className={`w-full border rounded-2xl p-4 font-mono text-xs leading-relaxed focus:outline-none scrollbar-thin ${
+                className={`w-full border rounded-2xl p-4 font-mono text-xs leading-relaxed focus:outline-none focus:border-purple-500 scrollbar-thin ${
                   isDarkMode ? 'bg-[#0b141a] border-purple-900/40 text-purple-100' : 'bg-slate-50 border-purple-200 text-purple-950'
                 }`}
               />

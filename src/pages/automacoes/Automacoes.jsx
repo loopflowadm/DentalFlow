@@ -213,7 +213,7 @@ export default function Automacoes() {
                 placeholder="ex: Lembrete de Falta - WhatsApp"
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
               />
             </div>
 

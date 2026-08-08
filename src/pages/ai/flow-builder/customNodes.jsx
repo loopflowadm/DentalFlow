@@ -144,7 +144,7 @@ export const MenuNode = memo(({ id, data, isSelected }) => {
                 type="text"
                 value={opt}
                 onChange={(e) => data.onEditOption && data.onEditOption(id, idx, e.target.value)}
-                className={`w-full bg-transparent focus:outline-none text-xs font-medium ${
+                className={`w-full bg-transparent focus:outline-none focus:ring-1 focus:ring-[#00a884] rounded-md text-xs font-medium ${
                   isDark ? 'text-slate-200' : 'text-slate-800'
                 }`}
               />

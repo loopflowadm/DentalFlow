@@ -399,7 +399,7 @@ export default function Financeiro() {
               <select
                 value={selectedDentist}
                 onChange={(e) => setSelectedDentist(e.target.value)}
-                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-bold flex-1"
+                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:border-secondary cursor-pointer font-bold flex-1"
               >
                 <option value="">Todos os Dentistas</option>
                 {dentistOptions.map(opt => (
@@ -416,7 +416,7 @@ export default function Financeiro() {
               <select
                 value={commissionReleaseRule}
                 onChange={(e) => setCommissionReleaseRule(e.target.value)}
-                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-emerald-600 dark:text-emerald-400 focus:outline-none cursor-pointer font-extrabold"
+                className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-emerald-600 dark:text-emerald-400 focus:outline-none focus:border-secondary cursor-pointer font-extrabold"
               >
                 <option value="CAIXA">Caixa / Liquidação (Após quitação do paciente)</option>
                 <option value="FATURAMENTO">Faturamento / Realizado (Conclusão da consulta)</option>
@@ -633,7 +633,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de luvas e agulhas"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -646,7 +646,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                   />
                 </div>
                 <div>
@@ -654,7 +654,7 @@ export default function Financeiro() {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                   >
                     <option value="INCOME">Receita (Entrada)</option>
                     <option value="EXPENSE">Despesa (Saída)</option>
@@ -667,7 +667,7 @@ export default function Financeiro() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 >
                   <option value="Tratamentos">Tratamentos</option>
                   <option value="Salários e Comissões">Salários e Comissões</option>
@@ -810,7 +810,7 @@ export default function Financeiro() {
                   placeholder="ex: Dental Cremer"
                   value={supName}
                   onChange={(e) => setSupName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
               <div>
@@ -820,7 +820,7 @@ export default function Financeiro() {
                   placeholder="00.000.000/0000-00"
                   value={supCnpj}
                   onChange={(e) => setSupCnpj(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
               <div>
@@ -830,7 +830,7 @@ export default function Financeiro() {
                   placeholder="0800 727 7527"
                   value={supPhone}
                   onChange={(e) => setSupPhone(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
               <div>
@@ -840,7 +840,7 @@ export default function Financeiro() {
                   placeholder="comercial@dental.com"
                   value={supEmail}
                   onChange={(e) => setSupEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -879,7 +879,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de Envelopes de Autoclave"
                   value={apDesc}
                   onChange={(e) => setApDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                 />
               </div>
 
@@ -892,7 +892,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={apAmount}
                     onChange={(e) => setApAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                   />
                 </div>
                 <div>
@@ -902,7 +902,7 @@ export default function Financeiro() {
                     required
                     value={apDueDate}
                     onChange={(e) => setApDueDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                   />
                 </div>
               </div>
@@ -912,7 +912,7 @@ export default function Financeiro() {
                 <select
                   value={apSupplierId}
                   onChange={(e) => setApSupplierId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="">Nenhum Fornecedor</option>
                   {suppliers.map(sup => (
@@ -926,7 +926,7 @@ export default function Financeiro() {
                 <select
                   value={apCategory}
                   onChange={(e) => setApCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="Insumos e Produtos">Insumos e Produtos</option>
                   <option value="Aluguel e Infra">Aluguel e Infra</option>
