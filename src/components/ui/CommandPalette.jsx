@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Calendar, Users, Kanban, DollarSign, Settings, 
-  LayoutDashboard, ArrowRight, X, Sparkles, MessageSquare 
+  LayoutDashboard, ArrowRight, X, Sparkles, MessageSquare, Megaphone 
 } from 'lucide-react';
 
 export default function CommandPalette({ isOpen, onClose, onNavigate, onOpenWhatsApp }) {
@@ -26,6 +26,7 @@ export default function CommandPalette({ isOpen, onClose, onNavigate, onOpenWhat
     { id: 'pacientes', title: 'Ir para Pacientes & Prontuários', category: 'Navegação', icon: Users, tab: 'pacientes' },
     { id: 'crm', title: 'Ir para Funil CRM (Jornada)', category: 'Navegação', icon: Kanban, tab: 'crm' },
     { id: 'financeiro', title: 'Ir para Gestão Financeira', category: 'Navegação', icon: DollarSign, tab: 'financeiro' },
+    { id: 'marketing', title: 'Ir para Marketing & Atração', category: 'Navegação', icon: Megaphone, tab: 'marketing' },
     { id: 'config', title: 'Ir para Configurações da Clínica', category: 'Navegação', icon: Settings, tab: 'configuracoes' },
     { id: 'wa', title: 'Abrir Central WhatsApp', category: 'Atalho Rápido', icon: MessageSquare, isWhatsApp: true }
   ];
