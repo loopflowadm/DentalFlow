@@ -51,7 +51,7 @@ export default function DentalArch({
   return (
     <div className={`flex-1 min-w-0 rounded-2xl border p-3.5 flex flex-col justify-between overflow-x-auto custom-scrollbar transition-all relative ${
       isDarkMode 
-        ? 'bg-[#0b0f19]/95 border-white/10 shadow-2xl text-white' 
+        ? 'bg-[#0D0D0D]/95 border-white/10 shadow-2xl text-white' 
         : 'bg-white border-slate-200 shadow-xs text-slate-800'
     }`}>
       {/* BARRA DE FERRAMENTAS TOUCH / QUADRANTES PARA MOBILE */}
@@ -201,7 +201,7 @@ export default function DentalArch({
         <div className={`w-full my-2 border-b relative ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className={`px-3 text-[9px] uppercase font-bold tracking-widest font-mono ${
-              isDarkMode ? 'bg-[#0b0f19] text-slate-500' : 'bg-white text-slate-400'
+              isDarkMode ? 'bg-[#0D0D0D] text-slate-500' : 'bg-white text-slate-400'
             }`}>
               Linha Oclusal Central • Dir | Linha Média | Esq
             </span>

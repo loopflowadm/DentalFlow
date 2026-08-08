@@ -57,7 +57,7 @@ export default function VisaoGeralView({
   }).length;
 
   const cardBgClass = isDarkMode 
-    ? 'bg-gradient-to-br from-[#151c2c] via-[#0b0f19] to-[#111726] border border-blue-500/20 shadow-xl text-white' 
+    ? 'bg-gradient-to-br from-[#18181B] via-[#0D0D0D] to-black border border-blue-500/20 shadow-xl text-white' 
     : 'bg-white border border-slate-200 shadow-sm text-slate-800';
 
   const subCardBgClass = isDarkMode
@@ -154,7 +154,7 @@ export default function VisaoGeralView({
 
             {/* Arcada Vetorial de Resumo */}
             <div className={`p-4 rounded-2xl border flex flex-col items-center gap-4 overflow-x-auto custom-scrollbar transition-all ${
-              isDarkMode ? 'bg-[#0b0f19] border-white/5' : 'bg-slate-50 border-slate-200 shadow-2xs'
+              isDarkMode ? 'bg-[#0D0D0D] border-white/5' : 'bg-slate-50 border-slate-200 shadow-2xs'
             }`}>
               {/* Arcada Superior */}
               <div className="flex flex-col items-center">

@@ -307,11 +307,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     if (isNaN(birthDate.getTime())) return null;
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
+    const months = today.getMonth() - birthDate.getMonth();
     
     if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
       years--;
-      months = 12 + months;
     }
     return `${years} anos`;
   };
@@ -841,7 +840,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
     if (toothData && toothData.conditions && toothData.conditions.length > 0) {
       const conds = toothData.conditions;
       if (conds.includes('Extraído') || conds.includes('Ausente')) {
-        return 'border-red-500 bg-red-500/10 text-red-650';
+        return 'border-red-500 bg-red-500/10 text-red-600';
       } else if (conds.includes('Implante')) {
         return 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400';
       } else if (conds.some(c => ['Cárie', 'Fratura', 'Lesão Cervical'].includes(c))) {
@@ -853,7 +852,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
     // 2. Fallback para a tabela toothRecords legada
     const data = toothRecords.find(r => r.patient_id === selectedPatient?.id && r.tooth_number === toothNumber);
-    if (!data) return 'border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-350 hover:bg-slate-50';
+    if (!data) return 'border-slate-300 dark:border-slate-800 bg-white dark:bg-black text-slate-700 dark:text-slate-400 hover:bg-slate-50';
     
     switch (data.status) {
       case 'NEED_TREATMENT':
@@ -863,7 +862,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
       case 'IMPLANT':
         return 'border-blue-500 bg-blue-50/10 text-blue-600 dark:text-blue-400';
       case 'MISSING':
-        return 'border-red-500 bg-red-500/10 text-red-650';
+        return 'border-red-500 bg-red-500/10 text-red-600';
       default:
         return 'border-slate-300 bg-white text-slate-700';
     }
@@ -901,13 +900,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
   };
 
   return (
-    <div className="h-full flex bg-white dark:bg-black font-body overflow-hidden transition-colors duration-300">
+    <div className="h-full flex bg-slate-50/50 dark:bg-[#0D0D0D] font-body overflow-hidden transition-colors duration-300">
       
 
       {/* ========================================================================= */}
       {/* PAINEL DIREITO: DETALHES / PRONTUÁRIO                                    */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-black transition-colors duration-300">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50 dark:bg-[#0D0D0D] transition-colors duration-300">
         {selectedPatient ? (
           <>
             {/* 1. Header do Prontuário (Alinhado em h-14 com SubSidebar) */}
@@ -916,7 +915,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 {/* Avatar Minimalista de Profundidade do Paciente */}
                 <div 
                   onClick={openEditModal}
-                  className="relative group w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200/90 dark:border-white/10 shadow-xs shrink-0 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:border-blue-500"
+                  className="relative group w-9 h-9 rounded-xl bg-slate-100 dark:bg-black flex items-center justify-center border border-slate-200/90 dark:border-white/10 shadow-xs shrink-0 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-105 hover:border-blue-500"
                   title="Clique para alterar a foto do paciente"
                 >
                   {selectedPatient.photoUrl || selectedPatient.avatar_url ? (
@@ -954,7 +953,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     </a>
                   )}
 
-                  <span className="hidden md:inline-block bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded-md font-mono text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
+                  <span className="hidden md:inline-block bg-slate-100 dark:bg-black/80 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded-md font-mono text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
                     ID: {selectedPatient.id ? (typeof selectedPatient.id === 'string' && selectedPatient.id.startsWith('p-') ? selectedPatient.id.replace('p-', '') : selectedPatient.id.substring(0, 8).toUpperCase()) : 'C16A3F1B'}
                   </span>
 
@@ -973,7 +972,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 <button
                   type="button"
                   onClick={() => setShowTagSelector(!showTagSelector)}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-2xs cursor-pointer active:scale-95"
+                  className="px-3 py-1.5 bg-slate-100 dark:bg-black/90 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold text-[11px] rounded-xl flex items-center gap-1.5 border border-slate-200/80 dark:border-white/10 transition-all shadow-2xs cursor-pointer active:scale-95"
                   aria-expanded={showTagSelector}
                   aria-label="Categorizar paciente"
                 >
@@ -982,7 +981,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 </button>
 
                 {showTagSelector && (
-                  <div className="absolute right-24 top-10 w-56 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-3 space-y-2 text-left animate-in fade-in zoom-in-95">
+                  <div className="absolute right-24 top-10 w-56 bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 p-3 space-y-2 text-left animate-in fade-in zoom-in-95">
                     <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="text-[10px] font-black uppercase text-slate-400">Categorizar Paciente</span>
                       <button onClick={() => setShowTagSelector(false)} className="p-0.5 rounded text-slate-400 hover:text-slate-200">
@@ -1015,7 +1014,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               await updatePatient(updatedPat);
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                              isChecked ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                              isChecked ? 'bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'
                             }`}
                           >
                             <span className="flex items-center gap-1.5">
@@ -1103,10 +1102,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   
                   <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl gap-3">
                     <div>
-                      <h4 className="text-xs font-black text-slate-855 dark:text-white font-title uppercase tracking-wider flex items-center gap-1.5">
+                      <h4 className="text-xs font-black text-slate-900 dark:text-white font-title uppercase tracking-wider flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-secondary" /> Ficha de Anamnese Padrão
                       </h4>
-                      <p className="text-[10px] text-slate-455 font-bold mt-1">Preencha o questionário completo do paciente para a integridade do prontuário.</p>
+                      <p className="text-[10px] text-slate-500 font-bold mt-1">Preencha o questionário completo do paciente para a integridade do prontuário.</p>
                     </div>
 
                     <div className="flex gap-2">
@@ -1120,14 +1119,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       <button
                         type="button"
                         onClick={() => window.print()}
-                        className="px-3 py-2 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-slate-855 text-slate-650 dark:text-slate-355 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-2 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-400 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
                       >
                         <Printer className="w-3.5 h-3.5" /> Imprimir
                       </button>
                     </div>
                   </div>
 
-                  <form onSubmit={handleSaveAnamneseSubmit} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 rounded-[28px] p-6 space-y-6 text-xs text-slate-750 dark:text-slate-200 font-semibold">
+                  <form onSubmit={handleSaveAnamneseSubmit} className="bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 rounded-[28px] p-6 space-y-6 text-xs text-slate-700 dark:text-slate-200 font-semibold">
                     
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-0.5">Queixa Principal *</label>
@@ -1137,11 +1136,11 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         placeholder="Qual o principal motivo da consulta?..."
                         value={queixaPrincipal}
                         onChange={(e) => setQueixaPrincipal(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                        className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
                       />
                     </div>
 
-                    <div className="w-full h-px bg-slate-100 dark:bg-slate-800" />
+                    <div className="w-full h-px bg-slate-100 dark:bg-white/5" />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                       
@@ -1168,7 +1167,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva detalhes (medicação, controle)..."
                             value={hasPressaoAltaDetail}
                             onChange={(e) => setHasPressaoAltaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1196,7 +1195,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva a que tem alergia..."
                             value={hasAlergiaDetail}
                             onChange={(e) => setHasAlergiaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1224,7 +1223,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva (Anemia, Leucemia, etc.)..."
                             value={hasAlteracaoSangueDetail}
                             onChange={(e) => setHasAlteracaoSangueDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1271,7 +1270,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasAlteracaoCardioDetail}
                             onChange={(e) => setHasAlteracaoCardioDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1299,7 +1298,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva detalhes (Insulina, Glicemia)..."
                             value={hasDiabetesDetail}
                             onChange={(e) => setHasDiabetesDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1365,7 +1364,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasDisfuncaoHepaticaDetail}
                             onChange={(e) => setHasDisfuncaoHepaticaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1393,7 +1392,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasDisfuncaoRenalDetail}
                             onChange={(e) => setHasDisfuncaoRenalDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1421,7 +1420,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasDisfuncaoRespiratoriaDetail}
                             onChange={(e) => setHasDisfuncaoRespiratoriaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1449,7 +1448,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasAlteracaoOsseaDetail}
                             onChange={(e) => setHasAlteracaoOsseaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1477,7 +1476,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasDoencaTransmissivelDetail}
                             onChange={(e) => setHasDoencaTransmissivelDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1505,7 +1504,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva..."
                             value={hasOutraDoencaDetail}
                             onChange={(e) => setHasOutraDoencaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1533,7 +1532,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Descreva qual tipo de anestesia/reação..."
                             value={hasAlergiaAnestesiaDetail}
                             onChange={(e) => setHasAlergiaAnestesiaDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1637,7 +1636,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="De quantos meses?..."
                             value={isGestanteDetail}
                             onChange={(e) => setIsGestanteDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
@@ -1684,21 +1683,21 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             placeholder="Quais marcas/dosagens?..."
                             value={isAnticoncepcionalDetail}
                             onChange={(e) => setIsAnticoncepcionalDetail(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
+                            className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-[11px] focus:outline-none focus:border-secondary"
                           />
                         )}
                       </div>
 
                     </div>
 
-                    <div className="space-y-1.5 border-t border-slate-150 dark:border-slate-800/80 pt-4">
+                    <div className="space-y-1.5 border-t border-slate-100 dark:border-slate-800/80 pt-4">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-0.5">Notas Clínicas e Observações Adicionais</label>
                       <textarea
                         rows={3.5}
                         placeholder="Histórico familiar, doenças hereditárias ou outras observações clínicas..."
                         value={anamneseNotes}
                         onChange={(e) => setAnamneseNotes(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
+                        className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
                       />
                     </div>
 
@@ -1772,19 +1771,19 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                   {/* Filters row */}
                   <div className="flex gap-2.5 flex-wrap items-center bg-white dark:bg-[#0D0D0D] border border-slate-200/40 dark:border-white/10 p-4 rounded-2xl shadow-sm text-xs font-semibold">
-                    <button className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold flex items-center gap-1">
+                    <button className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 font-bold flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-slate-500" /> Selecionar período
                     </button>
 
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/40 dark:border-slate-800/80 gap-1 pl-1">
+                    <div className="flex bg-slate-100 dark:bg-white/5 p-0.5 rounded-xl border border-slate-200/40 dark:border-slate-800/80 gap-1 pl-1">
                       {['Todos', 'Pagos', 'Aguardando', 'Em aberto', 'Em atraso'].map(pill => (
                         <button
                           key={pill}
                           onClick={() => setPayFilter(pill)}
                           className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${
                             payFilter === pill
-                              ? 'bg-white dark:bg-slate-750 text-slate-855 dark:text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-350'
+                              ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-400'
                           }`}
                         >
                           {pill}
@@ -1803,15 +1802,15 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         return true;
                       })
                       .map(item => (
-                        <div key={item.id} className="p-4 bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 shadow-sm text-xs">
+                        <div key={item.id} className="p-4 bg-white dark:bg-black border border-slate-200/40 dark:border-slate-800/80 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-3 shadow-sm text-xs">
                           <div className="flex items-center gap-3">
                             <input type="checkbox" className="rounded w-4 h-4 cursor-pointer" />
                             <div>
-                              <h4 className="font-extrabold text-slate-855 dark:text-white flex items-center gap-1.5">
+                              <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                                 {item.desc}
-                                <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] font-bold uppercase">{item.number}</span>
+                                <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/5 text-slate-500 text-[9px] font-bold uppercase">{item.number}</span>
                               </h4>
-                              <span className="text-[10px] text-slate-450 font-bold block mt-1">Vence em {item.due} • {item.orc}</span>
+                              <span className="text-[10px] text-slate-500 font-bold block mt-1">Vence em {item.due} • {item.orc}</span>
                             </div>
                           </div>
 
@@ -1819,7 +1818,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                             {item.status !== 'PAGO' && (
                               <button
                                 onClick={() => handlePayInstallment(item.id)}
-                                className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-750 hover:bg-slate-50 text-[10px] font-black rounded-lg transition-all bg-white dark:bg-slate-800 shadow-sm"
+                                className="px-3.5 py-1.5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-[10px] font-black rounded-lg transition-all bg-white dark:bg-white/5 shadow-sm"
                               >
                                 💵 Pagar
                               </button>
@@ -1832,7 +1831,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               {item.status === 'ATRASO' ? '× Em atraso' : item.status === 'PAGO' ? '✓ Pago' : '• Em aberto'}
                             </span>
 
-                            <span className="font-extrabold text-slate-855 dark:text-white text-xs">R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span className="font-extrabold text-slate-900 dark:text-white text-xs">R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                             <MoreVertical className="w-4 h-4 text-slate-400 cursor-pointer" />
                           </div>
                         </div>
@@ -1875,18 +1874,18 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       
                       {/* Editor Toolbar */}
                       <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-slate-100 dark:border-slate-800/80">
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><Bold className="w-4 h-4" /></button>
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><Italic className="w-4 h-4" /></button>
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><Link2 className="w-4 h-4" /></button>
-                        <div className="w-px bg-slate-200 dark:bg-slate-800 h-4 mx-1" />
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><AlignLeft className="w-4 h-4" /></button>
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><AlignCenter className="w-4 h-4" /></button>
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><AlignRight className="w-4 h-4" /></button>
-                        <div className="w-px bg-slate-200 dark:bg-slate-800 h-4 mx-1" />
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><List className="w-4 h-4" /></button>
-                        <div className="w-px bg-slate-200 dark:bg-slate-800 h-4 mx-1" />
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><Undo className="w-4 h-4" /></button>
-                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500"><Redo className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><Bold className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><Italic className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><Link2 className="w-4 h-4" /></button>
+                        <div className="w-px bg-slate-200 dark:bg-white/5 h-4 mx-1" />
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><AlignLeft className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><AlignCenter className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><AlignRight className="w-4 h-4" /></button>
+                        <div className="w-px bg-slate-200 dark:bg-white/5 h-4 mx-1" />
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><List className="w-4 h-4" /></button>
+                        <div className="w-px bg-slate-200 dark:bg-white/5 h-4 mx-1" />
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><Undo className="w-4 h-4" /></button>
+                        <button type="button" className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500"><Redo className="w-4 h-4" /></button>
                       </div>
 
                       {/* Textarea */}
@@ -1910,7 +1909,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            className="px-3.5 py-2 border border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-black rounded-xl flex items-center gap-1 transition-all"
+                            className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/10 text-[10px] font-black rounded-xl flex items-center gap-1 transition-all"
                           >
                             🎤 Transcrever com IA
                           </button>
@@ -1934,10 +1933,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                                 onChange={(e) => setIsEvolucaoSigned(e.target.checked)}
                                 className="sr-only" 
                               />
-                              <div className={`w-8 h-4 rounded-full transition-colors ${isEvolucaoSigned ? 'bg-secondary' : 'bg-slate-200 dark:bg-slate-800'}`} style={isEvolucaoSigned ? { backgroundColor: currentTheme.secondary_color } : {}}></div>
+                              <div className={`w-8 h-4 rounded-full transition-colors ${isEvolucaoSigned ? 'bg-secondary' : 'bg-slate-200 dark:bg-white/5'}`} style={isEvolucaoSigned ? { backgroundColor: currentTheme.secondary_color } : {}}></div>
                               <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${isEvolucaoSigned ? 'transform translate-x-4' : ''}`}></div>
                             </div>
-                            <span className="text-[10px] font-black text-slate-450 uppercase">Assinar evolução</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Assinar evolução</span>
                           </label>
 
                           <button
@@ -1955,15 +1954,15 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     {/* History lists */}
                     <div className="space-y-4 pt-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-black text-slate-855 dark:text-white font-title">
-                          Histórico <span className="ml-1 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[9px] font-bold text-slate-500">{patEvolutions.length}</span>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white font-title">
+                          Histórico <span className="ml-1 px-1.5 py-0.5 bg-slate-100 dark:bg-white/5 rounded-lg text-[9px] font-bold text-slate-500">{patEvolutions.length}</span>
                         </h4>
                         
                         <div className="flex gap-2">
-                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
+                          <button className="px-3.5 py-2 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
                             <Edit className="w-3 h-3" /> Assinar digitalmente
                           </button>
-                          <button className="px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
+                          <button className="px-3.5 py-2 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-[10px] font-bold rounded-xl shadow-sm flex items-center gap-1">
                             <Printer className="w-3 h-3" /> Imprimir
                           </button>
                         </div>
@@ -1973,12 +1972,12 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         {patEvolutions.map(rec => (
                           <div key={rec.id} className="relative group text-xs text-left">
                             <span className="absolute -left-[21.5px] top-1 w-2.5 h-2.5 bg-secondary rounded-full border-2 border-white dark:border-slate-950" style={{ backgroundColor: currentTheme.secondary_color }} />
-                            <div className="flex justify-between items-center text-[9px] text-slate-450 font-bold mb-1 uppercase tracking-wider">
+                            <div className="flex justify-between items-center text-[9px] text-slate-500 font-bold mb-1 uppercase tracking-wider">
                               <span>Dr(a). {rec.dentistName || 'Dentista'}</span>
                               <span>{new Date(rec.created_at).toLocaleDateString('pt-BR')}</span>
                             </div>
 
-                            <div className="bg-white dark:bg-slate-900 p-3.5 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl shadow-sm space-y-2">
+                            <div className="bg-white dark:bg-black p-3.5 border border-slate-200/40 dark:border-slate-800/80 rounded-2xl shadow-sm space-y-2">
                               <p className="font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">{rec.description}</p>
                               {rec.signature_hash && (
                                 <div className="text-[8px] text-emerald-500 font-mono flex items-center gap-1">
@@ -2015,7 +2014,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       
                       <button
                         onClick={() => setShowAddPresc(true)}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
+                        className="px-4 py-2.5 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
                       >
                         Emitir prescrição
                       </button>
@@ -2025,14 +2024,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                           setPNotes(selectedHistory.notes);
                           setShowAddPresc(true);
                         }}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
+                        className="px-4 py-2.5 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all"
                       >
                         Emitir atestado
                       </button>
 
                       <button
                         onClick={() => alert('Personalização de templates em desenvolvimento.')}
-                        className="px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all ml-auto"
+                        className="px-4 py-2.5 bg-white dark:bg-black border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl transition-all ml-auto"
                       >
                         Customizar
                       </button>
@@ -2042,7 +2041,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       <div className="bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/20 rounded-2xl p-4 flex gap-3 text-xs justify-between items-center animate-in fade-in">
                         <div className="flex gap-2.5 items-center">
                           <AlertCircle className="w-4 h-4 text-sky-500" />
-                          <p className="font-semibold text-slate-700 dark:text-slate-350">
+                          <p className="font-semibold text-slate-700 dark:text-slate-400">
                             Antes de gerar receitas e atestados complete as <button onClick={openEditModal} className="text-secondary underline font-bold" style={{ color: currentTheme.secondary_color }}>informações de cadastro.</button>
                           </p>
                         </div>
@@ -2054,17 +2053,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
                     {/* Empty State or Table */}
                     {patientPrescriptions.length === 0 ? (
-                      <div className="py-16 bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-[28px] flex flex-col items-center justify-center space-y-4 text-slate-400 select-none shadow-sm">
-                        <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-3xl border border-slate-100">
+                      <div className="py-16 bg-white dark:bg-black border border-slate-200/40 dark:border-slate-800/80 rounded-[28px] flex flex-col items-center justify-center space-y-4 text-slate-400 select-none shadow-sm">
+                        <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-black flex items-center justify-center text-3xl border border-slate-100">
                           📄
                         </div>
                         <h4 className="font-title font-bold text-slate-700 dark:text-slate-300 text-xs">Ainda não existem documentos por aqui</h4>
                       </div>
                     ) : (
-                      <div className="bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-800/80 rounded-[24px] overflow-hidden shadow-sm">
+                      <div className="bg-white dark:bg-black border border-slate-200/40 dark:border-slate-800/80 rounded-[24px] overflow-hidden shadow-sm">
                         <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="bg-slate-50 dark:bg-slate-955/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800/80 font-bold">
+                            <tr className="bg-slate-50 dark:bg-black/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800/80 font-bold">
                               <th className="py-3.5 px-4">Data</th>
                               <th className="py-3.5 px-4">Título</th>
                               <th className="py-3.5 px-4">Dentista</th>
@@ -2072,9 +2071,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                               <th className="py-3.5 px-4 text-right">Ações</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-slate-700 dark:text-slate-350">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/40 text-slate-700 dark:text-slate-400">
                             {patientPrescriptions.map(p => (
-                              <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
+                              <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10">
                                 <td className="py-3.5 px-4 font-semibold">{new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
                                 <td className="py-3.5 px-4 font-bold text-slate-850 dark:text-white">{p.title}</td>
                                 <td className="py-3.5 px-4 font-semibold">{p.dentistName}</td>
@@ -2084,7 +2083,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                                 <td className="py-3.5 px-4 text-right flex justify-end gap-1.5">
                                   <button
                                     onClick={() => setViewingPrescription(p)}
-                                    className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-330 font-bold rounded-lg text-[9px] hover:bg-slate-200"
+                                    className="px-2 py-1 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-400 font-bold rounded-lg text-[9px] hover:bg-slate-200"
                                   >
                                     Visualizar
                                   </button>
@@ -2120,10 +2119,10 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         { id: 1, title: 'Sorriso Inicial', date: '2026-06-01', url: 'https://images.unsplash.com/photo-1579684389782-64d84b5e901d?w=150&auto=format&fit=crop&q=60&ixlib=rb-4.0.3' },
                         { id: 2, title: 'Sorriso Final', date: '2026-07-14', url: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=150&auto=format&fit=crop&q=60' }
                       ].map(photo => (
-                        <div key={photo.id} className="group relative rounded-2xl border border-slate-200/50 dark:border-slate-800/80 overflow-hidden bg-white dark:bg-slate-900 p-2 shadow-sm">
+                        <div key={photo.id} className="group relative rounded-2xl border border-slate-200/50 dark:border-slate-800/80 overflow-hidden bg-white dark:bg-black p-2 shadow-sm">
                           <img src={photo.url} alt={photo.title} className="w-full h-28 object-cover rounded-xl" />
                           <div className="mt-2 text-[10px]">
-                            <h5 className="font-bold text-slate-700 dark:text-slate-350 truncate">{photo.title}</h5>
+                            <h5 className="font-bold text-slate-700 dark:text-slate-400 truncate">{photo.title}</h5>
                             <span className="text-slate-400 font-semibold">{photo.date}</span>
                           </div>
                         </div>
@@ -2131,17 +2130,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     </div>
                   </div>
 
-                  <div className="space-y-3 pt-5 border-t border-slate-250/20 dark:border-slate-800">
+                  <div className="space-y-3 pt-5 border-t border-slate-200/20 dark:border-slate-800">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                       <FileText className="w-4 h-4 text-secondary" /> Exames e Radiografias (PDF/Imagens)
                     </h4>
                     <div className="space-y-2">
-                      <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 flex items-center justify-between text-xs shadow-sm">
+                      <div className="p-3.5 bg-white dark:bg-black rounded-2xl border border-slate-200/50 dark:border-slate-800/80 flex items-center justify-between text-xs shadow-sm">
                         <div className="flex items-center gap-2.5">
                           <FileText className="w-5 h-5 text-red-500" />
                           <div>
                             <h5 className="font-bold">Radiografia_Panoramica_Completa.pdf</h5>
-                            <span className="text-[10px] text-slate-450 font-bold block">2.4 MB • Emitido em 01/06/2026</span>
+                            <span className="text-[10px] text-slate-500 font-bold block">2.4 MB • Emitido em 01/06/2026</span>
                           </div>
                         </div>
                         <button className="text-[10px] text-secondary font-bold hover:underline" style={{ color: currentTheme.secondary_color }}>Download</button>
@@ -2155,13 +2154,16 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-3 select-none">
-            <User className="w-12 h-12 text-slate-300 stroke-1" />
-            <h4 className="font-title font-bold text-slate-700 dark:text-slate-300 text-sm">Prontuário Odontológico</h4>
-            <p className="text-xs max-w-xs text-center leading-relaxed">Selecione um paciente na lista lateral para visualizar sua ficha clínica, odontograma interativo e histórico.</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 select-none">
+            <div className="w-16 h-16 rounded-3xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-500 flex items-center justify-center mb-4">
+              <User className="w-8 h-8" />
+            </div>
+            <h4 className="font-title font-bold text-slate-800 dark:text-white text-base">Prontuário Odontológico</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 leading-relaxed">Selecione um paciente na lista lateral para visualizar sua ficha clínica, odontograma interativo e histórico.</p>
             <button
               onClick={() => setShowAddPatient(true)}
-              className="px-4 py-2 bg-emerald-650 hover:opacity-95 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-1.5 mt-2 border border-white/5"
+              className="mt-5 px-4 py-2 bg-secondary hover:opacity-95 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-1.5 border border-white/5"
+              style={{ backgroundColor: currentTheme.secondary_color }}
             >
               <PlusCircle className="w-4 h-4" />
               <span>Cadastrar Novo Paciente</span>
@@ -2180,13 +2182,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Cadastrar Novo Paciente</h3>
                 <button 
                   onClick={() => setShowAddPatient(false)}
-                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2194,11 +2196,11 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
 
               <form onSubmit={handleAddPatientSubmit} className="space-y-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
                 {/* Seletor & Upload de Foto do Paciente */}
-                <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div className="space-y-2 bg-slate-50 dark:bg-black/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Foto de Perfil do Paciente</label>
                   
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-white/5 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
                       {pPhotoUrl ? (
                         <img src={pPhotoUrl} alt="Preview Foto" className="w-full h-full object-cover" />
                       ) : (
@@ -2234,7 +2236,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         placeholder="ou cole o link da foto (http...)"
                         value={pPhotoUrl}
                         onChange={(e) => setPPhotoUrl(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
+                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2251,7 +2253,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         key={idx}
                         type="button"
                         onClick={() => setPPhotoUrl(preset.url)}
-                        className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+                        className="px-2 py-0.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-white/10 transition-colors"
                       >
                         {preset.label}
                       </button>
@@ -2268,7 +2270,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="Nome do paciente"
                       value={pName}
                       onChange={(e) => setPName(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
@@ -2280,7 +2282,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="(88) 99969-9232"
                       value={pPhone}
                       onChange={(e) => setPPhone(formatPhone(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -2293,7 +2295,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="exemplo@gmail.com"
                       value={pEmail}
                       onChange={(e) => setPEmail(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
@@ -2303,7 +2305,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="000.000.000-00"
                       value={pCPF}
                       onChange={(e) => setPCPF(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2316,7 +2318,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="00.000.000-0"
                       value={pRG}
                       onChange={(e) => setPRG(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
@@ -2325,7 +2327,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       type="date"
                       value={pBirthDate}
                       onChange={(e) => setPBirthDate(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2336,7 +2338,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <select
                       value={pGender}
                       onChange={(e) => setPGender(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
                       <option value="Masculino">Masculino</option>
                       <option value="Feminino">Feminino</option>
@@ -2348,7 +2350,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <select
                       value={pReminderPref}
                       onChange={(e) => setPReminderPref(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="SMS">SMS</option>
@@ -2365,7 +2367,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     placeholder="Rua, Número, Bairro, Cidade - UF, CEP"
                     value={pAddress}
                     onChange={(e) => setPAddress(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -2375,7 +2377,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     placeholder="Alguma anotação sobre o paciente..."
                     value={pNotes}
                     onChange={(e) => setPNotes(e.target.value)}
-                    className="w-full h-20 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none resize-none"
+                    className="w-full h-20 bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none resize-none"
                   />
                 </div>
 
@@ -2383,7 +2385,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <button
                     type="button"
                     onClick={() => setShowAddPatient(false)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
                   >
                     Cancelar
                   </button>
@@ -2411,13 +2413,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Editar Dados do Paciente</h3>
                 <button 
                   onClick={() => setShowEditPatient(false)}
-                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2432,7 +2434,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       required
                       value={pName}
                       onChange={(e) => setPName(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
@@ -2443,17 +2445,17 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="(83) 99999-9999"
                       value={pPhone}
                       onChange={(e) => setPPhone(formatPhone(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
 
                 {/* Seletor & Upload de Foto do Paciente */}
-                <div className="space-y-2 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+                <div className="space-y-2 bg-slate-50 dark:bg-black/60 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                   <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider">Foto de Perfil do Paciente</label>
                   
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-white/5 border-2 border-blue-500/40 shrink-0 flex items-center justify-center relative">
                       {pPhotoUrl ? (
                         <img src={pPhotoUrl} alt="Preview Foto" className="w-full h-full object-cover" />
                       ) : (
@@ -2489,7 +2491,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         placeholder="ou cole o link da foto (http...)"
                         value={pPhotoUrl}
                         onChange={(e) => setPPhotoUrl(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
+                        className="w-full bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-1.5 px-2.5 text-[11px] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2506,7 +2508,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         key={idx}
                         type="button"
                         onClick={() => setPPhotoUrl(preset.url)}
-                        className="px-2 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+                        className="px-2 py-0.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-md text-[9px] font-bold text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-white/10 transition-colors"
                       >
                         {preset.label}
                       </button>
@@ -2522,7 +2524,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="paciente@exemplo.com"
                       value={pEmail}
                       onChange={(e) => setPEmail(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                   <div>
@@ -2532,7 +2534,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="000.000.000-00"
                       value={pCPF}
                       onChange={(e) => setPCPF(formatCPF(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -2545,7 +2547,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       placeholder="00.000.000-0"
                       value={pRG}
                       onChange={(e) => setPRG(formatRG(e.target.value))}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono"
                     />
                   </div>
                   <div>
@@ -2554,7 +2556,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                       type="date"
                       value={pBirthDate}
                       onChange={(e) => setPBirthDate(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2565,7 +2567,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <select
                       value={pGender}
                       onChange={(e) => setPGender(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
                       <option value="Masculino">Masculino</option>
                       <option value="Feminino">Feminino</option>
@@ -2577,7 +2579,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     <select
                       value={pReminderPref}
                       onChange={(e) => setPReminderPref(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                      className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                     >
                       <option value="WhatsApp">WhatsApp</option>
                       <option value="SMS">SMS</option>
@@ -2593,7 +2595,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     type="text"
                     value={pAddress}
                     onChange={(e) => setPAddress(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
 
@@ -2602,7 +2604,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <textarea
                     value={pNotes}
                     onChange={(e) => setPNotes(e.target.value)}
-                    className="w-full h-20 bg-slate-50 dark:bg-slate-850 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none resize-none"
+                    className="w-full h-20 bg-slate-50 dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none resize-none"
                   />
                 </div>
 
@@ -2610,7 +2612,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <button
                     type="button"
                     onClick={() => setShowEditPatient(false)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-850 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
                   >
                     Cancelar
                   </button>
@@ -2638,13 +2640,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-left text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200/50 dark:border-slate-800">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white font-title">Emitir Prescrição Digital</h3>
                 <button 
                   onClick={() => setShowAddPresc(false)}
-                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                  className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2656,7 +2658,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <select
                     value={selectedPrescTemplate}
                     onChange={(e) => handleTemplateChange(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   >
                     <option value="">-- Personalizado / Sem Modelo --</option>
                     <option value="analgesico">Receita Analgésica Padrão</option>
@@ -2667,26 +2669,26 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider mb-1">Título do Documento</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Título do Documento</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: Receita de Anti-inflamatório"
                     value={prescTitle}
                     onChange={(e) => setPrescTitle(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-455 uppercase tracking-wider mb-1">Corpo da Prescrição / Atestado</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Corpo da Prescrição / Atestado</label>
                   <textarea
                     rows={6}
                     required
                     placeholder="Uso Oral..."
                     value={prescText}
                     onChange={(e) => setPrescText(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono resize-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-mono resize-none"
                   />
                 </div>
 
@@ -2696,9 +2698,9 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     id="sendViaWa"
                     checked={sendViaWa}
                     onChange={(e) => setSendViaWa(e.target.checked)}
-                    className="rounded border-slate-350 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
+                    className="rounded border-slate-400 text-secondary focus:ring-secondary w-4 h-4 cursor-pointer"
                   />
-                  <label htmlFor="sendViaWa" className="text-xs font-bold text-slate-450 cursor-pointer select-none">
+                  <label htmlFor="sendViaWa" className="text-xs font-bold text-slate-500 cursor-pointer select-none">
                     Enviar PDF por WhatsApp automaticamente
                   </label>
                 </div>
@@ -2707,7 +2709,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <button
                     type="button"
                     onClick={() => setShowAddPresc(false)}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all"
                   >
                     Cancelar
                   </button>
@@ -2735,7 +2737,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="my-auto bg-white dark:bg-slate-850 rounded-[32px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-left space-y-6 text-slate-855 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[32px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-left space-y-6 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
@@ -2744,13 +2746,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 </div>
                 <button 
                   onClick={() => setViewingPrescription(null)}
-                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-inner text-slate-800 dark:text-slate-200">
+              <div className="bg-slate-50 dark:bg-black border border-slate-200/50 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-inner text-slate-800 dark:text-slate-200">
                 <div className="flex justify-between items-start pb-4 border-b border-slate-200/40 dark:border-slate-800/60">
                   <div className="space-y-1">
                     <h4 className="text-sm font-black font-title text-slate-900 dark:text-white uppercase tracking-wider">{clinic?.name || 'FlowDent Clinic'}</h4>
@@ -2759,14 +2761,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                   <Activity className="w-6 h-6 text-secondary" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-[10px] bg-slate-100/50 dark:bg-slate-850 p-3 rounded-xl">
+                <div className="grid grid-cols-2 gap-4 text-[10px] bg-slate-100/50 dark:bg-[#0D0D0D] p-3 rounded-xl">
                   <div>
                     <span className="text-slate-400 font-bold uppercase block">Paciente</span>
                     <span className="font-extrabold text-slate-800 dark:text-white text-xs">{selectedPatient?.name}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-slate-400 font-bold uppercase block">Data de Emissão</span>
-                    <span className="font-extrabold text-slate-855 dark:text-white text-xs">
+                    <span className="font-extrabold text-slate-900 dark:text-white text-xs">
                       {new Date(viewingPrescription.created_at).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
@@ -2779,7 +2781,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                 <div className="flex justify-between items-center gap-4 pt-2">
                   <div className="space-y-2 flex-1">
                     <div className="space-y-0.5">
-                      <span className="text-[9px] text-slate-450 font-bold uppercase block">Assinante</span>
+                      <span className="text-[9px] text-slate-500 font-bold uppercase block">Assinante</span>
                       <span className="font-extrabold text-xs text-slate-800 dark:text-white">{viewingPrescription.dentistName || 'Dentista'}</span>
                       <span className="text-[9px] text-slate-400 block font-semibold">Cirurgião-Dentista</span>
                     </div>
@@ -2794,13 +2796,13 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shadow-sm flex-shrink-0">
+                  <div className="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-sm flex-shrink-0">
                     <img 
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(`https://flowdent.com.br/verificar?hash=${viewingPrescription.signature_hash}`)}`} 
                       alt="QR Code" 
                       className="w-[60px] h-[60px]"
                     />
-                    <span className="text-[7px] text-slate-450 font-bold uppercase tracking-wider">E-VALIDAR</span>
+                    <span className="text-[7px] text-slate-500 font-bold uppercase tracking-wider">E-VALIDAR</span>
                   </div>
                 </div>
               </div>
@@ -2808,7 +2810,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               <div className="flex gap-2.5 justify-end pt-2 border-t border-slate-100 dark:border-slate-800/80">
                 <button
                   onClick={() => window.print()}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-355 font-bold text-xs rounded-xl transition-all"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-400 font-bold text-xs rounded-xl transition-all"
                 >
                   Imprimir
                 </button>
@@ -2870,13 +2872,13 @@ const ToothOutline = ({ number, conditions }) => {
             {isMolar ? (
               <path 
                 d="M 6 24 C 6 12, 10 6, 10 4 C 10 6, 12 14, 14 24 M 14 24 C 14 12, 16 8, 16 6 C 16 8, 18 12, 18 24 M 18 24 C 18 14, 20 6, 22 4 C 22 6, 26 12, 26 24" 
-                className="fill-none stroke-slate-350 dark:stroke-slate-700" 
+                className="fill-none stroke-slate-400 dark:stroke-slate-700" 
                 strokeWidth="1.25" 
               />
             ) : (
               <path 
                 d="M 8 24 C 8 12, 12 4, 16 2 C 20 4, 24 12, 24 24" 
-                className="fill-none stroke-slate-350 dark:stroke-slate-700" 
+                className="fill-none stroke-slate-400 dark:stroke-slate-700" 
                 strokeWidth="1.25" 
               />
             )}
@@ -2946,7 +2948,7 @@ const FaceGrid = ({ toothNumber, facesState, onFaceClick }) => {
     const condition = facesState[faceName];
     if (!condition) return 'fill-white dark:fill-slate-900';
     switch (condition) {
-      case 'Cárie': return 'fill-red-500 hover:fill-red-650';
+      case 'Cárie': return 'fill-red-500 hover:fill-red-600';
       case 'Restauração Resina': return 'fill-blue-500 hover:fill-blue-600';
       case 'Restauração Amálgama': return 'fill-slate-500 hover:fill-slate-600';
       case 'Coroa': return 'fill-yellow-500 hover:fill-yellow-600';

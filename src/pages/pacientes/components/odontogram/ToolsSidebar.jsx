@@ -54,7 +54,7 @@ export default function ToolsSidebar({
   return (
     <div className={`w-60 sm:w-64 shrink-0 min-w-[220px] backdrop-blur-md rounded-2xl border p-3 flex flex-col gap-3 transition-all ${
       isDarkMode 
-        ? 'bg-[#111726]/95 border-white/10 shadow-2xl text-white' 
+        ? 'bg-[#0D0D0D]/95 border-white/10 shadow-2xl text-white' 
         : 'bg-white border-slate-200 shadow-sm text-slate-800'
     }`}>
       {/* 1. MODO E STATUS DO PROCEDIMENTO */}

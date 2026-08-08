@@ -3,7 +3,7 @@ import { UserCheck, Building, ShieldCheck, Check, Layers, AlertCircle } from 'lu
 import { useAuth } from '../../../context/AuthContext';
 
 export default function DevTabRolesTenant({ setMessage }) {
-  const { user, clinic, selectClinic } = useAuth();
+  const { user, clinic, selectClinic, updateUserRole } = useAuth();
   const [selectedRole, setSelectedRole] = useState(user?.role || 'admin');
 
   const roles = [
@@ -22,8 +22,8 @@ export default function DevTabRolesTenant({ setMessage }) {
 
   const handleRoleChange = (roleId) => {
     setSelectedRole(roleId);
-    if (user) {
-      user.role = roleId;
+    if (updateUserRole) {
+      updateUserRole(roleId);
     }
     setMessage({ text: `Perfil de usuário alterado temporariamente para: ${roleId.toUpperCase()}`, type: 'success' });
   };

@@ -16,10 +16,15 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const evolutionUrl = (process.env.EVOLUTION_API_URL || 'http://179.197.225.90:8080').replace(/\/$/, '');
+const evolutionUrl = (process.env.EVOLUTION_API_URL || env.VITE_EVOLUTION_API_BASE_URL || '').replace(/\/$/, '');
 const instanceName = process.env.INSTANCE_NAME || 'odonto-crm';
-const globalApiKey = process.env.EVOLUTION_GLOBAL_KEY || process.env.EVOLUTION_API_KEY || 'odonto-secret-key';
-const webhookUrl = 'https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent';
+const globalApiKey = process.env.EVOLUTION_GLOBAL_KEY || process.env.EVOLUTION_API_KEY || env.VITE_EVOLUTION_API_KEY || '';
+const webhookUrl = env.VITE_WHATSAPP_EDGE_URL || `${env.VITE_SUPABASE_URL || ''}/functions/v1/whatsapp-agent`;
+
+if (!evolutionUrl || !globalApiKey) {
+  console.error('\n❌ Configure EVOLUTION_API_URL e EVOLUTION_API_KEY (ou VITE_EVOLUTION_API_BASE_URL e VITE_EVOLUTION_API_KEY)\n   no ambiente ou no .env.local (não use credenciais hardcoded).\n');
+  process.exit(1);
+}
 
 console.log('---------------------------------------------------------');
 console.log('🛠️ EVOLUTION API — CRIAR INSTÂNCIA E CONFIGURAR WEBHOOK');

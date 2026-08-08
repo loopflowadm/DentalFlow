@@ -24,7 +24,7 @@ export default function DevToolsModal({ isOpen, onClose, showBreakpointBadge, se
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden text-left font-sans flex flex-col max-h-[85vh]">
+      <div className="bg-white dark:bg-black border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden text-left font-sans flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
@@ -105,7 +105,7 @@ export default function DevToolsModal({ isOpen, onClose, showBreakpointBadge, se
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 dark:bg-[#070A11] px-6 py-3 border-t border-slate-200 dark:border-white/10 flex justify-between items-center shrink-0 text-xs">
+        <div className="bg-slate-50 dark:bg-black px-6 py-3 border-t border-slate-200 dark:border-white/10 flex justify-between items-center shrink-0 text-xs">
           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
             Atalhos: <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">Ctrl+Shift+D</kbd> ou <kbd className="px-1 py-0.5 bg-slate-200 dark:bg-white/10 rounded">⌘+Shift+D</kbd>
           </span>

@@ -295,7 +295,7 @@ export default function ClinicApp() {
           activeTab={activeTab}
           collapsed={collapsed}
           setCollapsed={setCollapsed}
-          onSearchChange={(q) => console.log('Search query:', q)}
+          onSearchChange={() => {}}
           onOpenWhatsApp={(patId) => {
             if (patId) setSelectedPatientId(patId);
             setActiveTab('whatsapp');

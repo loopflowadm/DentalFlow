@@ -17,7 +17,8 @@ import {
   IconBrandWhatsapp,
   IconArrowUpRight,
   IconLogout,
-  IconUser
+  IconUser,
+  IconSparkles
 } from '@tabler/icons-react';
 
 const formatPhone = (phone) => {
@@ -165,41 +166,8 @@ export default function Sidebar({
   const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
   const weekdaysMin = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-  // Modal rápido de inclusão de paciente na jornada
-  const [showAddLeadSidebar, setShowAddLeadSidebar] = useState(false);
-  const [newLeadName, setNewLeadName] = useState('');
-  const [newLeadPhone, setNewLeadPhone] = useState('');
-  const [newLeadProcedure, setNewLeadProcedure] = useState('');
-  const [newLeadBudget, setNewLeadBudget] = useState('');
-  const [newLeadPriority, setNewLeadPriority] = useState('medium');
-
   // Menu móvel
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-
-  const handleAddLead = async (e) => {
-    e.preventDefault();
-    if (!newLeadName || !newLeadPhone) return;
-
-    const created = await addCrmLead({
-      name: newLeadName,
-      phone: newLeadPhone,
-      procedure_name: newLeadProcedure || 'Consulta Geral',
-      budget_amount: newLeadBudget ? parseFloat(newLeadBudget) : null,
-      priority: newLeadPriority,
-      status: 'NOVO'
-    });
-
-    if (created && setSelectedLead) {
-      setSelectedLead(created);
-    }
-
-    setNewLeadName('');
-    setNewLeadPhone('');
-    setNewLeadProcedure('');
-    setNewLeadBudget('');
-    setNewLeadPriority('medium');
-    setShowAddLeadSidebar(false);
-  };
 
   // Mapeamento de perfis e permissões
   const userRole = user?.role || 'admin';
@@ -228,14 +196,14 @@ export default function Sidebar({
       >
         <div className="flex flex-col items-center gap-4 w-full">
           {/* Logo compacta - DentalFlow Symbol com Alinhamento h-16 (32px center) */}
-          <div className="h-16 w-full flex items-center justify-center border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white dark:bg-slate-950/20 rounded-t-[24px]">
+          <div className="h-16 w-full flex items-center justify-center border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 bg-white dark:bg-black/20 rounded-t-[24px]">
             <div 
               className="h-12 w-12 flex items-center justify-center cursor-pointer group relative" 
               onClick={() => setActiveTab('dashboard')}
             >
               <Logo collapsed={true} className="h-10 w-10 text-slate-800 dark:text-white transition-all duration-300 transform group-hover:scale-110 drop-shadow-[0_2px_10px_rgba(25,107,251,0.25)]" />
               {/* Tooltip da Logo */}
-              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
+              <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-black/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
                 <span>DentalFlow</span>
                 <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
               </div>
@@ -293,7 +261,7 @@ export default function Sidebar({
                   )}
 
                   {/* Tooltip Lateral Elevado (Sobrepõe qualquer sub-sidebar) */}
-                  <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-slate-950/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
+                  <div className="absolute left-16 top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-900/95 dark:bg-black/95 border border-white/10 text-white text-xs font-bold rounded-xl shadow-2xl opacity-0 pointer-events-none group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-200 whitespace-nowrap z-[70] flex items-center gap-1.5 backdrop-blur-md">
                     <span>{item.label}</span>
                     <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-0 h-0 border-y-4 border-y-transparent border-r-4 border-r-slate-900 dark:border-r-slate-950" />
                   </div>
@@ -322,7 +290,7 @@ export default function Sidebar({
       {/* ------------------------------------------------------------- */}
       {/* BARRA DE NAVEGAÇÃO INFERIOR (BOTTOM NAVIGATION) - MOBILE      */}
       {/* ------------------------------------------------------------- */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-slate-950 border-t border-slate-200/80 dark:border-white/10 z-40 flex items-center justify-around px-4 rounded-t-2xl shadow-lg md:hidden transition-colors duration-300">
+      <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-black border-t border-slate-200/80 dark:border-white/10 z-40 flex items-center justify-around px-4 rounded-t-2xl shadow-lg md:hidden transition-colors duration-300">
         <button
           onClick={() => { setActiveTab('dashboard'); setShowMoreMenu(false); }}
           className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all ${activeTab === 'dashboard' ? 'text-[#196BFB] dark:text-white font-bold' : 'text-slate-500 dark:text-white/50'}`}
@@ -373,7 +341,7 @@ export default function Sidebar({
       {showMoreMenu && (
         <>
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-45 md:hidden" onClick={() => setShowMoreMenu(false)} />
-          <div className="fixed bottom-20 left-4 right-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 p-4 rounded-3xl shadow-2xl z-50 md:hidden animate-in slide-in-from-bottom duration-200">
+          <div className="fixed bottom-20 left-4 right-4 bg-white dark:bg-black border border-slate-200/80 dark:border-white/10 p-4 rounded-3xl shadow-2xl z-50 md:hidden animate-in slide-in-from-bottom duration-200">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Outros Módulos</h4>
             <div className="grid grid-cols-2 gap-2">
               {allowedMenuItems.filter(item => !['dashboard', 'crm', 'pacientes', 'agenda'].includes(item.id)).map(item => {
@@ -434,6 +402,36 @@ export function SubSidebar({
   const [crmStageFilter, setCrmStageFilter] = useState('all');
   const [patientSearch, setPatientSearch] = useState('');
   const [showAddLeadSidebar, setShowAddLeadSidebar] = useState(false);
+  const [newLeadName, setNewLeadName] = useState('');
+  const [newLeadPhone, setNewLeadPhone] = useState('');
+  const [newLeadProcedure, setNewLeadProcedure] = useState('');
+  const [newLeadBudget, setNewLeadBudget] = useState('');
+  const [newLeadPriority, setNewLeadPriority] = useState('medium');
+
+  const handleAddLead = async (e) => {
+    e.preventDefault();
+    if (!newLeadName || !newLeadPhone) return;
+
+    const created = await addCrmLead({
+      name: newLeadName,
+      phone: newLeadPhone,
+      procedure_name: newLeadProcedure || 'Consulta Geral',
+      budget_amount: newLeadBudget ? parseFloat(newLeadBudget) : null,
+      priority: newLeadPriority,
+      status: 'NOVO'
+    });
+
+    if (created && setSelectedLead) {
+      setSelectedLead(created);
+    }
+
+    setNewLeadName('');
+    setNewLeadPhone('');
+    setNewLeadProcedure('');
+    setNewLeadBudget('');
+    setNewLeadPriority('medium');
+    setShowAddLeadSidebar(false);
+  };
 
   // Mini Calendário (Agenda)
   const [miniCalDate, setMiniCalDate] = useState(new Date());
@@ -1134,7 +1132,7 @@ export function SubSidebar({
               </h3>
               <button 
                 onClick={() => setShowAddLeadSidebar(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
               >
                 <IconChevronLeft className="w-4 h-4" />
               </button>

@@ -149,7 +149,7 @@ export default function SuperAdmin() {
 
   // Carregar clínicas na inicialização
   const loadClinics = async () => {
-    let rawClinics = [];
+    let rawClinics;
     if (supabaseActive && supabase) {
       try {
         const { data, error } = await supabase
@@ -319,7 +319,7 @@ export default function SuperAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-body p-6 lg:p-10 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-slate-100 font-body p-6 lg:p-10 relative overflow-hidden">
       
       {/* Glows de fundo da marca DentalFlow/OdontoCRM */}
       <div className="absolute w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none bg-[#1855FD]/10 -top-20 -left-20" />
@@ -394,7 +394,7 @@ export default function SuperAdmin() {
         {/* Painel do Formulário & Listagem (Lado Esquerdo - 8 Colunas) */}
         <div className="lg:col-span-7 space-y-8">
           {/* Formulário */}
-          <div className="bg-[#151c2c]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="bg-[#0D0D0D]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-[#1855FD] via-[#196BFB] to-[#03269A]" />
             
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2 font-title">
@@ -423,7 +423,7 @@ export default function SuperAdmin() {
                     placeholder="Ex: Clinica Sorriso Perfeito"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-[#0b0f19]/80 border border-white/10 rounded-xl p-2.5 text-sm focus:outline-none focus:border-[#1855FD] focus:ring-1 focus:ring-[#1855FD] transition-all text-white placeholder-slate-500"
+                    className="w-full bg-black/80 border border-white/10 rounded-xl p-2.5 text-sm focus:outline-none focus:border-[#1855FD] focus:ring-1 focus:ring-[#1855FD] transition-all text-white placeholder-slate-500"
                   />
                 </div>
                 <div>
@@ -435,7 +435,7 @@ export default function SuperAdmin() {
                       placeholder="sorrisoperfeito"
                       value={subdomain}
                       onChange={(e) => setSubdomain(e.target.value)}
-                      className="w-full bg-[#0b0f19]/80 border border-white/10 rounded-xl p-2.5 text-sm pr-16 focus:outline-none focus:border-[#1855FD] focus:ring-1 focus:ring-[#1855FD] transition-all text-white font-mono placeholder-slate-500"
+                      className="w-full bg-black/80 border border-white/10 rounded-xl p-2.5 text-sm pr-16 focus:outline-none focus:border-[#1855FD] focus:ring-1 focus:ring-[#1855FD] transition-all text-white font-mono placeholder-slate-500"
                     />
                     <span className="absolute right-3 text-[10px] text-slate-400 font-semibold font-mono">.crm.com</span>
                   </div>
@@ -443,7 +443,7 @@ export default function SuperAdmin() {
               </div>
 
               {/* Controles de Design Whitelabel */}
-              <div className="p-4 bg-[#0b0f19]/60 rounded-xl border border-white/10 space-y-3">
+              <div className="p-4 bg-black/60 rounded-xl border border-white/10 space-y-3">
                 <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-title">
                   <Palette className="w-4 h-4 text-[#196BFB]" />
                   Identidade Visual Whitelabel & Plano
@@ -463,7 +463,7 @@ export default function SuperAdmin() {
                         type="text"
                         value={primaryColor}
                         onChange={(e) => setPrimaryColor(e.target.value)}
-                        className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-1 text-[11px] text-center font-mono text-white"
+                        className="w-full bg-black border border-white/10 rounded-lg p-1 text-[11px] text-center font-mono text-white"
                       />
                     </div>
                   </div>
@@ -480,7 +480,7 @@ export default function SuperAdmin() {
                         type="text"
                         value={secondaryColor}
                         onChange={(e) => setSecondaryColor(e.target.value)}
-                        className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-1 text-[11px] text-center font-mono text-white"
+                        className="w-full bg-black border border-white/10 rounded-lg p-1 text-[11px] text-center font-mono text-white"
                       />
                     </div>
                   </div>
@@ -489,7 +489,7 @@ export default function SuperAdmin() {
                     <select
                       value={plan}
                       onChange={(e) => setPlan(e.target.value)}
-                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-[#1855FD] outline-none"
+                      className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white focus:border-[#1855FD] outline-none"
                     >
                       <option value="Starter">Starter (R$ 199)</option>
                       <option value="Pro">Pro (R$ 399)</option>
@@ -501,7 +501,7 @@ export default function SuperAdmin() {
                     <select
                       value={logo}
                       onChange={(e) => setLogo(e.target.value)}
-                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-2 text-xs text-white focus:border-[#1855FD] outline-none"
+                      className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white focus:border-[#1855FD] outline-none"
                     >
                       <option value="🦷">Dente</option>
                       <option value="✨">Brilho</option>
@@ -516,7 +516,7 @@ export default function SuperAdmin() {
 
               {/* Admin User setup */}
               {!supabaseActive && (
-                <div className="p-4 bg-[#0b0f19]/60 rounded-xl border border-white/10 space-y-3">
+                <div className="p-4 bg-black/60 rounded-xl border border-white/10 space-y-3">
                   <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-title">
                     <Key className="w-4 h-4 text-[#196BFB]" />
                     Conta Administrativa da Clínica
@@ -529,7 +529,7 @@ export default function SuperAdmin() {
                         placeholder="Ex: admin@sorriso.com"
                         value={adminEmail}
                         onChange={(e) => setAdminEmail(e.target.value)}
-                        className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-2 text-xs text-white"
+                        className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white"
                       />
                     </div>
                     <div>
@@ -539,7 +539,7 @@ export default function SuperAdmin() {
                         placeholder="Ex: 123"
                         value={adminPassword}
                         onChange={(e) => setAdminPassword(e.target.value)}
-                        className="w-full bg-[#0b0f19] border border-white/10 rounded-lg p-2 text-xs text-white"
+                        className="w-full bg-black border border-white/10 rounded-lg p-2 text-xs text-white"
                       />
                     </div>
                   </div>
@@ -557,7 +557,7 @@ export default function SuperAdmin() {
           </div>
 
           {/* Lista de Clínicas */}
-          <div className="bg-[#151c2c]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-[#0D0D0D]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-md font-bold text-white flex items-center gap-2 font-title">
                 <Users className="w-5 h-5 text-[#196BFB]" />

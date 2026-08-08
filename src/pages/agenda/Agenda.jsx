@@ -215,9 +215,9 @@ export default function Agenda({
 
       if (app.type === 'COMPROMISSO') {
         return {
-          bgClass: 'bg-slate-100 dark:bg-slate-900/90 hover:bg-slate-200/80',
+          bgClass: 'bg-slate-100 dark:bg-black/90 hover:bg-slate-200/80',
           borderClass: 'border-slate-300 dark:border-slate-700 border-l-4 border-l-slate-500',
-          badgeClass: 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
+          badgeClass: 'bg-slate-200 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
           badgeText: 'Compromisso',
           textTitle: 'text-slate-900 dark:text-white',
           textSub: 'text-slate-600 dark:text-slate-400'
@@ -383,7 +383,7 @@ export default function Agenda({
           {/* Header com Foto de Perfil + Nome do Paciente (Nome Único) */}
           <div className="flex items-center gap-2 overflow-hidden">
             {isConsulta && (
-              <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 border border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-2xs">
+              <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-slate-200 dark:bg-white/5 shrink-0 border border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-2xs">
                 <img src={patPhoto} alt={patName} className="w-full h-full object-cover rounded-full shrink-0" />
               </div>
             )}
@@ -657,7 +657,8 @@ export default function Agenda({
 
       const startDate = new Date(app.start_time);
       const tzOffset = startDate.getTimezoneOffset() * 60000;
-      const isoStart = localStartDate.toISOString();
+      const localStart = new Date(startDate.getTime() - tzOffset);
+      const isoStart = localStart.toISOString();
       const [startDateStr, startTimeStr] = isoStart.split('T');
       setAppDate(startDateStr || '');
       setAppTime((startTimeStr || '09:00:00').substring(0, 5));
@@ -1028,7 +1029,7 @@ export default function Agenda({
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigateDate(-1)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -1039,7 +1040,7 @@ export default function Agenda({
               </h3>
               <button
                 onClick={() => navigateDate(1)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -1174,7 +1175,7 @@ export default function Agenda({
                           key={dayIdx}
                           onDragOver={handleDragOver}
                           onDrop={(e) => handleDrop(e, time, date)}
-                          className={`p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors ${isSunday && !hasSundayApps ? 'bg-slate-100/30 dark:bg-slate-900/15' : (isInactive ? 'bg-slate-100/60 dark:bg-slate-900/40' : '')
+                          className={`p-1 border-r border-slate-100 dark:border-slate-800/40 relative transition-colors ${isSunday && !hasSundayApps ? 'bg-slate-100/30 dark:bg-black/15' : (isInactive ? 'bg-slate-100/60 dark:bg-black/40' : '')
                             }`}
                         >
                           {matchedApps.length === 0 && renderCellSubSlots(date, time)}
@@ -1192,7 +1193,7 @@ export default function Agenda({
         {/* VIEW: DIA */}
         {view === 'day' && (
           <div className="flex-grow flex flex-col overflow-y-auto">
-            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-4 flex-shrink-0 text-slate-550 font-semibold text-xs">
+            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-black/30 text-center py-4 flex-shrink-0 text-slate-600 font-semibold text-xs">
               <h4 className="font-title font-extrabold text-sm text-slate-800 dark:text-white">
                 {weekdays[activeDate.getDay()]}
               </h4>
@@ -1248,7 +1249,7 @@ export default function Agenda({
         {/* VIEW: MÊS */}
         {view === 'month' && (
           <div className="flex-1 flex flex-col overflow-y-auto">
-            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-2.5 text-slate-550 font-bold text-[10px] uppercase tracking-wider flex-shrink-0">
+            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-black/30 text-center py-2.5 text-slate-600 font-bold text-[10px] uppercase tracking-wider flex-shrink-0">
               {weekdays.map((day, idx) => <div key={idx}>{day.substring(0, 3)}</div>)}
             </div>
 
@@ -1259,7 +1260,7 @@ export default function Agenda({
                 const startDay = startMonth.getDay();
 
                 for (let i = 0; i < startDay; i++) {
-                  days.push(<div key={`prev-${i}`} className="bg-slate-50/50 dark:bg-slate-900/10 min-h-[90px]" />);
+                  days.push(<div key={`prev-${i}`} className="bg-slate-50/50 dark:bg-black/10 min-h-[90px]" />);
                 }
 
                 const totalDays = new Date(activeDate.getFullYear(), activeDate.getMonth() + 1, 0).getDate();
@@ -1279,7 +1280,7 @@ export default function Agenda({
                         setActiveModalTab('consulta');
                         setShowAddApp(true);
                       }}
-                      className="p-1.5 min-h-[90px] hover:bg-slate-50/30 dark:hover:bg-slate-800/5 transition-all text-left flex flex-col justify-between cursor-pointer"
+                      className="p-1.5 min-h-[90px] hover:bg-slate-50/30 dark:hover:bg-white/10 transition-all text-left flex flex-col justify-between cursor-pointer"
                     >
                       <span className="text-[10px] font-bold text-slate-400 select-none block mb-1">
                         {d}
@@ -1326,7 +1327,7 @@ export default function Agenda({
         {view === 'chair' && (
           <div className="flex-grow flex flex-col overflow-y-auto">
             {/* Headers de Cadeiras */}
-            <div className="grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-550 font-semibold text-[10px] uppercase tracking-wider">
+            <div className="grid grid-cols-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-black/30 text-center py-3 sticky top-0 z-10 flex-shrink-0 text-slate-600 font-semibold text-[10px] uppercase tracking-wider">
               <div className="col-span-2 flex items-center justify-center border-r border-slate-200/50 dark:border-slate-800/50">Horário</div>
               <div className="col-span-10 grid" style={{ gridTemplateColumns: `repeat(${selectedChairs.length > 0 ? selectedChairs.length : (chairs.length || 2)}, minmax(0, 1fr))` }}>
                 {(selectedChairs.length > 0 ? chairs.filter(c => selectedChairs.includes(c.id)) : chairs).map((chair, idx) => (
@@ -1411,7 +1412,7 @@ export default function Agenda({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="my-auto bg-white dark:bg-slate-850 rounded-[28px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-850 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
+              className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[28px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 relative text-slate-850 dark:text-white max-h-[90vh] overflow-y-auto scrollbar-thin"
             >
               {/* Fechar */}
               <button
@@ -1421,7 +1422,7 @@ export default function Agenda({
                     selectedAppointment(null);
                   }
                 }}
-                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-250 transition-colors"
+                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-700 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1469,14 +1470,14 @@ export default function Agenda({
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => handleOpenPatientRecord(selectedApp.patient_id)}
-                      className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
+                      className="py-2.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       Abrir prontuário
                     </button>
                     <button
                       onClick={() => handleOpenPatientRecord(selectedApp.patient_id)}
-                      className="py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
+                      className="py-2.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-850 dark:text-white font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-slate-200/40 dark:border-white/5 active:scale-[0.98] transition-all"
                     >
                       <Plus className="w-3.5 h-3.5 text-violet-500" />
                       Adicionar evolução
@@ -1496,7 +1497,7 @@ export default function Agenda({
                   </button>
                   <button
                     onClick={() => handleDuplicateApp(selectedApp)}
-                    className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-white rounded-xl flex items-center justify-center border border-slate-200/30 dark:border-white/5 shadow-sm transition-all"
+                    className="p-2.5 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-white rounded-xl flex items-center justify-center border border-slate-200/30 dark:border-white/5 shadow-sm transition-all"
                     title="Duplicar"
                   >
                     <Copy className="w-3.5 h-3.5" />
@@ -1504,7 +1505,7 @@ export default function Agenda({
                 </div>
 
                 {/* Listagem de Detalhes */}
-                <div className="space-y-2.5 bg-slate-50 dark:bg-black/30 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/60 text-slate-500 dark:text-slate-400">
+                <div className="space-y-2.5 bg-slate-50 dark:bg-black/30 p-3 rounded-2xl border border-slate-200/20 dark:border-slate-800/60 text-slate-500 dark:text-slate-400">
                   {/* Profissional / Cadeira */}
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
@@ -1550,7 +1551,7 @@ export default function Agenda({
                       <select
                         value={selectedApp.status}
                         onChange={(e) => handleStatusChange(selectedApp.id, e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/35 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 pl-8 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-secondary/30 focus:border-secondary cursor-pointer appearance-none"
+                        className="w-full bg-slate-50 dark:bg-black/35 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 pl-8 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-secondary/30 focus:border-secondary cursor-pointer appearance-none"
                       >
                         <option value="PENDING">Agendada</option>
                         <option value="CONFIRMED">Confirmada</option>
@@ -1595,7 +1596,7 @@ export default function Agenda({
                   setShowQuickPatientForm(false);
                   setEditingApp(null);
                 }}
-                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="absolute right-5 top-5 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1657,7 +1658,7 @@ export default function Agenda({
                                 placeholder="Nome completo do paciente..."
                                 value={quickPatientName}
                                 onChange={(e) => setQuickPatientName(e.target.value)}
-                                className="w-full bg-white dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:border-secondary"
+                                className="w-full bg-white dark:bg-black text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:border-secondary"
                                 aria-label="Nome completo do paciente"
                               />
                             </div>
@@ -1669,7 +1670,7 @@ export default function Agenda({
                                 placeholder="Celular (WhatsApp)..."
                                 value={quickPatientPhone}
                                 onChange={(e) => setQuickPatientPhone(formatPhone(e.target.value))}
-                                className="flex-1 bg-white dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-mono font-semibold focus:outline-none focus:border-secondary"
+                                className="flex-1 bg-white dark:bg-black text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-mono font-semibold focus:outline-none focus:border-secondary"
                                 aria-label="WhatsApp do paciente"
                               />
                               <button
@@ -1729,7 +1730,7 @@ export default function Agenda({
                                   aria-label="Buscar paciente"
                                 />
                                 {showSuggestions && (
-                                  <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-40 p-1.5 space-y-0.5 scrollbar-thin">
+                                  <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-48 overflow-y-auto z-40 p-1.5 space-y-0.5 scrollbar-thin">
                                     {filteredPatients.slice(0, 10).map(p => (
                                       <button
                                         key={p.id}
@@ -1739,7 +1740,7 @@ export default function Agenda({
                                           setPatientSearch(p.name);
                                           setShowSuggestions(false);
                                         }}
-                                        className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-blue-50 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors flex items-center justify-between"
+                                        className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-blue-50 dark:hover:bg-white/10 text-slate-800 dark:text-white transition-colors flex items-center justify-between"
                                       >
                                         <span className="font-bold truncate">{p.name}</span>
                                         <span className="text-[10px] text-slate-400 font-mono shrink-0 pl-2">{p.phone}</span>
@@ -1888,12 +1889,12 @@ export default function Agenda({
                         placeholder="Adicione observações sobre esta consulta..."
                         value={appObservations}
                         onChange={(e) => setAppObservations(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
                       />
                     </div>
 
                     {/* Sim/Não WhatsApp & Retorno & Etiqueta */}
-                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/50">
+                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-200/20 dark:border-slate-800/50">
                       <div>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-0.5 mb-1.5">Enviar confirmação?</label>
                         <div className="flex gap-4 items-center mt-1">
@@ -1925,7 +1926,7 @@ export default function Agenda({
                         <select
                           value={appReturnDays}
                           onChange={(e) => setAppReturnDays(e.target.value)}
-                          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-2 text-xs focus:outline-none cursor-pointer"
+                          className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-2 text-xs focus:outline-none cursor-pointer"
                         >
                           <option value="">Sem retorno</option>
                           <option value="15">15 dias</option>
@@ -1940,7 +1941,7 @@ export default function Agenda({
                       <select
                         value={appLabel}
                         onChange={(e) => setAppLabel(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none cursor-pointer"
                       >
                         <option value="Agendada">Agendada</option>
                         <option value="Primeira consulta">Primeira consulta</option>
@@ -1960,7 +1961,7 @@ export default function Agenda({
                         required
                         value={compDoctorId}
                         onChange={(e) => setCompDoctorId(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
                       >
                         {dentists.map(d => (
                           <option key={d.id} value={d.id}>{d.full_name}</option>
@@ -1976,7 +1977,7 @@ export default function Agenda({
                         placeholder="Dê um título ao compromisso (ex: Reunião, Almoço)..."
                         value={compTitle}
                         onChange={(e) => setCompTitle(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
                       />
                     </div>
 
@@ -1989,7 +1990,7 @@ export default function Agenda({
                           required
                           value={compStartDate}
                           onChange={(e) => setCompStartDate(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                       <div>
@@ -1999,7 +2000,7 @@ export default function Agenda({
                           required
                           value={compStartTime}
                           onChange={(e) => setCompStartTime(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                     </div>
@@ -2013,7 +2014,7 @@ export default function Agenda({
                           required
                           value={compEndDate}
                           onChange={(e) => setCompEndDate(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                       <div>
@@ -2023,13 +2024,13 @@ export default function Agenda({
                           required
                           value={compEndTime}
                           onChange={(e) => setCompEndTime(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                     </div>
 
                     {/* Recorrência */}
-                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-250/20 dark:border-slate-800/50">
+                    <div className="flex items-center gap-3 bg-slate-50 dark:bg-black/15 p-3 rounded-2xl border border-slate-200/20 dark:border-slate-800/50">
                       <label className="flex items-center gap-2 text-xs font-bold cursor-pointer select-none">
                         <input
                           type="checkbox"
@@ -2054,7 +2055,7 @@ export default function Agenda({
                         placeholder="Qual tarefa você precisa fazer?"
                         value={taskTitle}
                         onChange={(e) => setTaskTitle(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
                       />
                     </div>
 
@@ -2065,7 +2066,7 @@ export default function Agenda({
                         placeholder="Adicione detalhes sobre a tarefa..."
                         value={taskDescription}
                         onChange={(e) => setTaskDescription(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
+                        className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary resize-none"
                       />
                     </div>
 
@@ -2078,7 +2079,7 @@ export default function Agenda({
                           required
                           value={taskDueDate}
                           onChange={(e) => setTaskDueDate(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                       <div>
@@ -2088,7 +2089,7 @@ export default function Agenda({
                           required
                           value={taskDueTime}
                           onChange={(e) => setTaskDueTime(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary"
                         />
                       </div>
                     </div>
@@ -2100,7 +2101,7 @@ export default function Agenda({
                         <select
                           value={taskList}
                           onChange={(e) => setTaskList(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
+                          className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary cursor-pointer"
                         >
                           <option value="Entrada">Entrada</option>
                           <option value="Hoje">Hoje</option>
@@ -2110,9 +2111,9 @@ export default function Agenda({
                       <div className="relative" ref={taskAutocompleteRef}>
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Paciente (Opcional)</label>
                         {taskPatientId ? (
-                          <div className="flex items-center justify-between bg-slate-50 dark:bg-black/45 border border-slate-250 dark:border-slate-800 rounded-xl p-2 px-3 text-xs">
+                          <div className="flex items-center justify-between bg-slate-50 dark:bg-black/45 border border-slate-200 dark:border-slate-800 rounded-xl p-2 px-3 text-xs">
                             <div className="flex items-center gap-2 text-left">
-                              <User className="w-3.5 h-3.5 text-slate-450 dark:text-slate-400" />
+                              <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                               <span className="font-extrabold text-slate-800 dark:text-white truncate max-w-[120px]">
                                 {patients.find(p => p.id === taskPatientId)?.name || taskPatientSearch}
                               </span>
@@ -2123,7 +2124,7 @@ export default function Agenda({
                                 setTaskPatientId('');
                                 setTaskPatientSearch('');
                               }}
-                              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -2139,10 +2140,10 @@ export default function Agenda({
                                 setShowTaskPatientSuggestions(true);
                               }}
                               onFocus={() => setShowTaskPatientSuggestions(true)}
-                              className="w-full bg-slate-50 dark:bg-black/30 border border-slate-250 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
+                              className="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs focus:outline-none focus:border-secondary"
                             />
                             {showTaskPatientSuggestions && (
-                              <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
+                              <div className="absolute left-0 right-0 top-[65px] bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-h-40 overflow-y-auto z-40 p-1.5 space-y-0.5">
                                 {filteredTaskPatients.slice(0, 8).map(p => (
                                   <button
                                     key={p.id}
@@ -2152,13 +2153,13 @@ export default function Agenda({
                                       setTaskPatientSearch(p.name);
                                       setShowTaskPatientSuggestions(false);
                                     }}
-                                    className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-white transition-colors"
+                                    className="w-full text-left px-2.5 py-1.5 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-white/10 text-slate-800 dark:text-white transition-colors"
                                   >
                                     {p.name}
                                   </button>
                                 ))}
                                 {filteredTaskPatients.length === 0 && (
-                                  <div className="p-2 text-center text-xs text-slate-550">Nenhum paciente encontrado</div>
+                                  <div className="p-2 text-center text-xs text-slate-600">Nenhum paciente encontrado</div>
                                 )}
                               </div>
                             )}

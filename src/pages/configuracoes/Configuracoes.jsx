@@ -541,7 +541,7 @@ export default function Configuracoes() {
                 className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
                   isTabActive 
                     ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-400'
                 }`}
               >
                 <TabIcon className={`w-3.5 h-3.5 ${isTabActive ? 'text-violet-500' : 'text-slate-400'}`} />
@@ -786,7 +786,7 @@ export default function Configuracoes() {
                   style={{ fontFamily: `"${cFontFamily}", sans-serif` }}
                 >
                   {/* BARRA SUPERIOR MACOS STUDIO */}
-                  <div className="h-9 bg-slate-200/90 dark:bg-[#0A0A0A] border-b border-slate-300/60 dark:border-white/10 px-4 flex items-center justify-between flex-shrink-0">
+                  <div className="h-9 bg-slate-200/90 dark:bg-[#0D0D0D] border-b border-slate-300/60 dark:border-white/10 px-4 flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] block" />
                       <span className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] block" />
@@ -846,7 +846,7 @@ export default function Configuracoes() {
                           <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 relative">
                             <span className="w-4 h-4 rounded-sm bg-emerald-500 block" />
                             <span className={`w-2.5 h-2.5 rounded-full bg-emerald-500 absolute -top-0.5 -right-0.5 border-2 animate-pulse ${
-                              isDarkPreview ? 'border-[#0B1220]' : 'border-white'
+                              isDarkPreview ? 'border-[#0D0D0D]' : 'border-white'
                             }`} />
                           </div>
 
@@ -1097,10 +1097,10 @@ export default function Configuracoes() {
       {/* SUB-ABA: GERENCIAMENTO DE EQUIPE */}
       {activeSubTab === 'equipe' && (
         <div className="space-y-4 text-left">
-          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-black/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-[0_8px_30px_rgba(0,0,0,0.01)]">
             <div>
               <h3 className="text-sm font-bold text-slate-850 dark:text-white font-title">Profissionais e Equipe</h3>
-              <p className="text-xs text-slate-450 mt-0.5">Gerencie os funcionários, permissões de acesso e dentistas de sua clínica.</p>
+              <p className="text-xs text-slate-500 mt-0.5">Gerencie os funcionários, permissões de acesso e dentistas de sua clínica.</p>
             </div>
             <button
               onClick={() => setShowAddStaff(true)}
@@ -1112,28 +1112,28 @@ export default function Configuracoes() {
             </button>
           </div>
           
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-550 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black/30 text-slate-600 border-b border-slate-200/40 dark:border-slate-800">
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Profissional</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">E-mail</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Função</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-400">
                 {staff.map(st => {
                   const initials = st.name ? st.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U';
                   const isDoctor = st.role.toLowerCase().includes('doctor');
                   const isFinancial = st.role.toLowerCase().includes('financial');
                   
                   return (
-                    <tr key={st.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={st.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors">
                       <td className="py-3 px-5 flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center text-[10px] shadow-sm select-none border border-slate-200/40 dark:border-slate-700/40 flex-shrink-0 ${
-                          isDoctor ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-450' :
-                          isFinancial ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-450' :
-                          'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-450'
+                          isDoctor ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' :
+                          isFinancial ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400' :
+                          'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
                         }`}>
                           {initials}
                         </div>
@@ -1144,7 +1144,7 @@ export default function Configuracoes() {
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider border shadow-sm ${
                           isDoctor ? 'bg-indigo-50/80 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/40' :
                           isFinancial ? 'bg-amber-50/80 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/40' :
-                          'bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-450 border-emerald-100 dark:border-emerald-900/40'
+                          'bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40'
                         }`}>
                           {isDoctor ? (
                             <span className="flex items-center gap-1"><Activity className="w-3 h-3 text-indigo-500" /> Dentista</span>
@@ -1167,7 +1167,7 @@ export default function Configuracoes() {
       {/* SUB-ABA: CADEIRAS & CONSULTÓRIOS */}
       {activeSubTab === 'cadeiras' && (
         <div className="space-y-4 text-left animate-in fade-in">
-          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-black/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadeiras & Consultórios da Clínica</h3>
               <p className="text-xs text-slate-400 mt-0.5">Gerencie o cadastro de salas de atendimento e cadeiras odontológicas.</p>
@@ -1182,18 +1182,18 @@ export default function Configuracoes() {
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-550 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black/30 text-slate-600 border-b border-slate-200/40 dark:border-slate-800">
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Cadeira / Consultório</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Status</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-400">
                 {chairs.map(c => (
-                  <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors">
                     <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-extrabold text-[10px]">
                         <MapPin className="w-3.5 h-3.5" />
@@ -1208,7 +1208,7 @@ export default function Configuracoes() {
                     <td className="py-3.5 px-5 text-right flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEditChairOpen(c)}
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
                         title="Editar Cadeira"
                       >
                         <Edit className="w-3.5 h-3.5" />
@@ -1252,33 +1252,33 @@ export default function Configuracoes() {
               </button>
             </div>
             
-            <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 border-b border-slate-200/40 dark:border-slate-800">
+                  <tr className="bg-slate-50 dark:bg-black/30 text-slate-600 dark:text-slate-400 border-b border-slate-200/40 dark:border-slate-800">
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Procedimento</th>
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Preço Padrão</th>
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Categoria</th>
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-400">
                   {procedures.map(p => (
-                    <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
                         {p.name}
                       </td>
                       <td className="py-3.5 px-5 font-extrabold text-slate-850 dark:text-white">R$ {p.price}</td>
                       <td className="py-3.5 px-5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/30 dark:border-slate-700/30 uppercase tracking-wide">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200/30 dark:border-slate-700/30 uppercase tracking-wide">
                           {p.category}
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleEditProcOpen(p)}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-secondary rounded-xl transition-colors cursor-pointer"
                           title="Editar Procedimento"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -1311,18 +1311,18 @@ export default function Configuracoes() {
               </button>
             </div>
             
-            <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-550 border-b border-slate-200/40 dark:border-slate-800">
+                  <tr className="bg-slate-50 dark:bg-black/30 text-slate-600 border-b border-slate-200/40 dark:border-slate-800">
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Convênio</th>
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Desconto</th>
                     <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-400">
                   {insurancePlans.map(plan => (
-                    <tr key={plan.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={plan.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors">
                       <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white">{plan.name}</td>
                       <td className="py-3.5 px-5 font-extrabold text-emerald-500">{plan.discountPercent}%</td>
                       <td className="py-3.5 px-5 text-right">
@@ -1346,7 +1346,7 @@ export default function Configuracoes() {
       {activeSubTab === 'expediente' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left animate-in fade-in">
           {/* Horário de Atendimento Geral da Clínica */}
-          <div className="lg:col-span-6 bg-white dark:bg-slate-850 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="lg:col-span-6 bg-white dark:bg-[#0D0D0D] p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="p-2.5 rounded-2xl bg-blue-500/10 text-blue-500">
                 <Clock className="w-5 h-5" />
@@ -1366,7 +1366,7 @@ export default function Configuracoes() {
                     required
                     value={localClinicStart}
                     onChange={(e) => setLocalClinicStart(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -1376,7 +1376,7 @@ export default function Configuracoes() {
                     required
                     value={localClinicEnd}
                     onChange={(e) => setLocalClinicEnd(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -1408,7 +1408,7 @@ export default function Configuracoes() {
                         className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-blue-600 text-white shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-200'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-slate-200'
                         }`}
                       >
                         {d.label}
@@ -1419,7 +1419,7 @@ export default function Configuracoes() {
               </div>
 
               {/* Pausa de Almoço */}
-              <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+              <div className="p-3 bg-slate-50 dark:bg-black/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Pausa de Almoço (Intervalo)</span>
                   <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-bold text-slate-500">
@@ -1441,7 +1441,7 @@ export default function Configuracoes() {
                         type="time"
                         value={localClinicLunchStart}
                         onChange={(e) => setLocalClinicLunchStart(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
+                        className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
                       />
                     </div>
                     <div>
@@ -1450,7 +1450,7 @@ export default function Configuracoes() {
                         type="time"
                         value={localClinicLunchEnd}
                         onChange={(e) => setLocalClinicLunchEnd(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
+                        className="w-full bg-white dark:bg-[#0D0D0D] border border-slate-200 dark:border-slate-800 rounded-xl py-1.5 px-2.5 text-xs font-bold text-slate-800 dark:text-white"
                       />
                     </div>
                   </div>
@@ -1467,7 +1467,7 @@ export default function Configuracoes() {
           </div>
 
           {/* Escala Personalizada por Dentista */}
-          <div className="lg:col-span-6 bg-white dark:bg-slate-850 p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="lg:col-span-6 bg-white dark:bg-[#0D0D0D] p-6 rounded-3xl border border-slate-200/50 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-500">
                 <Users className="w-5 h-5" />
@@ -1493,7 +1493,7 @@ export default function Configuracoes() {
                       setDentistEnd(dentistSchedules[docId].end || '18:00');
                     }
                   }}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">-- Selecione o Dentista --</option>
                   {dentists.map(d => (
@@ -1512,7 +1512,7 @@ export default function Configuracoes() {
                         required
                         value={dentistStart}
                         onChange={(e) => setDentistStart(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                       />
                     </div>
                     <div>
@@ -1522,7 +1522,7 @@ export default function Configuracoes() {
                         required
                         value={dentistEnd}
                         onChange={(e) => setDentistEnd(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                        className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
                       />
                     </div>
                   </div>
@@ -1548,7 +1548,7 @@ export default function Configuracoes() {
                             className={`px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${
                               isChecked
                                 ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-200'
+                                : 'bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-slate-200'
                             }`}
                           >
                             {d.label}
@@ -1574,7 +1574,7 @@ export default function Configuracoes() {
       {/* SUB-ABA: FERIADOS, FOLGAS E BLOQUEIOS */}
       {activeSubTab === 'feriados' && (
         <div className="space-y-4 text-left animate-in fade-in">
-          <div className="flex justify-between items-center bg-white/80 dark:bg-slate-900/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
+          <div className="flex justify-between items-center bg-white/80 dark:bg-black/80 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-800/60 shadow-sm">
             <div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Feriados, Folgas e Férias</h3>
               <p className="text-xs text-slate-400 mt-0.5">Cadastre recessos da clínica ou ausências de dentistas para bloquear o agendamento.</p>
@@ -1589,21 +1589,21 @@ export default function Configuracoes() {
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-850 border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-[#0D0D0D] border border-slate-200/50 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
+                <tr className="bg-slate-50 dark:bg-black/30 text-slate-500 border-b border-slate-200/40 dark:border-slate-800">
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Data</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Título / Motivo</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px]">Escopo do Bloqueio</th>
                   <th className="py-3.5 px-5 font-bold uppercase tracking-wider text-[10px] text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-400">
                 {holidays.map(hol => {
                   const targetDentist = hol.dentist_id ? dentists.find(d => d.id === hol.dentist_id) : null;
                   return (
-                    <tr key={hol.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={hol.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10 transition-colors">
                       <td className="py-3.5 px-5 font-extrabold text-blue-500 font-mono">{hol.date}</td>
                       <td className="py-3.5 px-5 font-bold text-slate-800 dark:text-white">{hol.title}</td>
                       <td className="py-3.5 px-5">
@@ -1643,12 +1643,12 @@ export default function Configuracoes() {
       {/* MODAL: ADICIONAR PROFISSIONAL */}
       {showAddStaff && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Adicionar à Equipe</h3>
               <button 
                 onClick={() => setShowAddStaff(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1663,7 +1663,7 @@ export default function Configuracoes() {
                   placeholder="ex: Dr. Carlos Souza"
                   value={newStaffName}
                   onChange={(e) => setNewStaffName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -1675,7 +1675,7 @@ export default function Configuracoes() {
                   placeholder="carlos@sorriso.com"
                   value={newStaffEmail}
                   onChange={(e) => setNewStaffEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -1684,7 +1684,7 @@ export default function Configuracoes() {
                 <select
                   value={newStaffRole}
                   onChange={(e) => setNewStaffRole(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="DOCTOR">Dentista (DOCTOR)</option>
                   <option value="RECEPTIONIST">Secretária (RECEPTIONIST)</option>
@@ -1707,12 +1707,12 @@ export default function Configuracoes() {
       {/* MODAL: ADICIONAR PROCEDIMENTO */}
       {showAddProc && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Procedimento</h3>
               <button 
                 onClick={() => setShowAddProc(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-855 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1720,19 +1720,19 @@ export default function Configuracoes() {
 
             <form onSubmit={handleAddProcSubmit} className="space-y-4 text-slate-800 dark:text-slate-200">
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Nome do Procedimento</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome do Procedimento</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Canal Endodôntico Molar"
                   value={newProcName}
                   onChange={(e) => setNewProcName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Preço Padrão (R$)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Preço Padrão (R$)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1740,16 +1740,16 @@ export default function Configuracoes() {
                   placeholder="ex: 450.00"
                   value={newProcPrice}
                   onChange={(e) => setNewProcPrice(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Categoria</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Categoria</label>
                 <select
                   value={newProcCategory}
                   onChange={(e) => setNewProcCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="CLINICAL">Clínico Geral (CLINICAL)</option>
                   <option value="SURGERY">Cirurgia (SURGERY)</option>
@@ -1760,11 +1760,11 @@ export default function Configuracoes() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Cor Indicativa (Odontograma)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cor Indicativa (Odontograma)</label>
                 <select
                   value={newProcColor}
                   onChange={(e) => setNewProcColor(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="#a78bfa">Roxo (#a78bfa)</option>
                   <option value="#f87171">Vermelho (#f87171)</option>
@@ -1792,7 +1792,7 @@ export default function Configuracoes() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             
             {/* 1. WhatsApp Evolution API */}
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
@@ -1818,7 +1818,7 @@ export default function Configuracoes() {
                   placeholder="URL da API (ex: https://api.whatsapp.com)"
                   value={evolutionUrl}
                   onChange={(e) => setEvolutionUrl(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
                 />
                 <button
                   type="button"
@@ -1836,7 +1836,7 @@ export default function Configuracoes() {
             </div>
 
             {/* 2. Google Calendar Sync */}
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
@@ -1865,7 +1865,7 @@ export default function Configuracoes() {
                   }}
                   className={`w-full py-2 font-bold rounded-xl text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 ${
                     gcalConnected 
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300' 
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
                 >
@@ -1876,7 +1876,7 @@ export default function Configuracoes() {
             </div>
 
             {/* 3. Gateway de Pagamentos Stripe / PIX */}
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
@@ -1897,7 +1897,7 @@ export default function Configuracoes() {
                   type="password"
                   placeholder="Chave Secreta Stripe (sk_live_...)"
                   defaultValue="sk_live_demo_key_odontocrm_2026"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
                 />
                 <button
                   type="button"
@@ -1910,7 +1910,7 @@ export default function Configuracoes() {
             </div>
 
             {/* 4. n8n / Webhooks de Automação */}
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
@@ -1931,7 +1931,7 @@ export default function Configuracoes() {
                   type="url"
                   placeholder="URL do Webhook (https://n8n.suaclinica.com/webhook/...)"
                   defaultValue="https://n8n.odontocrm.com/webhook/clinic-events"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
                 />
                 <button
                   type="button"
@@ -1944,7 +1944,7 @@ export default function Configuracoes() {
             </div>
 
             {/* 5. OpenAI / Gemini AI API Key */}
-            <div className="bg-white dark:bg-slate-850 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 shadow-sm space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">
@@ -1965,7 +1965,7 @@ export default function Configuracoes() {
                   type="password"
                   placeholder="Chave de API (AIzaSy... ou sk-...)"
                   defaultValue="AIzaSy_demo_gemini_key_2026"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
                 />
                 <button
                   type="button"
@@ -1982,12 +1982,12 @@ export default function Configuracoes() {
       )}
       {showAddInsurance && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Convênio</h3>
               <button 
                 onClick={() => setShowAddInsurance(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-855 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1995,19 +1995,19 @@ export default function Configuracoes() {
 
             <form onSubmit={handleAddInsuranceSubmit} className="space-y-4 text-slate-800 dark:text-slate-200">
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Nome do Convênio</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nome do Convênio</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Bradesco Dental"
                   value={newInsuranceName}
                   onChange={(e) => setNewInsuranceName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider mb-1">Desconto Padrão (%)</label>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Desconto Padrão (%)</label>
                 <input
                   type="number"
                   min="0"
@@ -2016,7 +2016,7 @@ export default function Configuracoes() {
                   placeholder="ex: 15"
                   value={newInsuranceDiscount}
                   onChange={(e) => setNewInsuranceDiscount(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-250 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -2035,7 +2035,7 @@ export default function Configuracoes() {
       {/* MODAL: EDITAR PROCEDIMENTO */}
       {showEditProc && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Editar Procedimento</h3>
               <button 
@@ -2043,7 +2043,7 @@ export default function Configuracoes() {
                   setShowEditProc(false);
                   setEditingProc(null);
                 }}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2058,7 +2058,7 @@ export default function Configuracoes() {
                   placeholder="ex: Restauração Resina"
                   value={editProcName}
                   onChange={(e) => setEditProcName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 />
               </div>
 
@@ -2072,7 +2072,7 @@ export default function Configuracoes() {
                     placeholder="ex: 250.00"
                     value={editProcPrice}
                     onChange={(e) => setEditProcPrice(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                   />
                 </div>
                 <div>
@@ -2084,7 +2084,7 @@ export default function Configuracoes() {
                     placeholder="ex: 30"
                     value={editProcDuration}
                     onChange={(e) => setEditProcDuration(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                   />
                 </div>
               </div>
@@ -2094,7 +2094,7 @@ export default function Configuracoes() {
                 <select
                   value={editProcCategory}
                   onChange={(e) => setEditProcCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="CLINICAL">Clínica Geral</option>
                   <option value="ORTHO">Ortodontia</option>
@@ -2111,7 +2111,7 @@ export default function Configuracoes() {
                   type="color"
                   value={editProcColor}
                   onChange={(e) => setEditProcColor(e.target.value)}
-                  className="w-full h-9 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 cursor-pointer"
+                  className="w-full h-9 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl p-1 cursor-pointer"
                 />
               </div>
 
@@ -2130,12 +2130,12 @@ export default function Configuracoes() {
       {/* MODAL: CADASTRAR FERIADO OU FOLGA */}
       {showAddHoliday && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] rounded-[24px] max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800 dark:text-white font-title">Cadastrar Feriado / Bloqueio</h3>
               <button 
                 onClick={() => setShowAddHoliday(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -2150,7 +2150,7 @@ export default function Configuracoes() {
                   placeholder="ex: Feriado de Carnaval ou Férias Dr. Marcos"
                   value={newHolTitle}
                   onChange={(e) => setNewHolTitle(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 />
               </div>
 
@@ -2161,7 +2161,7 @@ export default function Configuracoes() {
                   required
                   value={newHolDate}
                   onChange={(e) => setNewHolDate(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 />
               </div>
 
@@ -2170,7 +2170,7 @@ export default function Configuracoes() {
                 <select
                   value={newHolType}
                   onChange={(e) => setNewHolType(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 >
                   <option value="CLINIC">Toda a Clínica (Feriado Geral)</option>
                   <option value="DENTIST">Profissional Específico (Folga / Férias)</option>
@@ -2184,7 +2184,7 @@ export default function Configuracoes() {
                     required
                     value={newHolDentistId}
                     onChange={(e) => setNewHolDentistId(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                   >
                     <option value="">-- Escolha o Dentista --</option>
                     {dentists.map(d => (
@@ -2209,13 +2209,13 @@ export default function Configuracoes() {
       {/* MODAL: NOVA CADEIRA / CONSULTÓRIO */}
       {showAddChair && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-extrabold text-sm text-slate-800 dark:text-white font-title flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span>Nova Cadeira / Consultório</span>
               </h3>
-              <button onClick={() => setShowAddChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowAddChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2229,7 +2229,7 @@ export default function Configuracoes() {
                   placeholder="ex: Consultório VIP 01, Cadeira Ortodontia..."
                   value={newChairName}
                   onChange={(e) => setNewChairName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 />
               </div>
 
@@ -2248,13 +2248,13 @@ export default function Configuracoes() {
       {/* MODAL: EDITAR CADEIRA / CONSULTÓRIO */}
       {showEditChair && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="my-auto bg-white dark:bg-slate-850 w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
+          <div className="my-auto bg-white dark:bg-[#0D0D0D] w-full max-w-sm rounded-3xl p-5 sm:p-6 border border-slate-200/50 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-left max-h-[90vh] overflow-y-auto scrollbar-thin">
             <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-extrabold text-sm text-slate-800 dark:text-white font-title flex items-center gap-2">
                 <Edit className="w-4 h-4 text-blue-500" />
                 <span>Editar Cadeira / Consultório</span>
               </h3>
-              <button onClick={() => setShowEditChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+              <button onClick={() => setShowEditChair(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -2267,7 +2267,7 @@ export default function Configuracoes() {
                   required
                   value={editChairName}
                   onChange={(e) => setEditChairName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-secondary font-bold"
                 />
               </div>
 

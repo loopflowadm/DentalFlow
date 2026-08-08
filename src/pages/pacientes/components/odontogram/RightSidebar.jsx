@@ -21,7 +21,7 @@ export default function RightSidebar({
   return (
     <div className={`w-56 sm:w-60 shrink-0 min-w-[210px] backdrop-blur-md rounded-2xl border p-3 flex flex-col gap-3 transition-all overflow-y-auto custom-scrollbar ${
       isDarkMode 
-        ? 'bg-[#111726]/90 border-white/10 shadow-xl text-white' 
+        ? 'bg-[#0D0D0D]/90 border-white/10 shadow-xl text-white' 
         : 'bg-white border-slate-200 shadow-xs text-slate-800'
     }`}>
       {/* 1. BOTÃO DE LEGENDA DE CORES */}

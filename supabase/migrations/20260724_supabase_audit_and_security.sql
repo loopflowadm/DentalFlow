@@ -7,6 +7,17 @@
 -- 1. Habilitar Extensão de Busca Vetorial pgvector (para o Agente Sofia e IA)
 CREATE EXTENSION IF NOT EXISTS vector;
 
+-- 1.1 Criar a tabela de memória semântica da IA (referenciada pelas políticas e índices abaixo).
+--     Criada aqui com IF NOT EXISTS para não quebrar em bases novas nem alterar bases já existentes.
+CREATE TABLE IF NOT EXISTS public.ai_semantic_memory (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+    patient_id UUID REFERENCES public.patients(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    embedding vector(1536) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- 2. Habilitar Row-Level Security (RLS) em 100% das Tabelas Operacionais
 ALTER TABLE IF EXISTS public.patients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.appointments ENABLE ROW LEVEL SECURITY;

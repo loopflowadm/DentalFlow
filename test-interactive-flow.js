@@ -1,11 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
-const supabaseUrl = 'https://rxjwfzknxatoozbuhqtr.supabase.co';
-const supabaseKey = 'sb_publishable_RfO9DUfBP1yi4gT1k2Qbbw_la4aLu7p';
+// Carregar variáveis do .env.local se existirem
+const envPath = path.resolve('.env.local');
+let env = {};
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim();
+      env[key] = val;
+    }
+  });
+}
+const getEnv = (key) => process.env[key] || env[key] || '';
+
+const supabaseUrl = getEnv('VITE_SUPABASE_URL');
+const supabaseKey = getEnv('VITE_SUPABASE_ANON_KEY');
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const globalKey = 'dentalflow_key_secure_123456';
-const url = 'http://179.197.225.90:8080';
+const globalKey = getEnv('VITE_EVOLUTION_API_KEY');
+const url = getEnv('VITE_EVOLUTION_API_BASE_URL');
 const targetPhone = process.env.TEST_PHONE || '5583996973326';
 
 console.log('---------------------------------------------------------');

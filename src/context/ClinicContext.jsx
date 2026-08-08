@@ -175,7 +175,7 @@ export function ClinicProvider({ children }) {
         const storedTags = localStorage.getItem(`chat_tags_${p.id}`);
         if (storedTags) savedTags = JSON.parse(storedTags);
         savedNotes = localStorage.getItem(`patient_notes_${p.id}`);
-      } catch (e) {}
+      } catch (e) { /* ignora erros de cache local */ }
       return {
         patientId: p.id,
         name: p.name,
@@ -209,7 +209,7 @@ export function ClinicProvider({ children }) {
         const storedTags = localStorage.getItem(`chat_tags_${l.id}`);
         if (storedTags) savedTags = JSON.parse(storedTags);
         savedNotes = localStorage.getItem(`patient_notes_${l.id}`);
-      } catch (e) {}
+      } catch (e) { /* fallback tolerante */ }
       return {
         patientId: l.id,
         name: l.name,
@@ -350,7 +350,9 @@ export function ClinicProvider({ children }) {
         }
       )
       .subscribe((status) => {
-        console.log('[Realtime] Status da assinatura chat_messages:', status);
+        if (import.meta.env.DEV) {
+          console.log('[Realtime] Status da assinatura chat_messages:', status);
+        }
       });
 
     return () => {
@@ -646,7 +648,7 @@ export function ClinicProvider({ children }) {
             setDentists(parsed.dentists);
           }
         }
-      } catch (e) {}
+      } catch (e) { /* fallback tolerante */ }
 
       // Inicializar chats do WhatsApp
       loadChatsState(finalPatients, leadData);
@@ -920,7 +922,7 @@ export function ClinicProvider({ children }) {
         if (isValidUUID(mLead.id)) {
           try {
             await supabase.from('crm_leads').delete().eq('id', mLead.id).eq('clinic_id', clinicId);
-          } catch (e) {}
+          } catch (e) { /* fallback tolerante */ }
         }
       }
     }
@@ -1296,8 +1298,6 @@ export function ClinicProvider({ children }) {
             formattedNumber = '55' + formattedNumber;
           }
 
-          console.log(`[Evolution API] Enviando mensagem manual para ${formattedNumber}...`);
-
           fetch(`${savedUrl.replace(/\/$/, '')}/message/sendText/${savedInstance}`, {
             method: 'POST',
             headers: {
@@ -1326,9 +1326,9 @@ export function ClinicProvider({ children }) {
 
   const sendWhatsAppButtons = async (targetPhoneOrId, title, description, footerText, buttonsArray) => {
     const clinicId = clinic.id;
-    const savedUrl = localStorage.getItem(`evolution_url_${clinicId}`) || 'http://179.197.225.90:8080';
+    const savedUrl = localStorage.getItem(`evolution_url_${clinicId}`) || import.meta.env.VITE_EVOLUTION_API_BASE_URL || '';
     const savedInstance = localStorage.getItem(`evolution_instance_${clinicId}`) || 'dentalflow-prod';
-    const savedToken = localStorage.getItem(`evolution_token_${clinicId}`) || 'dentalflow_key_secure_123456';
+    const savedToken = localStorage.getItem(`evolution_token_${clinicId}`) || import.meta.env.VITE_EVOLUTION_API_KEY || '';
 
     const pat = patients.find(p => p.id === targetPhoneOrId);
     let phoneNumber = pat ? pat.phone.replace(/\D/g, '') : targetPhoneOrId.replace(/\D/g, '');
@@ -1468,7 +1468,7 @@ export function ClinicProvider({ children }) {
     setProcedures(procsList);
     try {
       localStorage.setItem(`clinic_procedures_${clinicId}`, JSON.stringify(procsList));
-    } catch (e) {}
+    } catch (e) { /* fallback tolerante */ }
 
     if (isValidUUID(clinicId)) {
       try {
@@ -1480,7 +1480,7 @@ export function ClinicProvider({ children }) {
           clinic_id: clinicId
         }));
         await supabase.from('procedures').insert(dbPayload);
-      } catch (err) {}
+      } catch (err) { /* fallback tolerante */ }
     }
   };
 
@@ -1489,7 +1489,7 @@ export function ClinicProvider({ children }) {
     setInsurancePlans(plansList);
     try {
       localStorage.setItem(`clinic_insurance_plans_${clinicId}`, JSON.stringify(plansList));
-    } catch (e) {}
+    } catch (e) { /* fallback tolerante */ }
 
     if (isValidUUID(clinicId)) {
       try {
@@ -1499,7 +1499,7 @@ export function ClinicProvider({ children }) {
           clinic_id: clinicId
         }));
         await supabase.from('insurance_plans').insert(dbPayload);
-      } catch (err) {}
+      } catch (err) { /* fallback tolerante */ }
     }
   };
 
@@ -2788,10 +2788,9 @@ export function ClinicProvider({ children }) {
         dentists: demoDentists,
         chairs: demoChairs
       }));
-    } catch (e) {}
+    } catch (e) { /* fallback tolerante */ }
 
     // Dados de demonstração armazenados com sucesso no estado local e localStorage para desenvolvimento resiliente
-    console.log('[DevTools] Sistema populado com dados de demonstração completos!');
   };
 
   const clearAllData = async () => {
@@ -2823,7 +2822,7 @@ export function ClinicProvider({ children }) {
           localStorage.removeItem(key);
         }
       });
-    } catch (e) {}
+    } catch (e) { /* fallback tolerante */ }
 
     // 3. Deletar tabelas remotas no Supabase em ordem de dependência (chaves estrangeiras)
     if (clinicId && isValidUUID(clinicId)) {

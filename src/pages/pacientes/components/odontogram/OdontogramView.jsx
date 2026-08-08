@@ -431,7 +431,7 @@ export default function OdontogramView({ patient, onSavePatientData }) {
 
       {/* HEADER DE NAVEGAÇÃO E AÇÕES */}
       <div className={`p-3 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-3 ${
-        isDarkMode ? 'bg-[#111726]/90 border-white/10 shadow-lg text-white' : 'bg-white border-slate-200 shadow-xs text-slate-800'
+        isDarkMode ? 'bg-[#0D0D0D]/90 border-white/10 shadow-lg text-white' : 'bg-white border-slate-200 shadow-xs text-slate-800'
       }`}>
         {/* TAB SWITCHER PRINCIPAL */}
         <div className={`p-1 rounded-xl border flex items-center gap-1 ${isDarkMode ? 'bg-slate-950 border-white/10' : 'bg-slate-100 border-slate-200'}`}>

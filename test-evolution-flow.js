@@ -17,9 +17,14 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || 'https://rxjwfzknxatoozbuhqtr.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_RfO9DUfBP1yi4gT1k2Qbbw_la4aLu7p';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/whatsapp-agent`;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('\n❌ Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no .env.local (não use credenciais hardcoded).\n');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -60,8 +65,13 @@ async function sendWebhookMessage(phone, text, instanceName, apiKey) {
 async function runEvolutionTests() {
   const testPhone = process.env.TEST_PHONE || '5583999999999';
   const instanceName = process.env.INSTANCE_NAME || 'odonto-crm';
-  const apiKey = process.env.EVOLUTION_API_KEY || 'odonto-secret-key';
-  const evolutionBaseUrl = process.env.EVOLUTION_API_URL || 'http://179.197.225.90:8080';
+  const apiKey = process.env.EVOLUTION_API_KEY || env.VITE_EVOLUTION_API_KEY || '';
+  const evolutionBaseUrl = (process.env.EVOLUTION_API_URL || env.VITE_EVOLUTION_API_BASE_URL || '').replace(/\/$/, '');
+
+  if (!apiKey || !evolutionBaseUrl) {
+    console.error('❌ Configure EVOLUTION_API_KEY e EVOLUTION_API_URL (ou VITE_EVOLUTION_API_KEY e VITE_EVOLUTION_API_BASE_URL).');
+    return;
+  }
 
   console.log('🧪 ETAPA 1: Verificando Configurações e Instância Evolution API...');
   console.log(`   - Instância Alvo: ${instanceName}`);

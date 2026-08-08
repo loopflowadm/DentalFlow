@@ -13,6 +13,11 @@ import {
 
 import AIModule from '../ai/AIModule';
 
+// Configuração segura via variáveis de ambiente (nunca hardcoded)
+const EDGE_FUNCTION_URL = import.meta.env.VITE_WHATSAPP_EDGE_URL || `${import.meta.env.VITE_SUPABASE_URL || ''}/functions/v1/whatsapp-agent`;
+const EDGE_API_KEY = import.meta.env.VITE_WHATSAPP_WEBHOOK_SECRET || '';
+const DEFAULT_EVOLUTION_URL = import.meta.env.VITE_EVOLUTION_API_BASE_URL || '';
+
 export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefilledLeadData, selectedPatientId: initialPatientId }) {
   const { 
     whatsappChats: contextChats, 
@@ -106,9 +111,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   useEffect(() => {
     if (showEvolutionSettings) {
       // Chama silenciosamente para atualizar o status sem logs
-      fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+      fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+        headers: { 'Content-Type': 'application/json', 'apikey': EDGE_API_KEY },
         body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
       })
         .then(r => r.json())
@@ -155,9 +160,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     // Limpa valor antigo/errado que pode ter ficado preso no localStorage
     if (stored === 'https://api.dentalflow.clinic') {
       localStorage.removeItem(`evolution_url_${clinicId}`);
-      return 'http://179.197.225.90:8080';
+      return DEFAULT_EVOLUTION_URL;
     }
-    return stored || 'http://179.197.225.90:8080';
+    return stored || DEFAULT_EVOLUTION_URL;
   });
   const [evolutionInstance, setEvolutionInstance] = useState(() => {
     const stored = localStorage.getItem(`evolution_instance_${clinicId}`);
@@ -167,7 +172,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     }
     return stored || 'odonto-crm';
   });
-  const [evolutionToken, setEvolutionToken] = useState(() => localStorage.getItem(`evolution_token_${clinicId}`) || 'dentalflow_key_secure_123456');
+  const [evolutionToken, setEvolutionToken] = useState(() => localStorage.getItem(`evolution_token_${clinicId}`) || '');
   const [evolutionStatus, setEvolutionStatus] = useState(() => localStorage.getItem(`evolution_status_${clinicId}`) || 'DISCONNECTED');
   const [qrCode, setQrCode] = useState('');
   const [connectionLogs, setConnectionLogs] = useState([]);
@@ -185,9 +190,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   // Verifica conexão via Edge Function (sem CORS) — usado no polling e no botão "Atualizar Status"
   const checkRealConnection = async (silent = false) => {
     try {
-      const res = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+      const res = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+        headers: { 'Content-Type': 'application/json', 'apikey': EDGE_API_KEY },
         body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
       });
       const data = await res.json();
@@ -212,9 +217,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     addLog('👀 Aguardando leitura do QR Code... (verificando a cada 3s)');
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+        const res = await fetch(EDGE_FUNCTION_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+          headers: { 'Content-Type': 'application/json', 'apikey': EDGE_API_KEY },
           body: JSON.stringify({ action: 'check_status', instance: evolutionInstance || 'odonto-crm' })
         });
         const data = await res.json();
@@ -224,7 +229,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
           addLog('🎉 WhatsApp conectado com sucesso! QR Code escaneado.');
           clearInterval(interval);
         }
-      } catch (_) {}
+      } catch (_) { /* ignora falha de polling temporária */ }
     }, 3000);
     return () => clearInterval(interval);
   }, [qrCode, evolutionInstance]);
@@ -294,9 +299,9 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
 
       // 1. Tentar via Edge Function do Supabase (Zero CORS, reset automático de sessão presa)
       try {
-        const edgeRes = await fetch('https://rxjwfzknxatoozbuhqtr.supabase.co/functions/v1/whatsapp-agent', {
+        const edgeRes = await fetch(EDGE_FUNCTION_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': 'dentalflow_key_secure_123456' },
+          headers: { 'Content-Type': 'application/json', 'apikey': EDGE_API_KEY },
           body: JSON.stringify({ action: 'get_qrcode', instance: evolutionInstance })
         });
         if (edgeRes.ok) {
@@ -438,6 +443,13 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
       updatedTags = [...currentTags, tagToToggle];
     }
     updateChatTags(activeChat.patientId, updatedTags);
+  };
+
+  const handleTogglePauseBot = async (patientId) => {
+    if (!patientId) return;
+    const chat = allChats.find(c => c.patientId === patientId) || contextChats?.find(c => c.patientId === patientId);
+    const isPaused = !chat?.isBotPaused;
+    await toggleBotSilence(patientId, isPaused);
   };
 
   const handleAddCustomTag = (e) => {
@@ -1026,7 +1038,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
                       type="text"
                       value={evolutionUrl}
                       onChange={e => setEvolutionUrl(e.target.value)}
-                      placeholder="http://179.197.225.90:8080"
+                      placeholder="https://sua-vps:8080"
                       className={`w-full text-xs px-3 py-2.5 rounded-xl border font-mono transition-all outline-none ${
                         isDarkMode
                           ? 'bg-[#080d11] border-[#1f2c34] text-white focus:border-[#00a884] placeholder:text-slate-600'

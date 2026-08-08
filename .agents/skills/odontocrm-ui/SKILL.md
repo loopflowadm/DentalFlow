@@ -26,9 +26,15 @@ Todo botão principal deve passar a sensação física de profundidade e clique:
     ```
 
 ### 3. Cores Semânticas e Fundos
-*   **Fundo da Aplicação (Dark Mode):** `#0b0f19` (Navy Black).
-*   **Fundo de Cards (Dark Mode):** `#151c2c` (Slate 850) ou `#1d2433` (Slate 800) para popovers/modais.
-*   **Bordas Fina de Divisores:** `border-slate-200/50` (Light) ou `border-slate-800/80` (Dark).
+O tema escuro usa **preto neutro** (sem tom azulado). Evite `slate-800/850/900` (`#161e2e`/`#0f1624`/`#080d19`), `#0b0f19` e `#151c2c` — substitua pela família neutra abaixo:
+*   **Fundo da Aplicação (Dark Mode):** `black` (`dark:bg-black`) — shell externo.
+*   **Superfícies/Cards/Modais/Header (Dark Mode):** `#0D0D0D` (`dark:bg-[#0D0D0D]`).
+*   **Sub-navegação (SubSidebar, Dark Mode):** `#080808` (`dark:bg-[#080808]`).
+*   **Inputs/campos inset (Dark Mode):** `black` (`dark:bg-black`) ou `dark:bg-black/30` sobre superfície.
+*   **Hover em superfícies (Dark Mode):** `#18181B` (`dark:hover:bg-[#18181B]`) ou `dark:hover:bg-white/10`.
+*   **Badges/Chips (Dark Mode):** `dark:bg-white/5`, `dark:bg-white/10`.
+*   **Bordas finas de divisores:** `border-slate-200/80` (Light) ou `dark:border-white/5` / `dark:border-white/10` (Dark).
+*   **Accent/Brand:** `#196BFB` (Electric Blue) para botões primários e destaques.
 *   **Success/Accent Colors:**
     *   Sucesso: `#10b981` (Emerald).
     *   Aviso/Aguardando: `#f59e0b` (Amber).

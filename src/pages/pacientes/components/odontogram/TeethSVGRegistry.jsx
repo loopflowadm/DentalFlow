@@ -264,16 +264,13 @@ export const AnatomicalToothSVG = ({
   };
 
   // Caminhos de Raízes Curvas Anatômicas
-  let rootPath = '';
-  if (isUpper) {
-    rootPath = isMolar
-      ? "M 8 58 C 8 36, 12 16, 18 4 C 21 18, 24 36, 28 44 C 30 26, 34 10, 40 4 C 46 20, 50 38, 52 58 Z"
-      : "M 14 58 C 16 26, 22 6, 28 2 C 34 6, 40 26, 42 58 Z";
-  } else {
-    rootPath = isMolar
-      ? "M 8 4 C 8 30, 12 52, 18 66 C 24 50, 27 30, 29 18 C 31 30, 35 50, 40 66 C 47 52, 52 30, 52 4 Z"
-      : "M 14 4 C 16 28, 22 50, 28 68 C 34 50, 40 28, 42 4 Z";
-  }
+  const rootPath = isUpper
+    ? (isMolar
+        ? "M 8 58 C 8 36, 12 16, 18 4 C 21 18, 24 36, 28 44 C 30 26, 34 10, 40 4 C 46 20, 50 38, 52 58 Z"
+        : "M 14 58 C 16 26, 22 6, 28 2 C 34 6, 40 26, 42 58 Z")
+    : (isMolar
+        ? "M 8 4 C 8 30, 12 52, 18 66 C 24 50, 27 30, 29 18 C 31 30, 35 50, 40 66 C 47 52, 52 30, 52 4 Z"
+        : "M 14 4 C 16 28, 22 50, 28 68 C 34 50, 40 28, 42 4 Z");
 
   let rootStrokeAttrs = isEndo 
     ? 'stroke="#22C55E" stroke-width="2" fill="rgba(34, 197, 94, 0.3)"'

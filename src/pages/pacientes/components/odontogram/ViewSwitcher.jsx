@@ -17,7 +17,7 @@ export default function ViewSwitcher({ activeView, setActiveView, isDeciduo, set
   return (
     <div className={`flex items-center justify-between gap-4 backdrop-blur-md rounded-2xl border px-4 py-2 mt-4 transition-all ${
       isDarkMode 
-        ? 'bg-[#111726]/90 border-white/10 shadow-lg text-white' 
+        ? 'bg-[#0D0D0D]/90 border-white/10 shadow-lg text-white' 
         : 'bg-white border-slate-200 shadow-xs text-slate-800'
     }`}>
       <div className="flex items-center gap-2">

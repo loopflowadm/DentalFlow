@@ -69,6 +69,18 @@ export default {
         geist: ['Geist', 'sans-serif'],
         manrope: ['Manrope', 'sans-serif'],
       },
+      boxShadow: {
+        '2xs': '0 1px 1px 0 rgba(0, 0, 0, 0.03)',
+        xs: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+      },
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+        '9.5': '2.375rem',
+      },
+      blur: {
+        xs: '2px',
+      },
     },
   },
   plugins: [],

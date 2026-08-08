@@ -133,7 +133,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
       <div className="flex items-center gap-2.5">
         
         {/* Botão Opções de Desenvolvedor (Dev Tools) - Apenas Ícone à esquerda da Busca */}
-        {(import.meta.env.DEV || user?.role === 'superadmin' || user?.role === 'developer' || user?.is_superadmin || true) && (
+        {(import.meta.env.DEV || user?.role === 'superadmin' || user?.role === 'developer' || user?.is_superadmin) && (
           <button
             onClick={onOpenDevTools}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 active:scale-95 transition-all cursor-pointer shadow-xs"

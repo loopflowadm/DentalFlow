@@ -27,15 +27,17 @@ As cores do FlowDent são organizadas em tokens semânticos que mudam de acordo 
 *   **`secondary` (Cor Secundária):** Usada para botões principais, links ativos e elementos de sucesso (Normalmente `#3b82f6` Azul ou `#10b981` Esmeralda).
 *   **`accent` (Cor de Destaque):** Tons violetas ou índigos para IA e automações.
 
-### 2. Tons Neutros de Fundo (Tinting Neutrals)
-Para evitar que o tema escuro pareça cinza sem vida, adicionamos uma sutil tonalidade da cor primária ou azulada aos fundos escuros, criando profundidade tridimensional:
+### 2. Tons Neutros de Fundo (Neutral Dark Surfaces)
+O tema escuro usa **preto neutro** (sem tonalidade azulada) para garantir consistência visual entre as telas. Evite os tons azulados antigos (`#0b0f19`, `#151c2c`, `#1d2433`, slate-800/850/900):
 
-| Token Semântico | Light Mode | Dark Mode (Premium) |
+| Token Semântico | Light Mode | Dark Mode (Neutro) |
 | :--- | :--- | :--- |
-| **`background`** | `#f8fafc` (Slate 50) | `#0b0f19` (Navy Black) |
-| **`surface-card`** | `#ffffff` (Pure White) | `#151c2c` (Slate 850) |
-| **`surface-popover`** | `#ffffff` (Pure White) | `#1d2433` (Slate 800) |
-| **`border-base`** | `#e2e8f0` (Slate 200) | `#222b3d` (Border Slate) |
+| **`background`** | `#f8fafc` (Slate 50) | `#000000` (Black) |
+| **`surface-card`** | `#ffffff` (Pure White) | `#0D0D0D` (Neutral Black) |
+| **`surface-popover`** | `#ffffff` (Pure White) | `#0D0D0D` (Neutral Black) |
+| **`surface-subnav`** | `#ffffff` (Pure White) | `#080808` |
+| **`input-surface`** | `#f8fafc` (Slate 50) | `#000000` (Black) |
+| **`border-base`** | `#e2e8f0` (Slate 200) | `rgba(255,255,255,0.10)` (white/10) |
 | **`text-primary`** | `#0f172a` (Slate 900) | `#f8fafc` (Slate 50) |
 | **`text-secondary`** | `#475569` (Slate 600) | `#94a3b8` (Slate 400) |
 

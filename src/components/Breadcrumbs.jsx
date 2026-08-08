@@ -23,7 +23,7 @@ export default function Breadcrumbs({ activeTab }) {
     <nav className="flex items-center gap-2.5 text-xs font-semibold text-slate-500 select-none">
       <div className="flex items-center gap-3 hover:opacity-90 transition-opacity cursor-pointer">
         {clinic?.logo_url ? (
-          <div className="w-11 h-11 rounded-xl overflow-hidden bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none relative p-0.5">
+          <div className="w-11 h-11 rounded-xl overflow-hidden bg-white dark:bg-black flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none relative p-0.5">
             {clinic.logo_url.startsWith('http') || clinic.logo_url.startsWith('/') || clinic.logo_url.startsWith('data:image/') || clinic.logo_url.includes('.') ? (
               <img src={clinic.logo_url} alt="Logo" className="w-full h-full object-cover rounded-lg" />
             ) : clinic.logo_url === '🦷' ? (
@@ -43,13 +43,13 @@ export default function Breadcrumbs({ activeTab }) {
             )}
           </div>
         ) : (
-          <div className="w-11 h-11 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none p-0.5">
+          <div className="w-11 h-11 rounded-xl bg-white dark:bg-black flex items-center justify-center border border-slate-200/80 dark:border-white/10 flex-shrink-0 select-none p-0.5">
             <Logo collapsed={true} className="w-8 h-8" />
           </div>
         )}
         <span className="text-[15px] font-black text-slate-800 dark:text-white leading-none tracking-wide">{clinic?.name || 'DentalFlow'}</span>
       </div>
-      <ChevronRight className="w-3.5 h-3.5 text-slate-455" />
+      <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
       <span className="text-slate-800 dark:text-slate-200 text-xs font-medium pt-[1px]">
         {tabLabels[activeTab] || 'Página Inicial'}
       </span>

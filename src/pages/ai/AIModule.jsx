@@ -276,8 +276,8 @@ export default function AIModule({ onClose }) {
       let responseText;
       let intent = 'Dúvida Geral';
       let confidence = '92%';
-      let action = 'Responder conforme instruções do prompt.';
-      let activeNode = 'Bot Decision';
+      let action;
+      let activeNode;
       let options = null;
 
       const lower = queryText.toLowerCase();

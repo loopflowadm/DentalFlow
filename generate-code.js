@@ -1,9 +1,30 @@
 import fs from 'fs';
 import path from 'path';
 
-const globalKey = 'dentalflow_key_secure_123456';
-const url = 'http://179.197.225.90:8080';
+// Carregar variáveis do .env.local se existirem
+const envPath = path.resolve('.env.local');
+let env = {};
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim();
+      env[key] = val;
+    }
+  });
+}
+const getEnv = (key) => process.env[key] || env[key] || '';
+
+const globalKey = getEnv('VITE_EVOLUTION_API_KEY');
+const url = getEnv('VITE_EVOLUTION_API_BASE_URL');
 const phone = process.env.TEST_PHONE || '5583996973326';
+
+if (!globalKey || !url) {
+  console.error('\n❌ Configure VITE_EVOLUTION_API_KEY e VITE_EVOLUTION_API_BASE_URL\n   no arquivo .env.local (não use credenciais hardcoded).\n');
+  process.exit(1);
+}
 
 console.log('---------------------------------------------------------');
 console.log('🔑 GERADOR DE CÓDIGO DE PAREAMENTO WHATSAPP (WITHOUT CAMERA)');

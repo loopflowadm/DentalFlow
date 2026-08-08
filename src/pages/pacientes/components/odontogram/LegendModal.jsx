@@ -29,7 +29,7 @@ export default function LegendModal({ isOpen, onClose, showPrices = true }) {
           transition={{ duration: 0.18, ease: 'easeOut' }}
           className={`my-auto max-w-xl w-full rounded-2xl border p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-thin ${
             isDarkMode 
-              ? 'bg-[#111726] border-white/10 text-white' 
+              ? 'bg-[#0D0D0D] border-white/10 text-white' 
               : 'bg-white border-slate-200 text-slate-800'
           }`}
         >

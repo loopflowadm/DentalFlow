@@ -51,7 +51,7 @@ export default function PeriodontogramView({
       {/* Cards de Métricas do Periodontograma */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className={`p-4 rounded-2xl border flex items-center justify-between ${
-          isDarkMode ? 'bg-[#111726]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
+          isDarkMode ? 'bg-[#0D0D0D]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
         }`}>
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Dentes Examinados</span>
@@ -63,7 +63,7 @@ export default function PeriodontogramView({
         </div>
 
         <div className={`p-4 rounded-2xl border flex items-center justify-between ${
-          isDarkMode ? 'bg-[#111726]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
+          isDarkMode ? 'bg-[#0D0D0D]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
         }`}>
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Bolsas &gt; 3mm (Alerta)</span>
@@ -77,7 +77,7 @@ export default function PeriodontogramView({
         </div>
 
         <div className={`p-4 rounded-2xl border flex items-center justify-between ${
-          isDarkMode ? 'bg-[#111726]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
+          isDarkMode ? 'bg-[#0D0D0D]/90 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800 shadow-xs'
         }`}>
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Sangramento (BOP)</span>
@@ -93,7 +93,7 @@ export default function PeriodontogramView({
 
       {/* Tabela do Periodontograma em 6 Pontos */}
       <div className={`rounded-2xl border overflow-hidden transition-all ${
-        isDarkMode ? 'bg-[#0b0f19] border-white/10 shadow-2xl' : 'bg-white border-slate-200/90 shadow-xs'
+        isDarkMode ? 'bg-[#0D0D0D] border-white/10 shadow-2xl' : 'bg-white border-slate-200/90 shadow-xs'
       }`}>
         <div className={`p-4 border-b flex items-center justify-between ${
           isDarkMode ? 'border-white/10 bg-slate-950/40' : 'border-slate-200/80 bg-slate-50/50'

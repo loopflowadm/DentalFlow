@@ -8,8 +8,6 @@ import { useClinic, DEFAULT_DENTAL_AI_PROMPT, expandAiPrompt } from '../../../co
 import { useAuth } from '../../../context/AuthContext';
 
 export default function FlowInspectorModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
-
   const { clinic } = useAuth();
   const { procedures, insurancePlans, dentists } = useClinic();
 
@@ -83,6 +81,8 @@ export default function FlowInspectorModal({ isOpen, onClose }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

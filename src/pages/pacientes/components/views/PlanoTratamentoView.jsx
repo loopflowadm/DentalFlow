@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { AnatomicalToothSVG, ToothGradients } from '../odontogram/TeethSVGRegistry';
 
-export default function PlanoTratamentoView({ patient, onSavePatientData }) {
+export default function PlanoTratamentoView({ patient, onSavePatientData, onNavigateToTab }) {
   const themeContext = useTheme();
   const themeMode = themeContext?.themeMode;
   const isDarkMode = themeMode === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
@@ -211,7 +211,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
         {/* COLUNA ESQUERDA: ETAPAS DO TRATAMENTO & ANEXOS */}
         <div className={`w-full lg:w-64 backdrop-blur-md rounded-2xl border p-4 flex flex-col justify-between transition-all ${
           isDarkMode 
-            ? 'bg-[#111726]/90 border-white/10 shadow-xl text-white' 
+            ? 'bg-[#0D0D0D]/90 border-white/10 shadow-xl text-white' 
             : 'bg-white border-slate-200 shadow-xs text-slate-800'
         }`}>
           <div className="space-y-6">
@@ -313,7 +313,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
         {/* COLUNA CENTRAL: MINI-ODONTOGRAMA DA ETAPA & TABELA */}
         <div className={`flex-1 rounded-2xl border p-5 flex flex-col justify-between shadow-xs overflow-y-auto custom-scrollbar transition-all ${
           isDarkMode 
-            ? 'bg-[#0b0f19]/95 border-white/10 shadow-2xl text-white' 
+            ? 'bg-[#0D0D0D]/95 border-white/10 shadow-2xl text-white' 
             : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="space-y-5">
@@ -335,7 +335,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
 
             {/* Mini-odontograma anatômico da etapa (Adaptado ao Tema) */}
             <div className={`p-4 rounded-2xl border flex flex-col items-center gap-3 overflow-x-auto custom-scrollbar transition-all ${
-              isDarkMode ? 'bg-[#080d16] border-white/5' : 'bg-slate-50 border-slate-200 shadow-2xs'
+              isDarkMode ? 'bg-[#0D0D0D] border-white/5' : 'bg-slate-50 border-slate-200 shadow-2xs'
             }`}>
               <div className="flex items-center gap-1.5">
                 {upperTeethQ1.map(num => (
@@ -427,7 +427,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
         {/* COLUNA DIREITA: RESUMO DO PLANO, PROGRESSO & NOTAS */}
         <div className={`w-full lg:w-72 backdrop-blur-md rounded-2xl border p-4 flex flex-col gap-5 transition-all shadow-xs ${
           isDarkMode 
-            ? 'bg-[#111726]/90 border-white/10 shadow-xl text-white' 
+            ? 'bg-[#0D0D0D]/90 border-white/10 shadow-xl text-white' 
             : 'bg-white border-slate-200 shadow-xs text-slate-800'
         }`}>
           {/* Resumo Financeiro */}
@@ -586,7 +586,7 @@ export default function PlanoTratamentoView({ patient, onSavePatientData }) {
           <form 
             onSubmit={handleAddProcedureSubmit}
             className={`my-auto border rounded-2xl p-5 max-w-sm w-full relative flex flex-col gap-4 shadow-2xl text-left max-h-[90vh] overflow-y-auto scrollbar-thin ${
-              isDarkMode ? 'bg-[#111726] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'
+              isDarkMode ? 'bg-[#0D0D0D] border-white/10 text-white' : 'bg-white border-slate-200 text-slate-800'
             }`}
           >
             <div className={`flex justify-between items-center border-b pb-2.5 ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>

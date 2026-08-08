@@ -118,7 +118,7 @@ export default function TreatmentPlanView({
     <div className="space-y-4">
       {/* Header do Orçamento & Totais */}
       <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
-        isDarkMode ? 'bg-[#111726]/90 border-white/10 text-white' : 'bg-white border-slate-200/90 text-slate-900 shadow-xs'
+        isDarkMode ? 'bg-[#0D0D0D]/90 border-white/10 text-white' : 'bg-white border-slate-200/90 text-slate-900 shadow-xs'
       }`}>
         <div className="flex items-center gap-3">
           <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-2xl text-amber-600 dark:text-amber-400">
@@ -152,7 +152,7 @@ export default function TreatmentPlanView({
 
       {/* Tabela do Plano de Tratamento */}
       <div className={`rounded-2xl border overflow-hidden transition-all ${
-        isDarkMode ? 'bg-[#0b0f19] border-white/10 shadow-2xl' : 'bg-white border-slate-200/90 shadow-xs'
+        isDarkMode ? 'bg-[#0D0D0D] border-white/10 shadow-2xl' : 'bg-white border-slate-200/90 shadow-xs'
       }`}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">

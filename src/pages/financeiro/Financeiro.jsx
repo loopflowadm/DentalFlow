@@ -220,11 +220,11 @@ export default function Financeiro() {
   const netBalance = totalIncome - totalExpense;
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-[#0b0f19] font-body">
+    <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-[#0D0D0D] font-body">
       
       {/* Header Slim & Sub-Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0b0f19] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
-        <div className="flex bg-slate-100 dark:bg-[#151c2c] p-1 rounded-xl border border-slate-200/30 dark:border-white/10 overflow-x-auto scrollbar-none max-w-full">
+      <div className="flex flex-col sm:flex-row items-center justify-start gap-3 bg-white dark:bg-[#0D0D0D] px-6 py-3 border-b border-slate-200/80 dark:border-white/5 flex-shrink-0 transition-colors duration-300">
+        <div className="flex bg-slate-100 dark:bg-[#0D0D0D] p-1 rounded-xl border border-slate-200/30 dark:border-white/10 overflow-x-auto scrollbar-none max-w-full">
           {[
             { id: 'fluxo', label: 'Fluxo de Caixa' },
             { id: 'pagar', label: 'Contas a Pagar' },
@@ -236,8 +236,8 @@ export default function Financeiro() {
               onClick={() => setActiveSubTab(tab.id)}
               className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all duration-150 active:scale-[0.98] cursor-pointer ${
                 activeSubTab === tab.id 
-                  ? 'bg-white dark:bg-[#1f293d] text-slate-800 dark:text-white shadow-xs border border-slate-200/50 dark:border-white/10' 
-                  : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
+                  ? 'bg-white dark:bg-[#0D0D0D] text-slate-800 dark:text-white shadow-xs border border-slate-200/50 dark:border-white/10' 
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-400'
               }`}
             >
               {tab.label}
@@ -252,7 +252,7 @@ export default function Financeiro() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Receitas Totais</span>
                 <span className="text-xl font-extrabold font-title text-emerald-500 block mt-1.5">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -262,7 +262,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Despesas / Comissões</span>
                 <span className="text-xl font-extrabold font-title text-red-500 block mt-1.5">R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -272,7 +272,7 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#151c2c] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
+            <div className="bg-white dark:bg-[#0D0D0D] p-5 rounded-2xl border border-slate-200/50 dark:border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.01)] flex justify-between items-center text-left">
               <div>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Saldo Líquido</span>
                 <span className={`text-xl font-extrabold font-title block mt-1.5 ${netBalance >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>R$ {netBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -285,7 +285,7 @@ export default function Financeiro() {
 
           {/* Seção Operações e Lançamentos */}
           <div className="flex justify-between items-center flex-shrink-0">
-            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Histórico de Lançamentos</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Histórico de Lançamentos</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => exportToCSV(
@@ -326,9 +326,9 @@ export default function Financeiro() {
                   <th className="py-3 px-4 font-bold">Data</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-slate-700 dark:text-slate-400">
                 {financeTransactions.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                  <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-white/10">
                     <td className="py-3 px-4 font-bold text-slate-850 dark:text-white">{t.description}</td>
                     <td className={`py-3 px-4 font-extrabold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-red-500'}`}>
                       {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -426,7 +426,7 @@ export default function Financeiro() {
                   <th className="py-3 px-4 font-bold">Status & Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-400">
                 {commissionLogs.filter(log => log.dentist === selectedDentist).map((log) => {
                   const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
                   const totalDeductions = cardFee + (log.labCost || 0);
@@ -489,7 +489,7 @@ export default function Financeiro() {
       {activeSubTab === 'parcelas' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Carnês e Parcelas de Pacientes</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Carnês e Parcelas de Pacientes</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => exportToCSV(
@@ -523,12 +523,12 @@ export default function Financeiro() {
                   <th className="py-3 px-4 font-bold">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-400">
                 {installments.map(inst => (
                   <tr key={inst.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                     <td className="py-3 px-4 font-bold text-slate-850 dark:text-white">{inst.patient}</td>
                     <td className="py-3 px-4 font-semibold">{inst.desc}</td>
-                    <td className="py-3 px-4 font-bold text-slate-450">{inst.number}</td>
+                    <td className="py-3 px-4 font-bold text-slate-500">{inst.number}</td>
                     <td className="py-3 px-4 font-extrabold">R$ {inst.amount}</td>
                     <td className="py-3 px-4 font-medium">{inst.dueDate}</td>
                     <td className="py-3 px-4">
@@ -581,7 +581,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de luvas e agulhas"
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -594,7 +594,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
@@ -602,7 +602,7 @@ export default function Financeiro() {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                   >
                     <option value="INCOME">Receita (Entrada)</option>
                     <option value="EXPENSE">Despesa (Saída)</option>
@@ -615,7 +615,7 @@ export default function Financeiro() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 >
                   <option value="Tratamentos">Tratamentos</option>
                   <option value="Salários e Comissões">Salários e Comissões</option>
@@ -643,11 +643,11 @@ export default function Financeiro() {
         return (
           <div className="space-y-6 text-left">
             <div className="flex justify-between items-center">
-              <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Obrigações Financeiras</h3>
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Obrigações Financeiras</h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddSupplier(true)}
-                  className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] text-slate-700 dark:text-slate-350 border border-slate-200 dark:border-white/10 font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
+                  className="px-3 py-1.5 bg-slate-100 dark:bg-[#0D0D0D] text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-white/10 font-bold text-xs rounded-xl shadow transition-all active:scale-[0.98]"
                 >
                   Novo Fornecedor
                 </button>
@@ -674,7 +674,7 @@ export default function Financeiro() {
                     <th className="py-3 px-4 font-bold">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-400">
                   {accountsPayable.map(ap => {
                     const supplier = suppliers.find(s => s.id === ap.supplier_id);
                     return (
@@ -688,7 +688,7 @@ export default function Financeiro() {
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                             ap.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500' :
                             ap.status === 'AWAITING_APPROVAL' ? 'bg-amber-500/10 text-amber-500' :
-                            ap.status === 'OVERDUE' ? 'bg-red-500/10 text-red-550' : 'bg-blue-500/10 text-blue-500'
+                            ap.status === 'OVERDUE' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'
                           }`}>
                             {ap.status === 'PAID' ? 'Pago' :
                              ap.status === 'AWAITING_APPROVAL' ? 'Aprov. Pendente' :
@@ -758,7 +758,7 @@ export default function Financeiro() {
                   placeholder="ex: Dental Cremer"
                   value={supName}
                   onChange={(e) => setSupName(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -768,7 +768,7 @@ export default function Financeiro() {
                   placeholder="00.000.000/0000-00"
                   value={supCnpj}
                   onChange={(e) => setSupCnpj(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -778,7 +778,7 @@ export default function Financeiro() {
                   placeholder="0800 727 7527"
                   value={supPhone}
                   onChange={(e) => setSupPhone(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
               <div>
@@ -788,7 +788,7 @@ export default function Financeiro() {
                   placeholder="comercial@dental.com"
                   value={supEmail}
                   onChange={(e) => setSupEmail(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -827,7 +827,7 @@ export default function Financeiro() {
                   placeholder="ex: Compra de Envelopes de Autoclave"
                   value={apDesc}
                   onChange={(e) => setApDesc(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                 />
               </div>
 
@@ -840,7 +840,7 @@ export default function Financeiro() {
                     placeholder="350"
                     value={apAmount}
                     onChange={(e) => setApAmount(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
@@ -850,7 +850,7 @@ export default function Financeiro() {
                     required
                     value={apDueDate}
                     onChange={(e) => setApDueDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                    className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                   />
                 </div>
               </div>
@@ -860,7 +860,7 @@ export default function Financeiro() {
                 <select
                   value={apSupplierId}
                   onChange={(e) => setApSupplierId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="">Nenhum Fornecedor</option>
                   {suppliers.map(sup => (
@@ -874,7 +874,7 @@ export default function Financeiro() {
                 <select
                   value={apCategory}
                   onChange={(e) => setApCategory(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-black border border-slate-250 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
+                  className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-white/10 rounded-xl py-2 px-3 text-xs focus:outline-none font-bold"
                 >
                   <option value="Insumos e Produtos">Insumos e Produtos</option>
                   <option value="Aluguel e Infra">Aluguel e Infra</option>

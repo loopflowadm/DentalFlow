@@ -52,7 +52,7 @@ function App() {
 
           {/* Barra de Carregamento Ultra-Clean */}
           <div className="flex flex-col items-center space-y-2.5 pt-1">
-            <div className="w-44 h-[3px] rounded-full overflow-hidden relative bg-slate-200 dark:bg-slate-800">
+            <div className="w-44 h-[3px] rounded-full overflow-hidden relative bg-slate-200 dark:bg-white/5">
               <div className="animate-loading-sweep" />
             </div>
 

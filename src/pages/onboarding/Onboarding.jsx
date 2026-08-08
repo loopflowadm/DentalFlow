@@ -468,7 +468,7 @@ export default function Onboarding({ onComplete }) {
                 <h2 className="text-2xl font-extrabold text-slate-900 font-title leading-tight">
                   Para deixar o DentalFlow preparado para você, me conta:
                 </h2>
-                <h3 className="text-base font-bold text-slate-750 font-title mt-1.5">
+                <h3 className="text-base font-bold text-slate-700 font-title mt-1.5">
                   Qual sua especialidade dentro da odontologia?
                 </h3>
                 <p className="text-[10px] text-slate-400 mt-1">Selecione quantos quiser.</p>
@@ -518,7 +518,7 @@ export default function Onboarding({ onComplete }) {
                 <h2 className="text-2xl font-extrabold text-slate-900 font-title leading-tight">
                   Para que eu possa te ajudar.
                 </h2>
-                <h3 className="text-base font-bold text-slate-750 font-title mt-1.5">
+                <h3 className="text-base font-bold text-slate-700 font-title mt-1.5">
                   Quais são as principais dores que você espera resolver com o DentalFlow?
                 </h3>
                 <p className="text-[10px] text-slate-400 mt-1">Selecione quantos quiser.</p>
@@ -752,7 +752,7 @@ export default function Onboarding({ onComplete }) {
                       para você ver como o paciente confirma a consulta no DentalFlow.
                     </h2>
                     
-                    <p className="text-xs font-bold text-slate-750 font-title">
+                    <p className="text-xs font-bold text-slate-700 font-title">
                       Pode responder?
                     </p>
                     

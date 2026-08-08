@@ -60,7 +60,7 @@ export default function Marketing() {
               className={`px-3.5 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
                 activeSubTab === tab.id 
                   ? 'bg-white dark:bg-[#18181B] text-slate-800 dark:text-white shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-750 dark:hover:text-slate-350'
+                  : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-400'
               }`}
             >
               {tab.label}
@@ -100,7 +100,7 @@ export default function Marketing() {
                   <th className="py-3 px-4 font-bold">Origem</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-350">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-400">
                 {marketingCampaigns.map(camp => (
                   <tr key={camp.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                     <td className="py-3 px-4 font-bold text-slate-800 dark:text-white">{camp.name}</td>
@@ -132,7 +132,7 @@ export default function Marketing() {
                       <Layout className="w-4 h-4" />
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                      lp.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-200/50 text-slate-450'
+                      lp.status === 'PUBLISHED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-200/50 text-slate-500'
                     }`}>
                       {lp.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho'}
                     </span>
@@ -149,12 +149,12 @@ export default function Marketing() {
                 <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-white/10 flex-shrink-0">
                   <button
                     onClick={() => handleCopyLink(lp.id, lp.url)}
-                    className="flex-1 py-1.5 bg-slate-555/5 hover:bg-slate-100 dark:bg-[#18181B] dark:hover:bg-slate-800 text-slate-650 dark:text-slate-250 font-bold rounded-lg border border-slate-200/40 dark:border-white/10 text-[10px] flex items-center justify-center gap-1.5"
+                    className="flex-1 py-1.5 bg-slate-600/5 hover:bg-slate-100 dark:bg-[#18181B] dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 font-bold rounded-lg border border-slate-200/40 dark:border-white/10 text-[10px] flex items-center justify-center gap-1.5"
                   >
                     {copiedId === lp.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                     {copiedId === lp.id ? 'Copiado!' : 'Copiar URL'}
                   </button>
-                  <button className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#18181B] dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg border border-slate-200/45 dark:border-white/10">
+                  <button className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#18181B] dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-lg border border-slate-200/45 dark:border-white/10">
                     <ExternalLink className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -175,10 +175,10 @@ export default function Marketing() {
               >
                 <div>
                   <div className="flex justify-between items-center">
-                    <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-slate-400">
+                    <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#0D0D0D] flex items-center justify-center text-slate-400">
                       <FileText className="w-4 h-4" />
                     </span>
-                    <span className="text-[10px] text-slate-450 font-bold">Submissões: <b>{form.submissions}</b></span>
+                    <span className="text-[10px] text-slate-500 font-bold">Submissões: <b>{form.submissions}</b></span>
                   </div>
 
                   <h4 className="font-bold text-slate-850 dark:text-white font-title text-sm mt-3">{form.name}</h4>
@@ -186,7 +186,7 @@ export default function Marketing() {
                   {/* Campos do Form */}
                   <div className="flex flex-wrap gap-1 mt-2.5">
                     {form.fields.map((f, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-750 rounded text-[9px] font-bold text-slate-500">
+                      <span key={i} className="px-2 py-0.5 bg-slate-100 dark:bg-white/5 border border-slate-200/40 dark:border-slate-700 rounded text-[9px] font-bold text-slate-500">
                         {f}
                       </span>
                     ))}
@@ -194,7 +194,7 @@ export default function Marketing() {
                 </div>
 
                 <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80 mt-4">
-                  <button className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-250 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-650 dark:text-slate-350 font-bold rounded-lg border border-slate-200/40 dark:border-slate-750 text-[10px] flex items-center justify-center gap-1.5">
+                  <button className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-400 font-bold rounded-lg border border-slate-200/40 dark:border-white/10 text-[10px] flex items-center justify-center gap-1.5">
                     <Settings className="w-3.5 h-3.5" /> Editar Form
                   </button>
                 </div>

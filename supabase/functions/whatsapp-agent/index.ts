@@ -1,16 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 
-// Configurações do cabeçalho de resposta CORS
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Configurações de CORS — restritas à origem do próprio app (nunca "*")
+const getCorsHeaders = (req: Request): Record<string, string> => {
+  const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") || Deno.env.get("SUPABASE_URL") || "";
+  const origin = req.headers.get("origin") || "";
+
+  // Ecoa a origem apenas se estiver na lista permitida. Sem origem (ex.: webhook server-to-server
+  // da Evolution API) nenhum cabeçalho de CORS é devolvido — o que não afeta chamadas fora do navegador.
+  const allowOrigin = origin && allowedOrigin && origin === allowedOrigin ? origin : "";
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 serve(async (req) => {
   // Tratar requisição OPTIONS de pré-voo (CORS)
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -21,15 +30,24 @@ serve(async (req) => {
     // Inicializar cliente admin do Supabase
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Configuração obrigatória do servidor Evolution (sem valores hardcoded)
+    const evolutionBase = (Deno.env.get("EVOLUTION_API_BASE_URL") || "").replace(/\/$/, "");
+    const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "";
+    if (!evolutionBase) {
+      console.error("Variável EVOLUTION_API_BASE_URL não definida.");
+      return new Response(JSON.stringify({ error: "Configuração do servidor Evolution ausente" }), {
+        status: 500,
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     // Ler corpo da requisição
     const body = await req.json();
 
     // Ação auxiliar: Gerar QR Code via Proxy (Evita erros de CORS no navegador)
     if (body.action === "get_qrcode") {
       const targetInstance = body.instance || "odonto-crm";
-      const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
-      const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "dentalflow_key_secure_123456";
-      const baseUrl = evolutionBase.replace(/\/$/, "");
+      const baseUrl = evolutionBase;
 
       try {
         // 1. Verificar estado atual da instância
@@ -42,7 +60,7 @@ serve(async (req) => {
         if (currentState === "open") {
           return new Response(JSON.stringify({ success: true, state: "CONNECTED", base64: null }), {
             status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
           });
         }
 
@@ -71,12 +89,12 @@ serve(async (req) => {
           raw: connData
         }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
         });
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message }), {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
         });
       }
     }
@@ -84,11 +102,9 @@ serve(async (req) => {
     // Ação auxiliar: Verificar Status da Conexão
     if (body.action === "check_status") {
       const targetInstance = body.instance || "odonto-crm";
-      const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
-      const evolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "dentalflow_key_secure_123456";
 
       try {
-        const stateRes = await fetch(`${evolutionBase.replace(/\/$/, "")}/instance/connectionState/${targetInstance}`, {
+        const stateRes = await fetch(`${evolutionBase}/instance/connectionState/${targetInstance}`, {
           headers: { apikey: evolutionKey }
         });
         const stateData = await stateRes.json();
@@ -99,12 +115,12 @@ serve(async (req) => {
           state: state === "open" ? "CONNECTED" : state
         }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
         });
       } catch (err: any) {
         return new Response(JSON.stringify({ error: err.message, state: "DISCONNECTED" }), {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
         });
       }
     }
@@ -113,7 +129,7 @@ serve(async (req) => {
     if (body.event !== "messages.upsert") {
       return new Response(JSON.stringify({ message: "Ignorado (Não é messages.upsert)" }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -121,7 +137,7 @@ serve(async (req) => {
     if (!messageData) {
       return new Response(JSON.stringify({ error: "Dados ausentes na requisição" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -132,7 +148,7 @@ serve(async (req) => {
     if (isFromMe) {
       return new Response(JSON.stringify({ message: "Mensagem enviada pelo bot. Ignorado." }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -140,7 +156,7 @@ serve(async (req) => {
     if (remoteJid && (remoteJid.endsWith("@g.us") || remoteJid.endsWith("@broadcast"))) {
       return new Response(JSON.stringify({ message: "Mensagem de grupo ou broadcast. Ignorado." }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -154,7 +170,7 @@ serve(async (req) => {
       console.log(`Mensagem recebida de ${senderPhone}. Ignorando pois a trava de número de teste (${allowedTestPhone}) está ativa.`);
       return new Response(JSON.stringify({ message: `Ignorado. Apenas o número de testes configurado está ativo no momento.` }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -190,7 +206,7 @@ serve(async (req) => {
     if (!messageText.trim() && !buttonId) {
       return new Response(JSON.stringify({ message: "Mensagem vazia ou tipo não suportado. Ignorado." }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -205,19 +221,19 @@ serve(async (req) => {
       console.error("Configuração do WhatsApp não encontrada para a instância:", instanceName, waError);
       return new Response(JSON.stringify({ error: "Instância não cadastrada no CRM" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
-    // Validação de Segurança: Exigir token de validação se fornecido
+    // Validação de Segurança: exigir token de validação sempre (fail-closed)
     const requestApiKey = req.headers.get("apikey") || req.headers.get("x-api-key") || req.headers.get("authorization");
-    const expectedSecret = waConfig.api_key || Deno.env.get("WHATSAPP_WEBHOOK_SECRET");
-    
-    if (requestApiKey && expectedSecret && requestApiKey !== expectedSecret) {
-      console.warn(`[Segurança] Token de webhook incorreto recebido para a instância: ${instanceName}`);
+    const expectedSecret = waConfig.api_key || Deno.env.get("WHATSAPP_WEBHOOK_SECRET") || "";
+
+    if (!requestApiKey || !expectedSecret || requestApiKey !== expectedSecret) {
+      console.warn(`[Segurança] Token de webhook ausente ou inválido para a instância: ${instanceName}`);
       return new Response(JSON.stringify({ error: "Não autorizado. Token inválido." }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -225,7 +241,7 @@ serve(async (req) => {
     if (!waConfig.is_active) {
       return new Response(JSON.stringify({ message: "Automação desativada para esta clínica." }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -239,7 +255,7 @@ serve(async (req) => {
     if (!clinic) {
       return new Response(JSON.stringify({ error: "Clínica não encontrada" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -298,7 +314,6 @@ serve(async (req) => {
         const apptDate = parts[1]; // YYYY-MM-DD
         const apptHour = parts[2]; // HH:MM
 
-        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
         let replyText = `Perfeito, ${patient.name}! Sua consulta foi confirmada. Te esperamos! 🦷`;
 
         // Criar agendamento no banco se temos data e hora
@@ -350,12 +365,11 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({ success: true, action: "CONFIRMED", responseText: replyText }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
 
       if (isReschedule) {
-        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
         const replyText = `Sem problema! Qual data e horário prefere para reagendar? 😊`;
 
         await fetch(`${evolutionBase.replace(/\/$/, '')}/message/sendText/${instanceName}`, {
@@ -377,7 +391,7 @@ serve(async (req) => {
 
         return new Response(JSON.stringify({ success: true, action: "RESCHEDULE_REQUESTED", responseText: replyText }), {
           status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
     }
@@ -387,7 +401,7 @@ serve(async (req) => {
       console.error("Variável GEMINI_API_KEY não definida.");
       return new Response(JSON.stringify({ error: "Configuração do servidor de IA ausente" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -474,7 +488,6 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
         const { date, hour, display_date } = args;
         if (!date || !hour) return { error: "Parâmetros 'date' e 'hour' são obrigatórios." };
 
-        const evolutionBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
         const label = display_date || `${date} às ${hour}`;
 
         const btnPayload = {
@@ -608,24 +621,20 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
           },
           {
             name: "send_confirmation_buttons",
-            description: "Envia uma mensagem interativa com botões 'Confirmar' e 'Outro horário' para o paciente. Use OBRIGATORIAMENTE quando o paciente escolher um horário específico — NUNCA peça confirmação em texto livre.",
+            description: "Envia botoes de confirmacao para o paciente. Chame OBRIGATORIAMENTE quando paciente escolher um horario. Nunca confirme em texto.",
             parameters: {
               type: "OBJECT",
               properties: {
                 date: {
                   type: "STRING",
-                  description: "Data escolhida no formato YYYY-MM-DD."
+                  description: "Data no formato YYYY-MM-DD."
                 },
                 hour: {
                   type: "STRING",
-                  description: "Hora escolhida no formato HH:MM (ex: 14:00)."
-                },
-                display_date: {
-                  type: "STRING",
-                  description: "Texto legível para exibir ao paciente. Ex: 'amanhã (6/ago) às 14h'."
+                  description: "Hora no formato HH:MM ex: 14:00."
                 }
               },
-              required: ["date", "hour", "display_date"]
+              required: ["date", "hour"]
             }
           },
           {
@@ -698,7 +707,7 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
       console.error("Variável GEMINI_API_KEY não definida.");
       return new Response(JSON.stringify({ error: "Configuração do servidor de IA (Gemini) ausente" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -771,9 +780,9 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
       },
       tools: toolsDeclaration,
       generationConfig: {
-        temperature: 0.3,
+        temperature: 0.2,
         topP: 0.95,
-        maxOutputTokens: 150
+        maxOutputTokens: 300
       }
     };
 
@@ -782,9 +791,39 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
 
     let responseText = "";
     const candidate = resultJson.candidates?.[0];
+    const finishReason = candidate?.finishReason;
     const functionCall = candidate?.content?.parts?.[0]?.functionCall;
 
-    if (functionCall) {
+    // HANDLER: MALFORMED_FUNCTION_CALL
+    // Quando o Gemini tenta chamar send_confirmation_buttons mas corrompe a chamada,
+    // extraímos a data e hora do texto da mensagem e enviamos os botões diretamente.
+    if (finishReason === "MALFORMED_FUNCTION_CALL") {
+      console.warn("[Gemini] MALFORMED_FUNCTION_CALL — tentando enviar botões com fallback de extração de hora/data");
+
+      // Tentar extrair hora da mensagem atual (ex: "14h", "14:00", "às 14")
+      const hourMatch = messageText.match(/\b(\d{1,2})(?:h|:00|:30)?\b/);
+      const extractedHour = hourMatch ? hourMatch[1].padStart(2, "0") + ":00" : null;
+
+      if (extractedHour) {
+        try {
+          await executeTool("send_confirmation_buttons", {
+            date: tomorrowISO, // padrão amanhã, pode ser melhorado
+            hour: extractedHour
+          });
+        } catch (e: any) {
+          if (e instanceof DOMException && e.message.startsWith("__BUTTONS_SENT__")) {
+            const label = e.message.replace("__BUTTONS_SENT__:", "");
+            return new Response(JSON.stringify({ success: true, action: "buttons_sent", responseText: `Botões enviados para ${label}` }), {
+              status: 200,
+              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }
+            });
+          }
+        }
+      }
+
+      // Se não conseguiu extrair, pede para o paciente confirmar por texto
+      responseText = "Certo! Qual a data exata e o horário para eu confirmar? 😊";
+    } else if (functionCall) {
       const toolName = functionCall.name;
       const toolArgs = functionCall.args;
 
@@ -797,7 +836,7 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
           const label = e.message.replace("__BUTTONS_SENT__:", "");
           return new Response(JSON.stringify({ success: true, action: "buttons_sent", responseText: `Botões de confirmação enviados para ${label}` }), {
             status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
           });
         }
         throw e;
@@ -852,7 +891,7 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
     }
 
     // 6. Enviar a resposta final de volta via Evolution API
-    const evolutionApiBase = Deno.env.get("EVOLUTION_API_BASE_URL") || "http://179.197.225.90:8080";
+    const evolutionApiBase = evolutionBase;
     const evolutionApiKey = waConfig.api_key;
     const sendUrl = `${evolutionApiBase.replace(/\/$/, "")}/message/sendText/${instanceName}`;
 
@@ -881,14 +920,14 @@ ${waConfig.agent_prompt ? `- Instruções da clínica: ${waConfig.agent_prompt}`
 
     return new Response(JSON.stringify({ success: true, responseText }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
 
   } catch (err) {
     console.error("Erro geral na Edge Function:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

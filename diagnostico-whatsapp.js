@@ -11,11 +11,37 @@
  *  5. Se a trava de número de teste está bloqueando mensagens
  */
 
-const EVOLUTION_URL = 'http://179.197.225.90:8080';
-const EVOLUTION_KEY = 'dentalflow_key_secure_123456';
+import fs from 'fs';
+import path from 'path';
+
+// Carregar variáveis do .env.local se existirem
+const envPath = path.resolve('.env.local');
+let env = {};
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const parts = line.split('=');
+    if (parts.length >= 2) {
+      const key = parts[0].trim();
+      const val = parts.slice(1).join('=').trim();
+      env[key] = val;
+    }
+  });
+}
+
+const getEnv = (key) => process.env[key] || env[key] || '';
+
+const EVOLUTION_URL = getEnv('VITE_EVOLUTION_API_BASE_URL');
+const EVOLUTION_KEY = getEnv('VITE_EVOLUTION_API_KEY');
 const INSTANCE = 'dentalflow-prod';
-const SUPABASE_URL = 'https://rxjwfzknxatoozbuhqtr.supabase.co';
-const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/whatsapp-agent`;
+const SUPABASE_URL = getEnv('VITE_SUPABASE_URL');
+const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY');
+const EDGE_FUNCTION_URL = getEnv('VITE_WHATSAPP_EDGE_URL') || `${SUPABASE_URL}/functions/v1/whatsapp-agent`;
+
+if (!EVOLUTION_URL || !EVOLUTION_KEY || !SUPABASE_URL) {
+  console.error('\n❌ Configure VITE_EVOLUTION_API_BASE_URL, VITE_EVOLUTION_API_KEY e VITE_SUPABASE_URL\n   no arquivo .env.local (não use credenciais hardcoded).\n');
+  process.exit(1);
+}
 
 const OK  = '  OK';
 const ERR = '  ERRO';
@@ -149,8 +175,8 @@ async function main() {
       `${SUPABASE_URL}/rest/v1/chat_messages?order=created_at.desc&limit=5`,
       {
         headers: {
-          apikey: 'sb_publishable_RfO9DUfBP1yi4gT1k2Qbbw_la4aLu7p',
-          Authorization: 'Bearer sb_publishable_RfO9DUfBP1yi4gT1k2Qbbw_la4aLu7p'
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
         }
       }
     );

@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Componente Card Adaptável a Temas (Light / Dark Obsidian Surface #1A2333)
+ * Componente Card Adaptável a Temas (Light / Dark Neutral Surface #0D0D0D)
  */
 export default function Card({ 
   children, 

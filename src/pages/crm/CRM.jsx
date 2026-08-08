@@ -155,8 +155,8 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
   if (!selectedLead) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 font-medium text-sm bg-white dark:bg-[#0D0D0D] rounded-[28px] border border-slate-200/80 dark:border-white/5 p-8 transition-colors duration-300 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center text-center p-8 select-none">
+        <div className="w-16 h-16 rounded-3xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-500 flex items-center justify-center mb-4">
           <User className="w-8 h-8" />
         </div>
         <div>
@@ -328,7 +328,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
   };
 
   return (
-    <div className="h-full flex gap-6 overflow-hidden select-none relative">
+    <div className="h-full flex gap-6 overflow-hidden select-none relative bg-slate-50/50 dark:bg-[#0D0D0D] transition-colors duration-300">
       {/* Toast flutuante de feedback no CRM */}
       {crmToast && (
         <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border text-xs font-extrabold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200 ${
@@ -562,7 +562,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                             </div>
 
                             <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                              lead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              lead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500'
                             }`}>
                               {lead.priority === 'high' ? 'Alta' : lead.priority === 'medium' ? 'Média' : 'Baixa'}
                             </span>
@@ -602,7 +602,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     })}
 
                     {columnLeads.length === 0 && (
-                      <div className="py-8 text-center text-slate-400 text-xs font-bold italic border border-dashed border-slate-200 dark:border-white/5 rounded-xl">
+                      <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs font-bold border border-dashed border-slate-200/80 dark:border-white/10 rounded-xl">
                         Nenhum lead nesta etapa
                       </div>
                     )}
@@ -620,7 +620,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
             {/* HEADER DO LEAD */}
         <div className="p-6 border-b border-slate-200/80 dark:border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors duration-300">
           <div className="flex items-center gap-4">
-            <span className="p-2.5 bg-slate-100 dark:bg-[#0B1220]/60 rounded-2xl flex items-center justify-center text-slate-500 dark:text-slate-400 w-14 h-14 border border-slate-200/60 dark:border-white/5">
+            <span className="p-2.5 bg-slate-100 dark:bg-black/60 rounded-2xl flex items-center justify-center text-slate-500 dark:text-slate-400 w-14 h-14 border border-slate-200/60 dark:border-white/5">
               {selectedLead.avatar && selectedLead.avatar !== '👤' ? selectedLead.avatar : <User className="w-8 h-8" />}
             </span>
             <div>
@@ -638,7 +638,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                 
                 {/* Badges de Status */}
                 <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold ${
-                  selectedLead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  selectedLead.priority === 'high' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400'
                 }`}>
                   Prioridade: {selectedLead.priority === 'high' ? 'Alta' : selectedLead.priority === 'medium' ? 'Média' : 'Baixa'}
                 </span>
@@ -656,7 +656,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
             <div className="flex gap-1.5">
               <button 
                 onClick={() => alert(`Ligando simulado para ${selectedLead.phone}...`)}
-                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-black/60 dark:hover:bg-[#18181B] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Ligar para o lead"
               >
                 <Phone className="w-4 h-4" />
@@ -685,7 +685,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
                     alert('Direcionando para a aba Agenda para marcar consulta...');
                   }
                 }}
-                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-black/60 dark:hover:bg-[#18181B] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Agendar Consulta"
               >
                 <Calendar className="w-4 h-4" />
@@ -693,7 +693,7 @@ export default function CRM({ selectedLead, setSelectedLead, setActiveTab, setPr
 
               <button 
                 onClick={() => handleAttachMockFile(`Proposta_Tratamento_${selectedLead.name.replace(' ', '_')}.pdf`, '1.5 MB')}
-                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-[#0B1220]/60 dark:hover:bg-[#1A2333] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
+                className="w-9 h-9 bg-slate-100 hover:bg-slate-200 dark:bg-black/60 dark:hover:bg-[#18181B] active:scale-95 transition-all text-slate-700 dark:text-slate-300 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/5"
                 title="Anexar Proposta Comercial (MOCK)"
               >
                 <Paperclip className="w-4 h-4" />

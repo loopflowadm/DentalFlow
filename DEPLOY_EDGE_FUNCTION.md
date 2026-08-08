@@ -31,6 +31,16 @@ supabase secrets set GEMINI_API_KEY="SUA_CHAVE_GEMINI_API_AQUI"
 
 # 2. Definir a URL base da Evolution API onde as mensagens serão despachadas
 supabase secrets set EVOLUTION_API_BASE_URL="https://sua-evolution-api-domain.com"
+
+# 3. Chave de API da Evolution API (obrigatória)
+supabase secrets set EVOLUTION_API_KEY="SUA_CHAVE_EVOLUTION_AQUI"
+
+# 4. Segredo do webhook (obrigatório). Deve ser o MESMO valor de VITE_WHATSAPP_WEBHOOK_SECRET no build do frontend.
+#    A edge function rejeita (401) qualquer requisição sem este token.
+supabase secrets set WHATSAPP_WEBHOOK_SECRET="SEU_SEGREDO_FORTE_AQUI"
+
+# 5. Origem exata do frontend em produção (CORS restrito). Sem ela, chamadas do navegador são bloqueadas.
+supabase secrets set ALLOWED_ORIGIN="https://app.suaclinica.com"
 ```
 
 *Nota: As chaves `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` são injetadas automaticamente pelo Supabase para as Edge Functions, você não precisa configurá-las manualmente.*

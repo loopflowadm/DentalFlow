@@ -388,6 +388,13 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUserRole = (role) => {
+    if (!user) return;
+    const updatedUser = { ...user, role };
+    setUser(updatedUser);
+    localStorage.setItem('df_session_user', JSON.stringify(updatedUser));
+  };
+
   const updateClinic = async (updatedFields) => {
     if (!clinic) return;
     const updatedClinic = { ...clinic, ...updatedFields };
@@ -457,7 +464,8 @@ export function AuthProvider({ children }) {
       fetchClinicData,
       fetchClinicBySubdomain,
       selectClinic,
-      updateClinic
+      updateClinic,
+      updateUserRole
     }}>
       {children}
     </AuthContext.Provider>

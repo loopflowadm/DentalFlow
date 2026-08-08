@@ -571,7 +571,7 @@ export default function Login({ initialView = 'login', onBack }) {
               <button
                 type="button"
                 onClick={() => { setView('login'); resetTheme(); setError(''); }}
-                className="w-full py-2 bg-transparent text-slate-350 hover:text-white transition-colors text-xs flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-transparent text-slate-400 hover:text-white transition-colors text-xs flex items-center justify-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Voltar ao Login
@@ -624,7 +624,7 @@ export default function Login({ initialView = 'login', onBack }) {
               <button
                 type="button"
                 onClick={() => { setView('login'); setForgotSuccess(false); setForgotEmail(''); setError(''); }}
-                className="w-full py-2 bg-transparent text-slate-350 hover:text-white transition-colors text-xs flex items-center justify-center gap-1.5"
+                className="w-full py-2 bg-transparent text-slate-400 hover:text-white transition-colors text-xs flex items-center justify-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Voltar ao Login

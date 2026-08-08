@@ -17,9 +17,14 @@ if (fs.existsSync(envPath)) {
 }
 
 const targetPhone = process.env.TEST_PHONE || '5583996973326';
-const evolutionUrl = (process.env.EVOLUTION_API_URL || 'http://179.197.225.90:8080').replace(/\/$/, '');
+const evolutionUrl = (process.env.EVOLUTION_API_URL || env.VITE_EVOLUTION_API_BASE_URL || '').replace(/\/$/, '');
 const instanceName = process.env.INSTANCE_NAME || 'dentalflow-prod';
-const apiKey = process.env.EVOLUTION_API_KEY || 'dentalflow_key_secure_123456';
+const apiKey = process.env.EVOLUTION_API_KEY || env.VITE_EVOLUTION_API_KEY || '';
+
+if (!evolutionUrl || !apiKey) {
+  console.error('\n❌ Configure EVOLUTION_API_URL e EVOLUTION_API_KEY (ou VITE_EVOLUTION_API_BASE_URL e VITE_EVOLUTION_API_KEY)\n   no ambiente ou no .env.local (não use credenciais hardcoded).\n');
+  process.exit(1);
+}
 
 console.log('---------------------------------------------------------');
 console.log('⚡ ODONTOCRM — TESTE DE DISPARO DE MENSAGENS E BOTÕES');

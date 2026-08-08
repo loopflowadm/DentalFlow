@@ -22,7 +22,7 @@ Sempre que receber uma tarefa, consulte prioritariamente os seguintes arquivos a
 
 O projeto é uma aplicação Single Page Application (SPA):
 *   **Core:** React 19 + Vite.
-*   **Roteamento:** `react-router-dom` (v7+).
+*   **Roteamento:** Navegação interna por tabs/estado (`activeTab`), sem biblioteca de router.
 *   **Estilização:** Tailwind CSS 3.4 + PostCSS + Autoprefixer.
 *   **Animações:** Framer Motion.
 *   **Ícones:** Lucide React.
@@ -55,7 +55,7 @@ O projeto é uma aplicação Single Page Application (SPA):
 
 O visual do OdontoCRM deve impressionar pela qualidade e refinamento, inspirado no estilo moderno da Apple, Linear e Vercel:
 *   **Tipografia:** Fonte `Outfit` para títulos e métricas, e `Inter` para textos, tabelas e inputs.
-*   **Cores Neutras e Fundo:** Fundos escuros usam um tom azulado escuro (`#0b0f19` - Navy Black) e cartões usam `#151c2c` (Slate 850) para profundidade visual.
+*   **Cores Neutras e Fundo:** O tema escuro usa **preto neutro** (sem tom azulado): shell/fundo em `black` (`dark:bg-black`), superfícies/cards/modais em `#0D0D0D` (`dark:bg-[#0D0D0D]`) e inputs em `black`. Evite os tons azulados antigos (`#0b0f19`, `#151c2c`, `slate-800/850/900`).
 *   **Botões táteis (macOS Depth Button):**
     *   Default: Cantos arredondados (`rounded-xl` / 12px), borda interna suave (`border-white/10` ou `border-black/5`), sombra leve.
     *   Hover: Glow suave e elevação sutil (`hover:-translate-y-0.5`).

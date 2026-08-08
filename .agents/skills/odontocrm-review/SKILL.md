@@ -13,7 +13,7 @@ Antes de finalizar qualquer tarefa, revise mentalmente os seguintes 4 pilares:
 
 ### 1. UX/UI & Design System Alignment
 *   **Fontes:** O componente utiliza a fonte `Outfit` para títulos e `Inter` para o corpo de texto?
-*   **Design Tokens:** As cores seguem os tokens de tons neutros (Navy Black `#0b0f19` para dark background, Slate 850 `#151c2c` para cartões)?
+*   **Design Tokens:** As cores seguem os tokens de tons neutros (preto `black` para o fundo dark, `#0D0D0D` para cartões/superfícies)? Nenhum tom azulado antigo (`#0b0f19`, `#151c2c`, `#1d2433`, slate-800/850/900)?
 *   **Elementos macOS:** Botões principais implementam o estilo tátil macOS Depth Button (cantos de 12px `rounded-xl`, borda sutil, hover translate-y-0.5 e active scale-98)?
 *   **Animações:** Painéis e modais utilizam o efeito spring de transição do Framer Motion?
 

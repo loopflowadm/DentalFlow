@@ -175,7 +175,7 @@ export default function Automacoes() {
           {showBuilder && (
             <button 
               onClick={() => setShowBuilder(false)}
-              className="text-xs text-slate-400 hover:text-slate-650"
+              className="text-xs text-slate-400 hover:text-slate-700"
             >
               Cancelar
             </button>
@@ -336,7 +336,7 @@ export default function Automacoes() {
               <span className="text-slate-400 block border-b border-white/10 pb-1 font-bold">Console de Simulação:</span>
               {simLog.map((log, idx) => (
                 <div key={idx} className="leading-normal">
-                  <span className="text-emerald-450 mr-1">[{log.time}]</span>
+                  <span className="text-emerald-400 mr-1">[{log.time}]</span>
                   <span>{log.text}</span>
                 </div>
               ))}
@@ -369,16 +369,16 @@ export default function Automacoes() {
                       onChange={(e) => updateAutomationStatus(aut.id, e.target.checked)}
                       className="sr-only peer"
                     />
-                    <div className="w-7 h-3.5 bg-slate-200 dark:bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-emerald-500" />
+                    <div className="w-7 h-3.5 bg-slate-200 dark:bg-white/5 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-emerald-500" />
                   </label>
                 </div>
 
                 <div className="space-y-1 text-[8px] font-bold text-slate-400">
-                  <div className="flex items-center gap-1.5 bg-slate-50/50 dark:bg-slate-900/20 p-1 rounded">
+                  <div className="flex items-center gap-1.5 bg-slate-50/50 dark:bg-black/20 p-1 rounded">
                     <span className="text-violet-500 uppercase">Trigger:</span>
                     <span className="truncate text-slate-600 dark:text-slate-300">{aut.trigger}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-slate-50/50 dark:bg-slate-900/20 p-1 rounded">
+                  <div className="flex items-center gap-1.5 bg-slate-50/50 dark:bg-black/20 p-1 rounded">
                     <span className="text-emerald-500 uppercase">Actions:</span>
                     <span className="truncate text-slate-600 dark:text-slate-300">{aut.actions.join(', ')}</span>
                   </div>

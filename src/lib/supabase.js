@@ -13,6 +13,14 @@ const isValidSupabaseKey = (key) => typeof key === 'string' && (
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && isValidSupabaseKey(supabaseAnonKey));
 
+// Em produção, não permite modo demo silencioso: falha com erro claro se faltarem credenciais.
+if (!isSupabaseConfigured && import.meta.env.PROD) {
+  throw new Error(
+    '[Configuração inválida] VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não configuradas. ' +
+    'A aplicação não pode rodar em Modo Demo em produção. Configure as variáveis de ambiente antes do build.'
+  );
+}
+
 const createDummySupabase = () => {
   const dummyHandler = {
     get(target, prop) {
@@ -34,7 +42,7 @@ const createDummySupabase = () => {
                   return (resolve) => resolve({ data: [], error: new Error('Supabase em Modo Demo') });
                 }
                 if (builderProp === 'catch') {
-                  return (reject) => resolve({ data: [], error: new Error('Supabase em Modo Demo') });
+                  return (reject) => reject(new Error('Supabase em Modo Demo'));
                 }
                 return () => proxyBuilder;
               }
