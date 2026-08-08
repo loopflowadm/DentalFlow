@@ -81,16 +81,16 @@
   width: auto;
 }
 
-/* Dark variant: fills are navy/blue for light backgrounds */
-.landing-logo--dark path {
-  fill: var(--lp-blue-dark) !important;
-  transition: fill 0.3s ease;
+/* Variantes da marca: controlam apenas o texto "Dental" (currentColor).
+   O símbolo mantém o gradiente animado oficial e o "Flow" permanece #196BFB. */
+.landing-logo--dark {
+  color: var(--lp-text-primary);
+  transition: color 0.3s ease;
 }
 
-/* Light variant: fills are white for dark backgrounds */
-.landing-logo--light path {
-  fill: white !important;
-  transition: fill 0.3s ease;
+.landing-logo--light {
+  color: #ffffff;
+  transition: color 0.3s ease;
 }
 
 /* Brand icon sizing contexts */

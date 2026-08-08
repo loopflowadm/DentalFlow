@@ -28,13 +28,7 @@ export default function Login({ initialView = 'login', onBack }) {
       return '';
     }
   });
-  const [password, setPassword] = useState(() => {
-    try {
-      return localStorage.getItem('df_remember_me') === 'true' ? (localStorage.getItem('df_remembered_password') || '') : '';
-    } catch (e) {
-      return '';
-    }
-  });
+  const [password, setPassword] = useState('');
 
   // Register Form States
   const [clinicName, setClinicName] = useState('');
@@ -72,6 +66,15 @@ export default function Login({ initialView = 'login', onBack }) {
   const { applyTheme, resetTheme, currentTheme } = useTheme();
 
   // Efeito dinâmico para prever o tema no login pelo e-mail
+  // Higiene: remove senha eventualmente persistida por versões anteriores (segurança)
+  useEffect(() => {
+    try {
+      localStorage.removeItem('df_remembered_password');
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     if (view !== 'login') return;
 
@@ -151,11 +154,9 @@ export default function Login({ initialView = 'login', onBack }) {
       if (rememberMe) {
         localStorage.setItem('df_remember_me', 'true');
         localStorage.setItem('df_remembered_email', email);
-        localStorage.setItem('df_remembered_password', password);
       } else {
         localStorage.removeItem('df_remember_me');
         localStorage.removeItem('df_remembered_email');
-        localStorage.removeItem('df_remembered_password');
       }
 
       const res = await login(email, password);

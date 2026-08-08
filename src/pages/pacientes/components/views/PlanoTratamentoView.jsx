@@ -6,37 +6,34 @@ import {
 } from 'lucide-react';
 import { AnatomicalToothSVG, ToothGradients } from '../odontogram/TeethSVGRegistry';
 
+function createEmptyPlan() {
+  return {
+    activeStepId: 2,
+    steps: [
+      { id: 1, title: 'Avaliação e Diagnóstico', status: 'pending', procedures: [] },
+      { id: 2, title: 'Urgências', status: 'active', procedures: [] },
+      { id: 3, title: 'Restaurador', status: 'pending', procedures: [] },
+      { id: 4, title: 'Reabilitação', status: 'pending', procedures: [] },
+      { id: 5, title: 'Estética', status: 'pending', procedures: [] },
+      { id: 6, title: 'Manutenção', status: 'pending', procedures: [] }
+    ],
+    attachments: [],
+    generalNotes: '',
+    financialSummary: { total: 0, paid: 0 }
+  };
+}
+
 export default function PlanoTratamentoView({ patient, onSavePatientData, onNavigateToTab }) {
   const themeContext = useTheme();
   const themeMode = themeContext?.themeMode;
   const isDarkMode = themeMode === 'dark' || (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'));
   // Estado local para o plano de tratamento carregado do paciente
   const [treatmentPlan, setTreatmentPlan] = useState(() => {
-    return patient?.medical_history?.treatment_plan || {
-      activeStepId: 2,
-      steps: [
-        { id: 1, title: 'Avaliação e Diagnóstico', status: 'completed', completionDate: '10/05/2024' },
-        { id: 2, title: 'Urgências', status: 'active', procedures: [
-          { dente: '15', nome: 'Tratamento de Canal', status: 'Em andamento', dentista: 'Dra. Juliana', data: '15/05/2024', valor: 600 },
-          { dente: '33', nome: 'Restauração em Resina', status: 'Agendado', dentista: 'Dra. Juliana', data: '22/05/2024', valor: 350 },
-          { dente: '27', nome: 'Restauração em Resina', status: 'Agendado', dentista: 'Dra. Juliana', data: '22/05/2024', valor: 350 }
-        ]},
-        { id: 3, title: 'Restaurador', status: 'pending', procedures: [] },
-        { id: 4, title: 'Reabilitação', status: 'pending', procedures: [] },
-        { id: 5, title: 'Estética', status: 'pending', procedures: [] },
-        { id: 6, title: 'Manutenção', status: 'pending', procedures: [] }
-      ],
-      attachments: [
-        { id: 1, name: 'Radiografia Panorâmica', date: '10/05/2024', url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=800' },
-        { id: 2, name: 'Periapical 14 e 15', date: '10/05/2024', url: 'https://images.unsplash.com/photo-1559811814-e2c57b5e69df?w=800' },
-        { id: 3, name: 'Fotos Intraorais', date: '10/05/2024', url: 'https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?w=800' }
-      ],
-      generalNotes: 'Paciente apresenta sensibilidade em dentes posteriores superiores esquerdos. Manter acompanhamento periódico.',
-      financialSummary: {
-        total: 3450,
-        paid: 1200
-      }
-    };
+    let mh = patient?.medical_history;
+    if (typeof mh === 'string') {
+      try { mh = JSON.parse(mh); } catch (e) { mh = null; }
+    }
+    return mh?.treatment_plan || createEmptyPlan();
   });
 
   const [activeStepId, setActiveStepId] = useState(treatmentPlan.activeStepId || 2);
@@ -70,20 +67,24 @@ export default function PlanoTratamentoView({ patient, onSavePatientData, onNavi
   // Sync state if patient or medical_history changes
   useEffect(() => {
     const plan = getPlanFromPat(patient);
-    if (plan) {
-      setTreatmentPlan(plan);
-      setActiveStepId(plan.activeStepId || 2);
-    }
+    setTreatmentPlan(plan || createEmptyPlan());
+    setActiveStepId(plan?.activeStepId || 2);
   }, [patient?.id, patient?.medical_history, getPlanFromPat]);
 
   // Persistir dados no Supabase via componente pai
   const persistPlanData = async (updatedPlan) => {
     setTreatmentPlan(updatedPlan);
     if (patient && onSavePatientData) {
+      let mh = patient.medical_history;
+      if (typeof mh === 'string') {
+        try { mh = JSON.parse(mh); } catch (e) { mh = {}; }
+      } else if (!mh || typeof mh !== 'object') {
+        mh = {};
+      }
       const updatedPatient = {
         ...patient,
         medical_history: {
-          ...(patient.medical_history || {}),
+          ...(mh || {}),
           treatment_plan: updatedPlan
         }
       };

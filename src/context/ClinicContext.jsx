@@ -689,6 +689,9 @@ export function ClinicProvider({ children }) {
       name: newPat.name,
       phone: newPat.phone || '',
       email: newPat.email || null,
+      medical_history: (typeof newPat.medical_history === 'object' && newPat.medical_history !== null)
+        ? JSON.stringify(newPat.medical_history)
+        : (newPat.medical_history || null),
       clinic_id: isValidUUID(clinicId) ? clinicId : null,
       created_at: new Date().toISOString()
     };

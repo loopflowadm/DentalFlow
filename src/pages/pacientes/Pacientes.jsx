@@ -998,7 +998,14 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
                         { name: 'Sensível a Anestesia', color: 'bg-rose-500/10 text-rose-500 border-rose-500/30' },
                         { name: 'Em Atraso', color: 'bg-red-500/10 text-red-500 border-red-500/30' }
                       ].map(t => {
-                        const historyObj = selectedPatient?.medical_history ? JSON.parse(selectedPatient.medical_history) : {};
+                        let historyObj = {};
+                        if (selectedPatient?.medical_history) {
+                          if (typeof selectedPatient.medical_history === 'object') {
+                            historyObj = selectedPatient.medical_history;
+                          } else {
+                            try { historyObj = JSON.parse(selectedPatient.medical_history); } catch (e) { historyObj = {}; }
+                          }
+                        }
                         const currentTags = historyObj.tags || ['Particular'];
                         const isChecked = currentTags.includes(t.name);
 
