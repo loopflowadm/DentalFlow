@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
     }
   });
   const [loading, setLoading] = useState(true);
-  const supabaseActive = true;
+  const supabaseActive = isSupabaseConfigured;
   const setSupabaseActive = () => {};
   const { applyTheme, resetTheme } = useTheme();
 

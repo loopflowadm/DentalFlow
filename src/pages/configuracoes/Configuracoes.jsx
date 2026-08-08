@@ -1896,7 +1896,6 @@ export default function Configuracoes() {
                 <input
                   type="password"
                   placeholder="Chave Secreta Stripe (sk_live_...)"
-                  defaultValue="sk_live_demo_key_odontocrm_2026"
                   className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
                 />
                 <button
@@ -1930,7 +1929,6 @@ export default function Configuracoes() {
                 <input
                   type="url"
                   placeholder="URL do Webhook (https://n8n.suaclinica.com/webhook/...)"
-                  defaultValue="https://n8n.odontocrm.com/webhook/clinic-events"
                   className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none"
                 />
                 <button
@@ -1964,7 +1962,6 @@ export default function Configuracoes() {
                 <input
                   type="password"
                   placeholder="Chave de API (AIzaSy... ou sk-...)"
-                  defaultValue="AIzaSy_demo_gemini_key_2026"
                   className="w-full bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700/60 rounded-xl py-1.5 px-3 text-[11px] focus:outline-none font-mono text-slate-400"
                 />
                 <button
