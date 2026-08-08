@@ -16,7 +16,6 @@ import Pacientes from './pacientes/Pacientes';
 import Agenda from './agenda/Agenda';
 import Financeiro from './financeiro/Financeiro';
 import Configuracoes from './configuracoes/Configuracoes';
-import Marketing from './marketing/Marketing';
 import WhatsApp from './whatsapp/WhatsApp';
 
 export default function ClinicApp() {
@@ -64,7 +63,7 @@ export default function ClinicApp() {
     setShowOnboarding(false);
   };
 
-  // Módulos: 'dashboard' | 'agenda' | 'pacientes' | 'crm' | 'financeiro' | 'configuracoes' | 'whatsapp' | 'marketing'
+  // Módulos: 'dashboard' | 'agenda' | 'pacientes' | 'crm' | 'financeiro' | 'configuracoes' | 'whatsapp'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   
@@ -178,8 +177,6 @@ export default function ClinicApp() {
         );
       case 'financeiro':
         return <Financeiro />;
-      case 'marketing':
-        return <Marketing />;
       case 'configuracoes':
         return <Configuracoes />;
       default:

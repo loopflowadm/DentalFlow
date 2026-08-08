@@ -80,7 +80,6 @@ export function ClinicProvider({ children }) {
   const [insurancePlans, setInsurancePlans] = useState([]);
   const [financeTransactions, setFinanceTransactions] = useState([]);
   const [automations, setAutomations] = useState([]);
-  const [marketingCampaigns, setMarketingCampaigns] = useState([]);
   const [aiConfig, setAiConfig] = useState({
     prompt: DEFAULT_DENTAL_AI_PROMPT,
     personality: 'sofia_assistente',
@@ -390,7 +389,6 @@ export function ClinicProvider({ children }) {
         supabase.from('insurance_plans').select('*').eq('clinic_id', clinicId),
         supabase.from('transactions').select('*').eq('clinic_id', clinicId).order('date', { ascending: false }),
         supabase.from('automations').select('*').eq('clinic_id', clinicId),
-        supabase.from('marketing_campaigns').select('*').eq('clinic_id', clinicId),
         supabase.from('suppliers').select('*').eq('clinic_id', clinicId),
         supabase.from('accounts_payable').select('*').eq('clinic_id', clinicId),
         supabase.from('installments').select('*, treatment_budgets(*, patients(*))').eq('clinic_id', clinicId),
@@ -432,20 +430,19 @@ export function ClinicProvider({ children }) {
       const planData = getValue(results[3]);
       const tData = getValue(results[4]);
       const autData = getValue(results[5]);
-      const mData = getValue(results[6]);
-      const supData = getValue(results[7]);
-      const apData = getValue(results[8]);
-      const instData = getValue(results[9]);
-      const recData = getValue(results[10]);
-      const presData = getValue(results[11]);
-      const toothData = getValue(results[12]);
-      const leadData = getValue(results[13]);
-      const chairData = getValue(results[15]);
-      const dentistData = getValue(results[16]);
+      const supData = getValue(results[6]);
+      const apData = getValue(results[7]);
+      const instData = getValue(results[8]);
+      const recData = getValue(results[9]);
+      const presData = getValue(results[10]);
+      const toothData = getValue(results[11]);
+      const leadData = getValue(results[12]);
+      const chairData = getValue(results[14]);
+      const dentistData = getValue(results[15]);
 
       let waData = null;
-      if (results[14].status === 'fulfilled' && !results[14].value.error) {
-        waData = results[14].value.data;
+      if (results[13].status === 'fulfilled' && !results[13].value.error) {
+        waData = results[13].value.data;
       }
 
       let finalPatients = pData || [];
@@ -540,7 +537,6 @@ export function ClinicProvider({ children }) {
       setInsurancePlans(planData);
       setFinanceTransactions(prev => tData.length > 0 ? tData : prev);
       setAutomations(autData);
-      setMarketingCampaigns(mData);
       setSuppliers(supData);
       setAccountsPayable(apData);
       setToothRecords(prev => toothData.length > 0 ? toothData : prev);
@@ -634,9 +630,6 @@ export function ClinicProvider({ children }) {
           }
           if (supData.length === 0 && parsed.suppliers?.length > 0) {
             setSuppliers(parsed.suppliers);
-          }
-          if (mData.length === 0 && parsed.marketingCampaigns?.length > 0) {
-            setMarketingCampaigns(parsed.marketingCampaigns);
           }
           if (autData.length === 0 && parsed.automations?.length > 0) {
             setAutomations(parsed.automations);
@@ -2804,13 +2797,7 @@ export function ClinicProvider({ children }) {
     const demoAccountsPayable = fullYearAccountsPayable;
     const demoInstallments = fullYearInstallments;
 
-    // 9. Campanhas de Marketing & Automações
-    const demoMarketingCampaigns = [
-      { id: 'mc-1', name: 'Campanha Lentes de Contato VIP', views: 1420, leads: 48, budget: 1200, conversion: 14.5, source: 'Instagram Ads' },
-      { id: 'mc-2', name: 'Reativação de Pacientes Inativos', views: 890, leads: 32, budget: 450, conversion: 22.0, source: 'WhatsApp Disparo' },
-      { id: 'mc-3', name: 'Invisalign & Estética Dental', views: 2300, leads: 65, budget: 1800, conversion: 12.8, source: 'Google Ads' }
-    ];
-
+    // 9. Automações de Marketing
     const demoAutomations = [
       { id: 'aut-1', name: 'Lembrete de Consulta 24h Antes', trigger: 'Agendamento', actions: ['Enviar WhatsApp', 'Notificar equipe'], is_active: true, runs_count: 142 },
       { id: 'aut-2', name: 'Pesquisa NPS Pós-Atendimento', trigger: 'Conclusão de Consulta', actions: ['Enviar WhatsApp'], is_active: true, runs_count: 89 },
@@ -2828,7 +2815,6 @@ export function ClinicProvider({ children }) {
     setSuppliers(demoSuppliers);
     setAccountsPayable(demoAccountsPayable);
     setInstallments(demoInstallments);
-    setMarketingCampaigns(demoMarketingCampaigns);
     setAutomations(demoAutomations);
 
     try {
@@ -2844,7 +2830,6 @@ export function ClinicProvider({ children }) {
         suppliers: demoSuppliers,
         accountsPayable: demoAccountsPayable,
         installments: demoInstallments,
-        marketingCampaigns: demoMarketingCampaigns,
         automations: demoAutomations,
         dentists: demoDentists,
         chairs: demoChairs
@@ -2873,7 +2858,6 @@ export function ClinicProvider({ children }) {
     setSuppliers([]);
     setAccountsPayable([]);
     setInstallments([]);
-    setMarketingCampaigns([]);
     setAutomations([]);
 
     // 2. Limpar localStorage de anotações, tags, procedimentos e convênios
@@ -2916,7 +2900,6 @@ export function ClinicProvider({ children }) {
     whatsappChats,
     financeTransactions,
     automations,
-    marketingCampaigns,
     procedures,
     insurancePlans,
     aiConfig,
@@ -2981,7 +2964,6 @@ export function ClinicProvider({ children }) {
     whatsappChats,
     financeTransactions,
     automations,
-    marketingCampaigns,
     procedures,
     insurancePlans,
     aiConfig,

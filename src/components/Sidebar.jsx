@@ -16,7 +16,6 @@ import {
   IconSearch,
   IconBrandWhatsapp,
   IconArrowUpRight,
-  IconTarget,
   IconLogout,
   IconUser,
   IconSparkles
@@ -180,7 +179,6 @@ export default function Sidebar({
     { id: 'pacientes', label: 'Pacientes', icon: IconUsers },
     { id: 'agenda', label: 'Agenda', icon: IconCalendar },
     { id: 'whatsapp', label: 'Central WhatsApp', icon: IconBrandWhatsapp },
-    { id: 'marketing', label: 'Marketing', icon: IconTarget },
     { id: 'financeiro', label: 'Financeiro', icon: IconChartBar },
     { id: 'configuracoes', label: 'Configurações', icon: IconSettings },
   ];
