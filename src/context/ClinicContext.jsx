@@ -783,7 +783,8 @@ export function ClinicProvider({ children }) {
           const { error } = await supabase
             .from('patients')
             .update(dbPayload)
-            .eq('id', updatedPat.id);
+            .eq('id', updatedPat.id)
+            .eq('clinic_id', updatedPat.clinic_id || clinic?.id);
           if (error) console.warn('[Supabase] Aviso ao atualizar paciente:', error.message || error);
         }
       } catch (err) {
@@ -889,7 +890,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('crm_leads')
         .update(dbPayload)
-        .eq('id', updatedLead.id);
+        .eq('id', updatedLead.id)
+        .eq('clinic_id', updatedLead.clinic_id || clinic?.id);
       if (error) console.warn('[Supabase] Aviso ao atualizar crm_lead:', error);
     }
 
@@ -1123,7 +1125,8 @@ export function ClinicProvider({ children }) {
         const { error } = await supabase
           .from('appointments')
           .update(cleanApp)
-          .eq('id', cleanApp.id);
+          .eq('id', cleanApp.id)
+          .eq('clinic_id', cleanApp.clinic_id);
         
         if (error) {
           if (error.code === 'PGRST204' || error.message?.includes('column')) {
@@ -1194,7 +1197,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('chairs')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('clinic_id', clinic?.id);
       if (error) throw error;
     } catch (err) {
       console.warn('[Supabase] Error deleting chair, simulating locally:', err.message || err);
@@ -1208,7 +1212,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('chairs')
         .update({ name: chairObj.name })
-        .eq('id', chairObj.id);
+        .eq('id', chairObj.id)
+        .eq('clinic_id', chairObj.clinic_id || clinic?.id);
       if (error) throw error;
     } catch (err) {
       console.warn('[Supabase] Error updating chair, simulating locally:', err.message || err);
@@ -1561,7 +1566,8 @@ export function ClinicProvider({ children }) {
       await supabase
         .from('automations')
         .update({ is_active: isActive })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('clinic_id', clinic?.id);
       setAutomations(prev => prev.map(a => a.id === id ? { ...a, isActive } : a));
     } catch (err) {
       console.error('Erro ao atualizar status de automação no Supabase:', err);
@@ -1610,7 +1616,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('accounts_payable')
         .update({ status: 'PENDING', approved_by: user.id })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('clinic_id', clinic?.id);
       if (error) throw error;
 
       setAccountsPayable(prev => prev.map(ap => ap.id === id ? { ...ap, status: 'PENDING', approved_by: user.id } : ap));
@@ -1632,7 +1639,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('accounts_payable')
         .update(updatedFields)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('clinic_id', clinic?.id);
       if (error) throw error;
 
       setAccountsPayable(prev => prev.map(ap => ap.id === id ? { ...ap, ...updatedFields } : ap));
@@ -1662,7 +1670,8 @@ export function ClinicProvider({ children }) {
       const { error } = await supabase
         .from('installments')
         .update(updatedFields)
-        .eq('id', id);
+        .eq('id', id)
+        .eq('clinic_id', clinic?.id);
       if (error) throw error;
 
       setInstallments(prev => prev.map(i => i.id === id ? { ...i, ...updatedFields } : i));
