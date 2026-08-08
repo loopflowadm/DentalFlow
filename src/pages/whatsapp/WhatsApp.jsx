@@ -28,6 +28,8 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     patients,
     procedures,
     chairs,
+    crmLeads,
+    addPatient,
     addAppointment,
     deletePatient,
     deleteCrmLead
@@ -563,7 +565,7 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
   };
 
   // HANDLERS DAS AÇÕES RÁPIDAS EXECUTADAS DIRETO NO CHAT
-  const handleConfirmScheduleInChat = (e) => {
+  const handleConfirmScheduleInChat = async (e) => {
     e.preventDefault();
     if (!activeChat) return;
 
@@ -571,16 +573,38 @@ export default function WhatsApp({ onNavigateTab, setSelectedPatient, setPrefill
     const [year, month, day] = scheduleDate.split('-');
     const formattedDate = `${day}/${month}/${year}`;
 
+    // Resolver paciente real: se o chat for de um Lead (sem paciente criado), criar o paciente no banco
+    let resolvedPatientId = activeChat.patientId;
+    const isRealPatient = patients.some(p => p.id === resolvedPatientId);
+    if (!isRealPatient) {
+      const matchedLead = crmLeads.find(l => l.id === resolvedPatientId);
+      if (matchedLead?.patient_id) {
+        resolvedPatientId = matchedLead.patient_id;
+      } else {
+        const createdPatient = await addPatient({
+          name: activeChat.name,
+          phone: activeChat.phone || '',
+          medical_history: { anamnese: null }
+        });
+        if (createdPatient?.id) resolvedPatientId = createdPatient.id;
+      }
+    }
+
+    // Resolver cadeira e procedimento reais (por nome) para persistir UUIDs válidos no banco
+    const matchedChair = chairs.find(c => c.name === scheduleChairName);
+    const matchedProc = procedures.find(p => p.name === scheduleProcedureName);
+
     // Salvar agendamento no banco via Context (Automação de Agendamento)
     if (addAppointment) {
-      addAppointment({
-        patient_id: activeChat.patientId,
+      await addAppointment({
+        patient_id: resolvedPatientId,
         patientName: activeChat.name,
         patientPhone: activeChat.phone,
         date: scheduleDate,
         time: scheduleTime,
         procedureName: scheduleProcedureName,
-        chairId: scheduleChairName,
+        procedureId: matchedProc?.id || null,
+        chairId: matchedChair?.id || null,
         clinic_id: clinicId
       });
     }

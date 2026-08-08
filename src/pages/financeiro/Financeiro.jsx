@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useClinic } from '../../context/ClinicContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -68,6 +68,8 @@ export default function Financeiro() {
     payAccountsPayable,
     payInstallment,
     installments: ctxInstallments,
+    appointments,
+    dentists,
     fetchClinicData
   } = useClinic();
   const { currentTheme } = useTheme();
@@ -91,13 +93,49 @@ export default function Financeiro() {
   const [category, setCategory] = useState('Tratamentos');
 
   // Estado da comissão do dentista
-  const [selectedDentist, setSelectedDentist] = useState(() => user?.full_name || '');
+  const [selectedDentist, setSelectedDentist] = useState('');
   
   // Regra de Liberação de Comissão: 'CAIXA' (Após quitação do paciente) | 'FATURAMENTO' (Conclusão do atendimento)
   const [commissionReleaseRule, setCommissionReleaseRule] = useState('CAIXA');
 
-  // Mapeamento enriquecido de comissões com deduções de custos (Protético/Laboratório, Taxas de Cartão)
-  const [commissionLogs, setCommissionLogs] = useState([]);
+  // Comissões derivadas das consultas concluídas atribuídas a dentistas
+  const [paidCommissionIds, setPaidCommissionIds] = useState(() => new Set());
+  const baseCommissionLogs = useMemo(() => {
+    const completed = appointments.filter(a => a.status === 'completed' || a.status === 'Concluído' || a.status === 'CONCLUIDO');
+    const logs = [];
+    completed.forEach((app, idx) => {
+      const dentistName = app.doctor_name || app.dentist_name ||
+        (dentists.find(d => d.id === app.doctor_id || d.id === app.dentist_id)?.full_name || '');
+      if (!dentistName) return;
+      const gross = parseFloat(app.price || app.amount) || 0;
+      if (gross <= 0) return;
+      logs.push({
+        id: `comm-${app.id || idx}`,
+        date: (app.start_time || app.appointment_date || app.date || '').split('T')[0],
+        dentist: dentistName,
+        patient: app.patientName || 'Paciente',
+        procedure: app.procedure_name || app.procedure || 'Consulta',
+        grossAmount: gross,
+        cardFeePercent: 3.5,
+        labCost: 0,
+        percent: 30,
+        status: 'PENDING',
+        patientPaymentStatus: 'PAID'
+      });
+    });
+    return logs;
+  }, [appointments, dentists]);
+
+  const commissionLogs = useMemo(() => {
+    return baseCommissionLogs.map(log => paidCommissionIds.has(log.id) ? { ...log, status: 'PAID' } : log);
+  }, [baseCommissionLogs, paidCommissionIds]);
+
+  const dentistOptions = dentists.length > 0
+    ? dentists.map(d => ({ name: d.full_name || 'Cirurgião-Dentista', specialty: '' }))
+    : [
+        { name: 'Dr. Pedro Ramos', specialty: 'Ortodontia & Implantes' },
+        { name: 'Dra. Ana Paula', specialty: 'Estética & Clareamento' }
+      ];
 
   // Form Novo Fornecedor
   const [supName, setSupName] = useState('');
@@ -198,7 +236,7 @@ export default function Financeiro() {
   };
 
   const handlePayCommission = (logId, dentistName, amountVal, patientName) => {
-    setCommissionLogs(prev => prev.map(item => item.id === logId ? { ...item, status: 'PAID' } : item));
+    setPaidCommissionIds(prev => new Set(prev).add(logId));
     addTransaction({
       description: `Comissão paga a ${dentistName} - Paciente: ${patientName}`,
       amount: parseFloat(amountVal),
@@ -363,8 +401,12 @@ export default function Financeiro() {
                 onChange={(e) => setSelectedDentist(e.target.value)}
                 className="bg-slate-100 dark:bg-black border border-slate-200/50 dark:border-white/10 rounded-xl py-1.5 px-3 text-xs text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer font-bold flex-1"
               >
-                <option value="Dr. Pedro Ramos">Dr. Pedro Ramos (Ortodontia & Implantes)</option>
-                <option value="Dra. Ana Paula">Dra. Ana Paula (Estética & Clareamento)</option>
+                <option value="">Todos os Dentistas</option>
+                {dentistOptions.map(opt => (
+                  <option key={opt.name} value={opt.name}>
+                    {opt.specialty ? `${opt.name} (${opt.specialty})` : opt.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -389,9 +431,9 @@ export default function Financeiro() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => exportToCSV(
-                  `comissoes-${selectedDentist.replace(/\s+/g, '-')}`,
+                  `comissoes-${(selectedDentist || 'todos-dentistas').replace(/\s+/g, '-')}`,
                   ['Data', 'Dentista', 'Paciente', 'Procedimento', 'Valor Bruto (R$)', 'Abatimentos (R$)', 'Valor Líquido (R$)', '% Dentista', 'Comissão (R$)', 'Status Repasse'],
-                  commissionLogs.filter(log => log.dentist === selectedDentist).map(log => {
+                  commissionLogs.filter(log => !selectedDentist || log.dentist === selectedDentist).map(log => {
                     const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
                     const deductions = cardFee + (log.labCost || 0);
                     const netAmount = Math.max(0, log.grossAmount - deductions);
@@ -427,7 +469,7 @@ export default function Financeiro() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-slate-700 dark:text-slate-400">
-                {commissionLogs.filter(log => log.dentist === selectedDentist).map((log) => {
+                {commissionLogs.filter(log => !selectedDentist || log.dentist === selectedDentist).map((log) => {
                   const cardFee = (log.grossAmount * (log.cardFeePercent || 0)) / 100;
                   const totalDeductions = cardFee + (log.labCost || 0);
                   const netAmount = Math.max(0, log.grossAmount - totalDeductions);
@@ -479,12 +521,22 @@ export default function Financeiro() {
                     </tr>
                   );
                 })}
+                {commissionLogs.filter(log => !selectedDentist || log.dentist === selectedDentist).length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center">
+                      <Award className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Nenhuma comissão gerada</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Conclua atendimentos na Agenda e atribua o dentista responsável para as comissões aparecerem aqui.
+                      </p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
-
       {/* SUB-ABA: PARCELAMENTOS */}
       {activeSubTab === 'parcelas' && (
         <div className="space-y-6">

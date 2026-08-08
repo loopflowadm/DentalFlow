@@ -1576,39 +1576,88 @@ export function ClinicProvider({ children }) {
 
   // FORNECEDORES
   const addSupplier = async (supplier) => {
-    const clinicId = clinic.id;
-    const fresh = { ...supplier, clinic_id: clinicId };
+    const rawClinicId = clinic?.id || clinic?.clinic_id;
+    const clinicId = isValidUUID(rawClinicId) ? rawClinicId : null;
 
-    const { data, error } = await supabase
-      .from('suppliers')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setSuppliers(prev => [...prev, data]);
-    return data;
+    const fresh = {
+      id: supplier.id || 'sup-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      ...supplier,
+      clinic_id: clinicId,
+      created_at: new Date().toISOString()
+    };
+
+    // Atualização instantânea na UI
+    setSuppliers(prev => [...prev.filter(s => s.id !== fresh.id), fresh]);
+
+    // Persistência remota em segundo plano se houver UUID de clínica válido
+    if (clinicId) {
+      try {
+        const { data, error } = await supabase
+          .from('suppliers')
+          .insert([{
+            clinic_id: clinicId,
+            name: fresh.name,
+            cnpj: fresh.cnpj || null,
+            phone: fresh.phone || null,
+            email: fresh.email || null
+          }])
+          .select()
+          .single();
+        if (!error && data) {
+          setSuppliers(prev => prev.map(s => s.id === fresh.id ? { ...s, id: data.id } : s));
+        } else if (error) {
+          console.warn('[Supabase] Aviso ao cadastrar fornecedor:', error.message || error);
+        }
+      } catch (err) {
+        console.warn('[Supabase] Erro ao cadastrar fornecedor:', err.message || err);
+      }
+    }
+    return fresh;
   };
 
   // CONTAS A PAGAR
   const addAccountsPayable = async (payable) => {
-    const clinicId = clinic.id;
-    const initialStatus = payable.amount > 2000 ? 'AWAITING_APPROVAL' : 'PENDING';
+    const rawClinicId = clinic?.id || clinic?.clinic_id;
+    const clinicId = isValidUUID(rawClinicId) ? rawClinicId : null;
+    const initialStatus = parseFloat(payable.amount) > 2000 ? 'AWAITING_APPROVAL' : 'PENDING';
 
     const fresh = {
+      id: payable.id || 'ap-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       ...payable,
       clinic_id: clinicId,
       status: initialStatus,
       created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from('accounts_payable')
-      .insert([fresh])
-      .select()
-      .single();
-    if (error) throw error;
-    setAccountsPayable(prev => [...prev, data]);
-    return data;
+    // Atualização instantânea na UI
+    setAccountsPayable(prev => [...prev.filter(ap => ap.id !== fresh.id), fresh]);
+
+    // Persistência remota em segundo plano se houver UUID de clínica válido
+    if (clinicId) {
+      try {
+        const { data, error } = await supabase
+          .from('accounts_payable')
+          .insert([{
+            clinic_id: clinicId,
+            supplier_id: fresh.supplier_id || null,
+            description: fresh.description,
+            amount: parseFloat(fresh.amount) || 0,
+            due_date: fresh.due_date,
+            status: initialStatus,
+            category: fresh.category || 'OTHER'
+          }])
+          .select()
+          .single();
+        if (!error && data) {
+          setAccountsPayable(prev => prev.map(ap => ap.id === fresh.id ? { ...ap, id: data.id } : ap));
+        } else if (error) {
+          console.warn('[Supabase] Aviso ao cadastrar conta a pagar:', error.message || error);
+        }
+      } catch (err) {
+        console.warn('[Supabase] Erro ao cadastrar conta a pagar:', err.message || err);
+      }
+    }
+    return fresh;
   };
 
   const approveAccountsPayable = async (id) => {

@@ -29,31 +29,65 @@ const CustomTooltip = ({ active, payload, label, formatter }) => {
 };
 
 export default function Relatorios({ onNavigateTab }) {
-  const { patients, appointments, dentists, financeTransactions } = useClinic();
+  const { patients, appointments, dentists } = useClinic();
   
   // Estados locais de filtro
   const [dateRange, setDateRange] = useState('30d');
   const [insuranceFilter, setInsuranceFilter] = useState('');
 
   // 1. CÁLCULOS DINÂMICOS BASEADOS NOS DADOS REAIS
+  // Data de corte conforme o período selecionado (7d / 30d / 90d / 12m)
+  const cutoffDate = useMemo(() => {
+    const now = new Date();
+    switch (dateRange) {
+      case '7d': now.setDate(now.getDate() - 7); break;
+      case '90d': now.setDate(now.getDate() - 90); break;
+      case '12m': now.setFullYear(now.getFullYear() - 1); break;
+      default: now.setDate(now.getDate() - 30); // '30d'
+    }
+    return now;
+  }, [dateRange]);
+
   const completedAppointments = useMemo(() => {
-    return appointments.filter(app => 
-      app.status === 'completed' || app.status === 'Concluído' || app.status === 'CONCLUIDO'
-    );
-  }, [appointments]);
+    return appointments.filter(app => {
+      const isCompleted = app.status === 'completed' || app.status === 'Concluído' || app.status === 'CONCLUIDO';
+      if (!isCompleted) return false;
+
+      const rawDate = app.start_time || app.appointment_date || app.date;
+      if (rawDate) {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime()) && d < cutoffDate) return false;
+      }
+
+      if (insuranceFilter) {
+        const ins = String(app.insurance || app.convenio || app.insurance_plan || '').toLowerCase();
+        if (insuranceFilter === 'particular') {
+          if (ins && !['particular', 'nenhum', 'n/a'].includes(ins)) return false;
+        } else if (!ins.includes(insuranceFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [appointments, cutoffDate, insuranceFilter]);
 
   const totalRevenue = useMemo(() => {
-    const appRevenue = completedAppointments.reduce((sum, a) => sum + (parseFloat(a.price || a.amount) || 0), 0);
-    const transRevenue = financeTransactions
-      .filter(t => t.type === 'receita' || t.type === 'income' || t.type === 'INCOME')
-      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    return Math.max(appRevenue, transRevenue);
-  }, [completedAppointments, financeTransactions]);
+    return completedAppointments.reduce((sum, a) => sum + (parseFloat(a.price || a.amount) || 0), 0);
+  }, [completedAppointments]);
 
   const ticketMedio = useMemo(() => {
     if (completedAppointments.length === 0) return 0;
     return totalRevenue / completedAppointments.length;
   }, [totalRevenue, completedAppointments]);
+
+  const newPatientsCount = useMemo(() => {
+    return patients.filter(p => {
+      if (!p.created_at) return true;
+      const d = new Date(p.created_at);
+      return isNaN(d.getTime()) || d >= cutoffDate;
+    }).length;
+  }, [patients, cutoffDate]);
 
   // 3 KPIs Principais
   const biMetrics = [
@@ -75,8 +109,8 @@ export default function Relatorios({ onNavigateTab }) {
     },
     { 
       label: 'Novos Pacientes', 
-      value: `${patients.length}`, 
-      desc: 'Pacientes ativos na base de dados', 
+      value: `${newPatientsCount}`, 
+      desc: `Pacientes cadastrados no período`, 
       icon: Users, 
       color: 'text-purple-600 dark:text-purple-400',
       bgColor: 'bg-purple-500/10 border-purple-500/20'

@@ -37,7 +37,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard({ onNavigateTab }) {
-  const { patients, appointments, crmLeads, updateAppointment } = useClinic();
+  const { patients, appointments, crmLeads, updateAppointment, financeTransactions } = useClinic();
   const { user } = useAuth();
   const [doctorsList, setDoctorsList] = useState([]);
   const [dashboardTab, setDashboardTab] = useState('geral'); // 'geral' | 'bi'
@@ -192,7 +192,14 @@ export default function Dashboard({ onNavigateTab }) {
     const crmLeadsCount = crmLeads.length;
 
     const revSum = appointments
-      .filter(a => a.status === 'CONCLUIDO' || a.status === 'completed' || a.status === 'Concluído')
+      .filter(a => {
+        const completed = a.status === 'CONCLUIDO' || a.status === 'completed' || a.status === 'Concluído';
+        if (!completed) return false;
+        const rawDate = a.start_time || a.appointment_date || a.date;
+        if (!rawDate) return false;
+        const appDate = new Date(rawDate);
+        return appDate.getMonth() === currentMonthIdx && appDate.getFullYear() === currentYear;
+      })
       .reduce((acc, a) => acc + (parseFloat(a.price || a.amount) || 0), 0);
 
     const revStr = revSum > 0 
@@ -301,20 +308,74 @@ export default function Dashboard({ onNavigateTab }) {
     ];
   }, [crmLeads]);
 
-  // Dados de Sparkline Financeira (Mini Area Chart)
+  // Financeiro real: receitas/despesas/lucro do mês e variações (a partir das transações)
+  const monthlyFinancials = useMemo(() => {
+    const calc = (year, monthIdx) => {
+      let income = 0, expense = 0;
+      financeTransactions.forEach(tx => {
+        const rawDate = tx.date || tx.created_at;
+        if (!rawDate) return;
+        const d = new Date(rawDate);
+        if (d.getMonth() !== monthIdx || d.getFullYear() !== year) return;
+        const amount = parseFloat(tx.amount) || 0;
+        if (tx.type === 'INCOME') income += amount;
+        else if (tx.type === 'EXPENSE') expense += amount;
+      });
+      return { income, expense, net: income - expense };
+    };
+
+    const cur = calc(currentYear, currentMonthIdx);
+    const prevY = currentMonthIdx === 0 ? currentYear - 1 : currentYear;
+    const prevM = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
+    const prev = calc(prevY, prevM);
+
+    const deltaPct = (curVal, prevVal) => prevVal > 0 ? Math.round(((curVal - prevVal) / prevVal) * 100) : (curVal > 0 ? 100 : 0);
+
+    return {
+      income: cur.income,
+      expense: cur.expense,
+      net: cur.net,
+      incomeDelta: deltaPct(cur.income, prev.income),
+      expenseDelta: deltaPct(cur.expense, prev.expense),
+      netDelta: deltaPct(cur.net, prev.net)
+    };
+  }, [financeTransactions, currentYear, currentMonthIdx]);
+
+  // Variação real do faturamento (consultas concluídas) vs. mês anterior
+  const revenueDelta = useMemo(() => {
+    const calc = (year, monthIdx) => appointments
+      .filter(a => {
+        if (!(a.status === 'CONCLUIDO' || a.status === 'completed' || a.status === 'Concluído')) return false;
+        const rawDate = a.start_time || a.appointment_date || a.date;
+        if (!rawDate) return false;
+        const d = new Date(rawDate);
+        return d.getMonth() === monthIdx && d.getFullYear() === year;
+      })
+      .reduce((acc, a) => acc + (parseFloat(a.price || a.amount) || 0), 0);
+    const cur = calc(currentYear, currentMonthIdx);
+    const prevY = currentMonthIdx === 0 ? currentYear - 1 : currentYear;
+    const prevM = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
+    const prev = calc(prevY, prevM);
+    return prev > 0 ? Math.round(((cur - prev) / prev) * 100) : (cur > 0 ? 100 : 0);
+  }, [appointments, currentYear, currentMonthIdx]);
+
+  // Dados de Sparkline Financeira (Mini Area Chart) — receitas reais dos últimos 6 meses
   const financialSparklineData = useMemo(() => {
-    if (monthlyRevenueSum === 0) {
-      return [{ v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }, { v: 0 }];
-    }
-    return [
-      { v: Math.round(monthlyRevenueSum * 0.4) },
-      { v: Math.round(monthlyRevenueSum * 0.55) },
-      { v: Math.round(monthlyRevenueSum * 0.5) },
-      { v: Math.round(monthlyRevenueSum * 0.7) },
-      { v: Math.round(monthlyRevenueSum * 0.85) },
-      { v: monthlyRevenueSum }
-    ];
-  }, [monthlyRevenueSum]);
+    return Array.from({ length: 6 }).map((_, idx) => {
+      const targetMonthIdx = (currentMonthIdx - 5 + idx + 12) % 12;
+      const targetYear = currentYear - (currentMonthIdx - 5 + idx < 0 ? 1 : 0);
+      let income = 0;
+      financeTransactions.forEach(tx => {
+        const rawDate = tx.date || tx.created_at;
+        if (!rawDate) return;
+        const d = new Date(rawDate);
+        if (d.getMonth() === targetMonthIdx && d.getFullYear() === targetYear && tx.type === 'INCOME') {
+          income += parseFloat(tx.amount) || 0;
+        }
+      });
+      return { v: Math.round(income) };
+    });
+  }, [financeTransactions, currentYear, currentMonthIdx]);
 
   // Atividades Recentes (Dinâmicas)
   const recentActivities = useMemo(() => {
@@ -376,7 +437,7 @@ export default function Dashboard({ onNavigateTab }) {
     return `Dr. ${parts[0]}`;
   };
 
-  const formattedCurrentDateStr = `02 de ${monthNames[currentMonthIdx]}, ${currentYear}`;
+  const formattedCurrentDateStr = `${currentDate} de ${monthNames[currentMonthIdx]}, ${currentYear}`;
 
   return (
     <div className="h-full flex flex-col overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-[#0D0D0D] text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
@@ -665,7 +726,7 @@ export default function Dashboard({ onNavigateTab }) {
                       <span className="text-xs text-slate-500 font-medium">Faturamento</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-slate-900 dark:text-white font-title tracking-tight">{formattedRevenueStr}</span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+15%' : '0%'}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? `+${revenueDelta}%` : '0%'}</span>
                       </div>
                     </div>
 
@@ -673,9 +734,9 @@ export default function Dashboard({ onNavigateTab }) {
                       <span className="text-xs text-slate-500 font-medium">Recebimentos</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-title tracking-tight">
-                          {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.938).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
+                          {monthlyFinancials.income > 0 ? `R$ ${monthlyFinancials.income.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+13%' : '0%'}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyFinancials.income > 0 ? `+${monthlyFinancials.incomeDelta}%` : '0%'}</span>
                       </div>
                     </div>
 
@@ -683,9 +744,9 @@ export default function Dashboard({ onNavigateTab }) {
                       <span className="text-xs text-slate-500 font-medium">Despesas</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-rose-600 dark:text-rose-400 font-title tracking-tight">
-                          {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.331).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
+                          {monthlyFinancials.expense > 0 ? `R$ ${monthlyFinancials.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
-                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+8%' : '0%'}</span>
+                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 rounded">{monthlyFinancials.expense > 0 ? `+${monthlyFinancials.expenseDelta}%` : '0%'}</span>
                       </div>
                     </div>
 
@@ -693,9 +754,9 @@ export default function Dashboard({ onNavigateTab }) {
                       <span className="text-xs font-bold text-slate-900 dark:text-white">Lucro Líquido</span>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-black text-blue-600 dark:text-blue-400 font-title tracking-tight">
-                          {monthlyRevenueSum > 0 ? `R$ ${(monthlyRevenueSum * 0.607).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
+                          {monthlyFinancials.net !== 0 ? `R$ ${monthlyFinancials.net.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyRevenueSum > 0 ? '+21%' : '0%'}</span>
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">{monthlyFinancials.net > 0 ? `+${monthlyFinancials.netDelta}%` : '0%'}</span>
                       </div>
                     </div>
                   </div>
