@@ -265,6 +265,22 @@ export function ClinicProvider({ children }) {
           }
         });
       }
+
+      // Fallback: se nenhuma mensagem veio do Supabase, restaurar conversas demo salvas no localStorage
+      const demoMessagesKey = `demo_chat_messages_${clinicId}`;
+      const cachedDemoMessages = localStorage.getItem(demoMessagesKey);
+      if (cachedDemoMessages) {
+        try {
+          const demoChatMap = JSON.parse(cachedDemoMessages);
+          defaultChats.forEach(chat => {
+            if (chat.messages.length === 0 && demoChatMap[chat.patientId]) {
+              chat.messages = demoChatMap[chat.patientId];
+              chat.status = 'online';
+              chat.unreadCount = demoChatMap[chat.patientId].filter(m => m.sender === 'PATIENT').length;
+            }
+          });
+        } catch (e) { /* fallback tolerante */ }
+      }
     } catch (err) {
       console.error('Erro ao carregar mensagens do Supabase:');
     }
@@ -832,7 +848,7 @@ export function ClinicProvider({ children }) {
 
     if (!createdLead) {
       createdLead = {
-        id: 'lead-' + Date.now(),
+        id: 'lead-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         ...lead,
         clinic_id: clinicId,
         avatar: lead.avatar || '👤',
@@ -2429,6 +2445,7 @@ export function ClinicProvider({ children }) {
     ];
 
     const createdPatients = [];
+    const createdLeads = [];
     try {
       for (const pat of demoPatientsData) {
         const p = await addPatient(pat);
@@ -2436,7 +2453,8 @@ export function ClinicProvider({ children }) {
       }
       setPatients(createdPatients);
       for (const lead of demoLeadsData) {
-        await addCrmLead(lead);
+        const createdLead = await addCrmLead(lead);
+        if (createdLead) createdLeads.push(createdLead);
       }
     } catch (e) {
       console.warn('Aviso ao semear pacientes/leads:', e);
@@ -2804,8 +2822,73 @@ export function ClinicProvider({ children }) {
       { id: 'aut-3', name: 'Mensagem de Aniversário Automática', trigger: 'Aniversário', actions: ['Enviar WhatsApp'], is_active: true, runs_count: 34 }
     ];
 
+    // 10. Prescrições e Atestados Assinados (Prontuário → Documentos)
+    const demoPrescriptions = [
+      {
+        id: 'presc-1',
+        clinic_id: clinicId,
+        patient_id: firstPat.id,
+        dentist_id: mainDentistId,
+        dentistName: docName,
+        title: 'Prescrição Antibiótico — Amoxicilina 500mg',
+        description: 'Amoxicilina 500mg — Tomar 1 cápsula de 8 em 8 horas por 7 dias, após as refeições. Indicado profilaxia antibiótica pós-exodontia.',
+        file_path: `/storage/v1/prescriptions/demo-prec-1.pdf`,
+        signature_hash: 'sig-demo-9f2c4a1b7d3e8f6a5b0c2d1e4f7a9b8c',
+        created_at: new Date(Date.now() - 86400000 * 3).toISOString()
+      },
+      {
+        id: 'presc-2',
+        clinic_id: clinicId,
+        patient_id: firstPat.id,
+        dentist_id: dentist2Id,
+        dentistName: dentist2Name,
+        title: 'Prescrição Analgésico — Nimesulida 100mg',
+        description: 'Nimesulida 100mg — Tomar 1 comprimido de 12 em 12 horas por 5 dias. Em caso de dor persistente, retornar para avaliação.',
+        file_path: `/storage/v1/prescriptions/demo-prec-2.pdf`,
+        signature_hash: 'sig-demo-7b1e5d9c2a8f4b6e1d3c5a7f9e8b0d2c',
+        created_at: new Date(Date.now() - 86400000 * 5).toISOString()
+      },
+      {
+        id: 'presc-3',
+        clinic_id: clinicId,
+        patient_id: secondPat.id,
+        dentist_id: mainDentistId,
+        dentistName: docName,
+        title: 'Atestado Odontológico — Comparecimento',
+        description: 'Atestamos para os devidos fins que o(a) paciente compareceu à consulta odontológica de manutenção ortodôntica neste consultório.',
+        file_path: `/storage/v1/prescriptions/demo-prec-3.pdf`,
+        signature_hash: 'sig-demo-3e8a2c6f1d5b9a7e0c4f8d2b6a1e5c9d',
+        created_at: new Date(Date.now() - 86400000 * 6).toISOString()
+      },
+      {
+        id: 'presc-4',
+        clinic_id: clinicId,
+        patient_id: thirdPat.id,
+        dentist_id: dentist2Id,
+        dentistName: dentist2Name,
+        title: 'Prescrição Anti-inflamatório — Dexametasona',
+        description: 'Dexametasona 4mg — Tomar 1 comprimido pela manhã por 3 dias. Uso pós-procedimento de clareamento a laser para controle de sensibilidade.',
+        file_path: `/storage/v1/prescriptions/demo-prec-4.pdf`,
+        signature_hash: 'sig-demo-5d1f9b3e7a2c6d8f0b4e9a1c3d7f5b2a',
+        created_at: new Date(Date.now() - 86400000 * 2).toISOString()
+      },
+      {
+        id: 'presc-5',
+        clinic_id: clinicId,
+        patient_id: fourthPat.id,
+        dentist_id: mainDentistId,
+        dentistName: docName,
+        title: 'Atestado de Comparecimento — Sessão de Canal',
+        description: 'Atestamos que o(a) paciente compareceu a sessão de tratamento endodôntico no dente 35, no período de 60 minutos.',
+        file_path: `/storage/v1/prescriptions/demo-prec-5.pdf`,
+        signature_hash: 'sig-demo-8c4a2e6f1d9b7a3c5e0f2d8b4a6c1e9f',
+        created_at: new Date(Date.now() - 86400000 * 8).toISOString()
+      }
+    ];
+
     setMedicalRecords(demoMedicalRecords);
     setToothRecords(demoToothRecords);
+    setPrescriptions(demoPrescriptions);
     setAppointments(demoAppointments);
     setFinanceTransactions(demoTransactions);
     setDentists(demoDentists);
@@ -2817,6 +2900,104 @@ export function ClinicProvider({ children }) {
     setInstallments(demoInstallments);
     setAutomations(demoAutomations);
 
+    // 11. Config de IA + Fluxo (AIModule / Flow Builder) pré-preenchidos
+    const demoAiConfig = {
+      prompt: 'Você é a Sofia, assistente virtual da clínica odontológica. Seu objetivo é acolher o paciente, sanar dúvidas de procedimentos, valores e horários, e sempre que necessário transferir para a recepção. Seja educada, objetiva e nunca invente valores ou procedimentos que não existam na tabela da clínica.',
+      personality: 'sofia_assistente',
+      operatingHours: '08:00 - 18:00',
+      isActive: true,
+      autoSilence: true,
+      aiProvider: 'openai',
+      apiKey: '',
+      knowledgeBase: [
+        { id: 'kb-1', question: 'O clareamento dental dói?', answer: 'O clareamento dental moderno utiliza géis dessensibilizantes de última geração que minimizam o desconforto.' },
+        { id: 'kb-2', question: 'Quais as formas de pagamento aceitas?', answer: 'Aceitamos PIX com desconto, cartões de crédito em até 12x e convênios parceiros.' },
+        { id: 'kb-3', question: 'Quanto custa um implante dentário?', answer: 'O valor do implante parte de R$ 3.200,00 por unidade, incluindo coroa. Um plano de pagamento em até 12x pode ser negociado.' },
+        { id: 'kb-4', question: 'Qual o horário de atendimento?', answer: 'Atendemos de segunda a sexta das 08:00 às 18:00, e aos sábados das 08:00 às 12:00.' },
+        { id: 'kb-5', question: 'Aceitam convênios?', answer: 'Trabalhamos com Amil Dental, Bradesco Dental, Unimed Odonto e SulAmérica Odonto.' },
+        { id: 'kb-6', question: 'Preciso de encaminhamento?', answer: 'Não. Você pode agendar sua consulta diretamente pelo WhatsApp ou pela recepção.' }
+      ],
+      flowData: {
+        nodes: [
+          { id: 'node-welcome', type: 'messageNode', position: { x: 50, y: 400 }, data: { content: 'Olá, {NOME_PACIENTE}! Seja bem-vindo(a) à {NOME_CLINICA}. Como posso te ajudar hoje?' } },
+          { id: 'node-menu-main', type: 'menuNode', position: { x: 520, y: 280 }, data: { title: 'Por favor, escolha uma das opções abaixo:', options: ['1. Agendar ou remarcar consulta', '2. Tabela de procedimentos e valores', '3. Endereço e horários de atendimento', '4. Urgência ou dor forte', '5. Falar com a recepção'] } },
+          { id: 'node-msg-agenda', type: 'messageNode', position: { x: 1080, y: 50 }, data: { content: 'Temos os seguintes horários livres disponíveis para consulta na {NOME_CLINICA}:\n\n1. Amanhã às 14:30 (Dr. Lucas)\n2. Sexta-feira às 10:00 (Dra. Juliana)' } },
+          { id: 'node-menu-agenda', type: 'menuNode', position: { x: 1560, y: 50 }, data: { title: 'Deseja confirmar algum destes horários?', options: ['1. Confirmar amanhã 14:30', '2. Confirmar sexta 10:00', '3. Falar com a recepção para outro horário'] } },
+          { id: 'node-msg-prices', type: 'messageNode', position: { x: 1080, y: 420 }, data: { content: 'Nossos principais tratamentos na {NOME_CLINICA}:\n{LISTA_PROCEDIMENTOS}\n\nAceitamos cartões de crédito em até 12x e convênios parceiros!' } },
+          { id: 'node-menu-prices', type: 'menuNode', position: { x: 1560, y: 420 }, data: { title: 'Gostaria de agendar algum destes procedimentos?', options: ['1. Sim, quero agendar agora', '2. Quero falar com um atendente'] } },
+          { id: 'node-msg-location', type: 'messageNode', position: { x: 1080, y: 780 }, data: { content: '📍 {NOME_CLINICA}\n🏢 Endereço: {ENDERECO_COMPLETO}\n⏰ Horário: {HORARIO_FUNCIONAMENTO}\n📞 Contato: {TELEFONE_CONTATO}' } },
+          { id: 'node-transfer-urgency', type: 'transferNode', position: { x: 1080, y: 1080 }, data: { reason: 'ATENÇÃO: Paciente relatou Urgência / Dor Forte. Notificação prioritária enviada à recepção!' } },
+          { id: 'node-transfer-human', type: 'transferNode', position: { x: 1080, y: 1360 }, data: { reason: 'Paciente escolheu falar diretamente com a recepção' } }
+        ],
+        edges: [
+          { id: 'e-welcome-menu', type: 'buttonEdge', source: 'node-welcome', target: 'node-menu-main', animated: true, style: { stroke: '#00a884', strokeWidth: 2 } },
+          { id: 'e-opt-0-agenda', type: 'buttonEdge', source: 'node-menu-main', sourceHandle: 'opt-0', target: 'node-msg-agenda', animated: true, style: { stroke: '#00a884', strokeWidth: 2 } },
+          { id: 'e-msg-agenda-menu', type: 'buttonEdge', source: 'node-msg-agenda', target: 'node-menu-agenda', animated: true, style: { stroke: '#00a884', strokeWidth: 2 } },
+          { id: 'e-opt-1-prices', type: 'buttonEdge', source: 'node-menu-main', sourceHandle: 'opt-1', target: 'node-msg-prices', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } },
+          { id: 'e-prices-menu', type: 'buttonEdge', source: 'node-msg-prices', target: 'node-menu-prices', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } },
+          { id: 'e-prices-agendar', type: 'buttonEdge', source: 'node-menu-prices', sourceHandle: 'opt-0', target: 'node-msg-agenda', animated: true, style: { stroke: '#00a884', strokeWidth: 2 } },
+          { id: 'e-opt-2-location', type: 'buttonEdge', source: 'node-menu-main', sourceHandle: 'opt-2', target: 'node-msg-location', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+          { id: 'e-opt-3-urgency', type: 'buttonEdge', source: 'node-menu-main', sourceHandle: 'opt-3', target: 'node-transfer-urgency', animated: true, style: { stroke: '#ef4444', strokeWidth: 2 } },
+          { id: 'e-opt-4-reception', type: 'buttonEdge', source: 'node-menu-main', sourceHandle: 'opt-4', target: 'node-transfer-human', animated: true, style: { stroke: '#ef4444', strokeWidth: 2 } }
+        ]
+      }
+    };
+    setAiConfig(demoAiConfig);
+    mockDb.set('odonto_crm_ai_config_' + clinicId, demoAiConfig);
+
+    // 12. Conversas de WhatsApp Demo — histórico realista em alguns chats (Pacientes e Leads)
+    const demoChatMessages = {};
+    const attachChatMessages = (patientId, messages) => {
+      if (patientId) demoChatMessages[patientId] = messages;
+    };
+
+    attachChatMessages(firstPat.id, [
+      { id: 'dm-1', sender: 'PATIENT', text: 'Boa tarde! Gostaria de saber se tem horário amanhã para uma limpeza.', time: '14:02', type: 'text' },
+      { id: 'dm-2', sender: 'USER', text: 'Boa tarde, Fernando! Temos sim. Amanhã às 15:30 com a Dra. Juliana. Posso confirmar?', time: '14:05', type: 'text' },
+      { id: 'dm-3', sender: 'PATIENT', text: 'Perfeito, pode confirmar!', time: '14:06', type: 'text' },
+      { id: 'dm-4', sender: 'USER', text: 'Confirmado! Consulta de Profilaxia amanhã às 15:30. Até lá! 😊', time: '14:08', type: 'text' }
+    ]);
+
+    attachChatMessages(secondPat.id, [
+      { id: 'dm-5', sender: 'PATIENT', text: 'Oi! Minha manutenção ortodôntica é essa semana?', time: '09:12', type: 'text' },
+      { id: 'dm-6', sender: 'BOT', text: 'Olá, Ana Paula! Sim, sua manutenção está agendada para sexta-feira às 10:00 com o Dr. Alexandre. Precisa remarcar?', time: '09:13', type: 'text' },
+      { id: 'dm-7', sender: 'PATIENT', text: 'Perfeito, confirmado. Obrigada!', time: '09:15', type: 'text' }
+    ]);
+
+    attachChatMessages(thirdPat.id, [
+      { id: 'dm-8', sender: 'PATIENT', text: 'Doutora, posso beber café depois do clareamento de hoje?', time: '17:40', type: 'text' },
+      { id: 'dm-9', sender: 'USER', text: 'Vanessa, evite alimentos pigmentados por 48h. Qualquer dúvida estamos por aqui!', time: '17:55', type: 'text' },
+      { id: 'dm-10', sender: 'PATIENT', text: 'Entendido, obrigada!', time: '18:01', type: 'text' }
+    ]);
+
+    if (createdLeads[0]) {
+      attachChatMessages(createdLeads[0].id, [
+        { id: 'dm-11', sender: 'PATIENT', text: 'Oi! Vi no Instagram que vocês fazem Invisalign. Quanto custa?', time: '10:20', type: 'text' },
+        { id: 'dm-12', sender: 'BOT', text: 'Olá, Ana Beatriz! O Invisalign parte de R$ 4.500,00 com parcelamento em até 12x. Quer agendar uma avaliação?', time: '10:22', type: 'text' },
+        { id: 'dm-13', sender: 'PATIENT', text: 'Quero sim! Tem horário na terça?', time: '10:25', type: 'text' },
+        { id: 'dm-14', sender: 'USER', text: 'Ana, terça às 14:30 com o Dr. Alexandre fica ótimo. Confirmo para você?', time: '10:31', type: 'text' }
+      ]);
+    }
+
+    if (createdLeads[5]) {
+      attachChatMessages(createdLeads[5].id, [
+        { id: 'dm-15', sender: 'PATIENT', text: 'Gostaria de orçamento de harmonização orofacial.', time: '16:05', type: 'text' },
+        { id: 'dm-16', sender: 'BOT', text: 'Olá, Lucas! Nossa harmonização orofacial parte de R$ 5.400,00. Posso marcar uma avaliação com a Dra. Juliana?', time: '16:08', type: 'text' },
+        { id: 'dm-17', sender: 'PATIENT', text: 'Pode sim.', time: '16:10', type: 'text' }
+      ]);
+    }
+
+    setWhatsappChats(prev => prev.map(chat => {
+      const msgs = demoChatMessages[chat.patientId];
+      if (!msgs) return chat;
+      return {
+        ...chat,
+        status: 'online',
+        unreadCount: msgs.filter(m => m.sender === 'PATIENT').length,
+        messages: msgs
+      };
+    }));
+
     try {
       localStorage.setItem(`patient_notes_${firstPat.id}`, 'Paciente relata sensibilidade ao mastigar gelado no dente 16.');
       localStorage.setItem(`patient_notes_${secondPat.id}`, 'Troca de borrachinhas ortodônticas realizada.');
@@ -2827,6 +3008,7 @@ export function ClinicProvider({ children }) {
         transactions: demoTransactions,
         medicalRecords: demoMedicalRecords,
         toothRecords: demoToothRecords,
+        prescriptions: demoPrescriptions,
         suppliers: demoSuppliers,
         accountsPayable: demoAccountsPayable,
         installments: demoInstallments,
@@ -2834,6 +3016,7 @@ export function ClinicProvider({ children }) {
         dentists: demoDentists,
         chairs: demoChairs
       }));
+      localStorage.setItem(`demo_chat_messages_${rawId}`, JSON.stringify(demoChatMessages));
     } catch (e) { /* fallback tolerante */ }
 
     // Dados de demonstração armazenados com sucesso no estado local e localStorage para desenvolvimento resiliente
@@ -2851,6 +3034,16 @@ export function ClinicProvider({ children }) {
     setToothRecords([]);
     setPrescriptions([]);
     setWhatsappChats([]);
+    setAiConfig({
+      prompt: '',
+      personality: 'sofia_assistente',
+      operatingHours: '08:00 - 18:00',
+      isActive: true,
+      aiProvider: 'openai',
+      apiKey: '',
+      knowledgeBase: [],
+      flowData: null
+    });
     setDentists([]);
     setChairs([]);
     saveProcedures([]);
@@ -2863,7 +3056,7 @@ export function ClinicProvider({ children }) {
     // 2. Limpar localStorage de anotações, tags, procedimentos e convênios
     try {
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('patient_notes_') || key.startsWith('chat_tags_') || key.startsWith('clinic_procedures_') || key.startsWith('clinic_insurance_plans_') || key.startsWith('demo_data_')) {
+        if (key.startsWith('patient_notes_') || key.startsWith('chat_tags_') || key.startsWith('clinic_procedures_') || key.startsWith('clinic_insurance_plans_') || key.startsWith('demo_data_') || key.startsWith('demo_chat_messages_') || key.startsWith('odonto_crm_ai_config_')) {
           localStorage.removeItem(key);
         }
       });
