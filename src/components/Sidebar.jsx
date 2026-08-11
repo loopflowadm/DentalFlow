@@ -220,7 +220,7 @@ export default function Sidebar({
           </div>
 
           {/* Lista de Ícones de Módulos */}
-          <nav className="flex flex-col items-center gap-3 w-full px-2 pt-1">
+          <nav className="flex flex-col items-center gap-3 w-full px-2 pt-1" data-tour="sidebar-navigation">
             {allowedMenuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -243,9 +243,12 @@ export default function Sidebar({
                 iconStyle = isDarkTheme ? 'text-emerald-300 font-bold' : 'text-emerald-600 dark:text-emerald-300 font-bold';
               }
 
+              const tourAttribute = item.id === 'crm' ? 'sidebar-kanban' : item.id === 'agenda' ? 'sidebar-agenda' : item.id === 'pacientes' ? 'sidebar-pacientes' : item.id === 'financeiro' ? 'sidebar-financeiro' : item.id === 'whatsapp' ? 'sidebar-whatsapp' : undefined;
+
               return (
                 <button
                   key={item.id}
+                  data-tour={tourAttribute}
                   onClick={() => setActiveTab(item.id)}
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center relative group transition-all duration-300 ${buttonStyle}`}
                   style={isActive && themeMode === 'clinic' && !isWhatsApp ? { backgroundColor: currentTheme.secondary_color, boxShadow: `0 4px 15px ${currentTheme.secondary_color}40` } : {}}

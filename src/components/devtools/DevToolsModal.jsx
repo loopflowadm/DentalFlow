@@ -40,7 +40,7 @@ export default function DevToolsModal({ isOpen, onClose, showBreakpointBadge, se
                 </span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Suite integrada de testes, mocks e diagnósticos do OdontoCRM.
+                Suite integrada de testes, mocks e diagnósticos do DentalFlow.
               </p>
             </div>
           </div>

@@ -20,13 +20,14 @@ import {
   IconCurrencyDollar,
   IconBrandWhatsapp,
   IconFilter,
-  IconCode
+  IconCode,
+  IconHelpCircle
 } from '@tabler/icons-react';
 import Breadcrumbs from './Breadcrumbs';
 import { mockDb } from '../lib/mockDatabase';
 import { isSupabaseConfigured } from '../lib/supabase';
 
-export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette, onOpenDevTools, collapsed, setCollapsed }) {
+export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQuickAction, onOpenCmdPalette, onOpenDevTools, collapsed, setCollapsed, onStartTour }) {
   const { user, clinic, selectClinic, supabaseActive, logout } = useAuth();
   const { currentTheme, themeMode, setThemeMode } = useTheme();
   
@@ -119,7 +120,7 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           </button>
         )}
 
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3.5" data-tour="header-logo">
           <Breadcrumbs activeTab={activeTab} />
           {!isSupabaseConfigured && (
             <span className="hidden sm:inline-block px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] rounded-full uppercase tracking-wider select-none animate-pulse">
@@ -255,59 +256,86 @@ export default function Header({ activeTab, onSearchChange, onOpenWhatsApp, onQu
           )}
         </div>
 
-        {/* Alternador de 3 Temas Padronizado (w-9 h-9) */}
+        {/* Alternador de 3 Temas Minimalista */}
         <div className="relative">
           <button
             onClick={toggleThemeMenu}
             className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] border border-slate-200/80 dark:border-white/10 active:scale-95 transition-all text-slate-700 dark:text-slate-300"
             title="Alterar Tema"
           >
-            {themeMode === 'light' && <IconSun className="w-4 h-4 text-amber-500" />}
-            {themeMode === 'dark' && <IconMoon className="w-4 h-4 text-indigo-400" />}
-            {themeMode === 'clinic' && <IconSparkles className="w-4 h-4 text-emerald-500" />}
+            {themeMode === 'light' && <IconSun className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
+            {themeMode === 'dark' && <IconMoon className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
+            {themeMode === 'clinic' && <IconBuilding className="w-4 h-4 text-slate-700 dark:text-slate-200" />}
           </button>
 
           {showThemeMenu && (
-            <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-[#0D0D0D] shadow-xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white text-xs">
+            <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white dark:bg-[#0D0D0D] shadow-2xl border border-slate-200/80 dark:border-white/10 p-1.5 z-50 text-slate-800 dark:text-white text-xs animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider select-none">
+                Aparência
+              </div>
+
               <button
                 onClick={() => {
                   setThemeMode('light');
                   setShowThemeMenu(false);
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all ${
-                  themeMode === 'light' ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-white/5'
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-left transition-all ${
+                  themeMode === 'light'
+                    ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <IconSun className="w-3.5 h-3.5 text-amber-500" />
-                <span>Tema Claro</span>
+                <IconSun className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+                <span className="flex-1">Claro</span>
+                {themeMode === 'light' && <IconCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
               </button>
+
               <button
                 onClick={() => {
                   setThemeMode('dark');
                   setShowThemeMenu(false);
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all mt-0.5 ${
-                  themeMode === 'dark' ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-white/5'
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-left transition-all mt-0.5 ${
+                  themeMode === 'dark'
+                    ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <IconMoon className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Tema Escuro</span>
+                <IconMoon className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+                <span className="flex-1">Escuro</span>
+                {themeMode === 'dark' && <IconCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
               </button>
+
               <button
                 onClick={() => {
                   setThemeMode('clinic');
                   setShowThemeMenu(false);
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg font-semibold text-left transition-all mt-0.5 ${
-                  themeMode === 'clinic' ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-white/5'
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-left transition-all mt-0.5 ${
+                  themeMode === 'clinic'
+                    ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-semibold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <IconSparkles className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Tema da Empresa</span>
+                <IconBuilding className="w-4 h-4 text-slate-400 dark:text-slate-400 shrink-0" />
+                <span className="flex-1">Tema da Clínica</span>
+                {themeMode === 'clinic' && <IconCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
               </button>
             </div>
           )}
         </div>
+
+        {/* Botão de Ajuda & Tour Guiado */}
+        <button 
+          data-tour="header-help"
+          onClick={() => {
+            if (onStartTour) onStartTour();
+          }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-[#0D0D0D] dark:hover:bg-[#18181B] text-slate-700 dark:text-slate-300 transition-all border border-slate-200/80 dark:border-white/10 active:scale-95"
+          title="Ajuda & Refazer Tour Guiado"
+        >
+          <IconHelpCircle className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+        </button>
 
         {/* Notificações Padronizado (w-9 h-9) */}
         <div className="relative">

@@ -1364,7 +1364,7 @@ export function ClinicProvider({ children }) {
           number: phoneNumber,
           title: title,
           description: description,
-          footer: footerText || 'OdontoCRM - Odontologia Especializada',
+          footer: footerText || 'DentalFlow - Odontologia Especializada',
           buttons: buttonsArray
         })
       });

@@ -297,7 +297,7 @@ export default function Configuracoes() {
   const [gcalConnected, setGcalConnected] = useState(false);
 
   // States SMTP Email
-  const [smtpHost, setSmtpHost] = useState('smtp.odontocrm.com');
+  const [smtpHost, setSmtpHost] = useState('smtp.dentalflow.app');
   const [smtpPort, setSmtpPort] = useState('587');
 
   // Estados locais adicionais para Procedimentos e Convênios
@@ -1852,7 +1852,7 @@ export default function Configuracoes() {
                 </div>
                 <h3 className="text-xs font-black text-slate-800 dark:text-white font-title">Google Calendar</h3>
                 <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                  Sincronização bidirecional em tempo real de agendamentos entre o OdontoCRM e o Google Agenda.
+                  Sincronização bidirecional em tempo real de agendamentos entre o DentalFlow e o Google Agenda.
                 </p>
               </div>
 

@@ -10,6 +10,8 @@ import {
   Activity, CheckCircle2, Search, Bell, ArrowRight, Wallet
 } from 'lucide-react';
 import Relatorios from '../relatorios/Relatorios';
+import SetupChecklist from '../../components/onboarding/SetupChecklist';
+import { useOnboardingTour } from '../../hooks/useOnboardingTour';
 import { 
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie,
   XAxis, YAxis, CartesianGrid, Tooltip, Cell 
@@ -36,11 +38,18 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function Dashboard({ onNavigateTab }) {
+export default function Dashboard({ onNavigateTab, onOpenNewPatientModal, onOpenNewAppointmentModal }) {
   const { patients, appointments, crmLeads, updateAppointment, financeTransactions } = useClinic();
   const { user } = useAuth();
+  const { showInviteModal, dismissInvite, startTour, triggerInitialInvite } = useOnboardingTour();
+
   const [doctorsList, setDoctorsList] = useState([]);
   const [dashboardTab, setDashboardTab] = useState('geral'); // 'geral' | 'bi'
+
+  // Disparar convite inicial do tour se ainda não tiver sido ignorado
+  useEffect(() => {
+    triggerInitialInvite();
+  }, [triggerInitialInvite]);
 
   // Simular controle de próteses associados a pacientes cadastrados
   const labWorks = useMemo(() => {
@@ -468,9 +477,54 @@ export default function Dashboard({ onNavigateTab }) {
             <span>Análise de BI & Desempenho</span>
           </button>
         </div>
-      </div>
 
-      <div className="p-6 space-y-6 pb-12">
+      {/* Mini Modal de Convite do Tour (👋 Tudo pronto!) */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#0D0D0D] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto text-xl font-bold">
+              👋
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-extrabold font-title text-white">
+                Tudo pronto!
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Este é o seu painel. Vamos conhecer rapidamente as principais áreas.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                onClick={() => {
+                  startTour(true);
+                }}
+                className="w-full h-10 bg-[#196BFB] hover:bg-[#155bd8] text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Conhecer o DentalFlow</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={dismissInvite}
+                className="w-full h-9 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-semibold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Agora não
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+      <div className="p-6 space-y-6 pb-12" data-tour="tour-dashboard">
+        {/* Card Inteligente de Checklist de Configuração (Comece por aqui) */}
+        <SetupChecklist 
+          onNavigateTab={onNavigateTab}
+          onOpenNewPatientModal={onOpenNewPatientModal}
+          onOpenNewAppointmentModal={onOpenNewAppointmentModal}
+        />
+
         {dashboardTab === 'bi' ? (
           <Relatorios onNavigateTab={onNavigateTab} />
         ) : (

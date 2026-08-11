@@ -189,15 +189,13 @@ export function ThemeProvider({ children }) {
     }
 
     // Sincronizar Favicon dinamicamente
-    if (currentTheme.favicon_url) {
-      let faviconLink = document.querySelector("link[rel~='icon']");
-      if (!faviconLink) {
-        faviconLink = document.createElement('link');
-        faviconLink.rel = 'icon';
-        document.head.appendChild(faviconLink);
-      }
-      faviconLink.href = currentTheme.favicon_url;
+    let faviconLink = document.querySelector("link[rel~='icon']");
+    if (!faviconLink) {
+      faviconLink = document.createElement('link');
+      faviconLink.rel = 'icon';
+      document.head.appendChild(faviconLink);
     }
+    faviconLink.href = currentTheme.favicon_url || '/favicon.svg';
 
     // Atualizar o título do documento para a marca do cliente
     if (currentTheme.name) {

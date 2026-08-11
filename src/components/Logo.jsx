@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Logo({ collapsed = false, className = '' }) {
+export default function Logo({ collapsed = false, className = '', white = false }) {
   // Símbolo Oficial do Dental Flow (Ícone Compacto em Vetor de Precisão)
   const symbolPath1 = "M47070 122570c-10080,-10940 -20130,-32440 -25190,-53920 -4460,-18880 -5180,-37960 970,-50280 4860,-9730 13260,-16790 24260,-18120 8500,-1030 14520,1300 20120,4190 5940,3080 11050,6550 18120,6970 3870,230 7730,-650 11500,-3010l4840 7690c-5510,3450 -11210,4660 -16870,4330 -9370,-560 -14660,-4450 -22300,-8250 -4190,-2080 -8660,-3640 -14350,-2950 -7940,960 -13750,6200 -17230,13170 -5130,10270 -4290,27150 -270,44210 4740,20090 13640,40240 22750,50130l-6350 5840z";
   const symbolPath2 = "M110020 120910c0,-10 350,-90 910,-340 3130,-1410 14160,-6990 24790,-19310 3500,-4070 7320,-9420 10610,-15290 2780,-4950 5150,-10210 6570,-15280 1700,-6070 2490,-14210 -1930,-19380 -1550,-1820 -3720,-3180 -6490,-3950 -3140,-890 -7030,-1040 -11650,-320 -9050,1410 -19470,6310 -28870,14790 -8120,7320 -15400,17290 -20330,29960l-8410 -3250c5490,-14120 13630,-25240 22700,-33430 10730,-9680 22860,-15310 33530,-16970 5970,-930 11140,-690 15470,530 4550,1270 8190,3600 10900,6770 6530,7650 6350,18500 3770,27690 -1630,5820 -4290,11750 -7380,17260 -3570,6370 -7780,12250 -11680,16770 -11570,13420 -23940,19850 -27880,21640 -810,370 -1300,480 -1310,480l-3320 -8370z";
@@ -75,9 +75,9 @@ export default function Logo({ collapsed = false, className = '' }) {
         </defs>
 
         <g className="group/logo cursor-pointer transition-transform duration-300 transform group-hover/logo:scale-105">
-          <path fill="url(#dfFluidGrad0)" d={symbolPath1} />
-          <path fill="url(#dfFluidGrad1)" d={symbolPath2} />
-          <path fill="url(#dfFluidGrad2)" d={symbolPath3} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGrad0)"} d={symbolPath1} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGrad1)"} d={symbolPath2} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGrad2)"} d={symbolPath3} />
         </g>
       </svg>
     );
@@ -139,17 +139,17 @@ export default function Logo({ collapsed = false, className = '' }) {
       </defs>
 
       <g className="group/logo cursor-pointer">
-        {/* Símbolo do DentalFlow (Caminhos Oficiais do CorelDRAW com Gradiente Animado) */}
+        {/* Símbolo do DentalFlow (Caminhos Oficiais do CorelDRAW com Gradiente Animado ou Branco) */}
         <g className="transition-transform duration-300 transform group-hover/logo:scale-[1.02]">
-          <path fill="url(#dfFluidGradFull0)" d={fullSymbolPath1} />
-          <path fill="url(#dfFluidGradFull1)" d={fullSymbolPath2} />
-          <path fill="url(#dfFluidGradFull2)" d={fullSymbolPath3} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGradFull0)"} d={fullSymbolPath1} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGradFull1)"} d={fullSymbolPath2} />
+          <path fill={white ? "#FFFFFF" : "url(#dfFluidGradFull2)"} d={fullSymbolPath3} />
         </g>
 
-        {/* Texto da Marca Oficial (Dental em Escuro/Branco Adaptativo via currentColor + Flow em Azul #196BFB) */}
+        {/* Texto da Marca Oficial (Dental em Escuro/Branco Adaptativo via currentColor + Flow em Azul #196BFB ou Branco) */}
         <g className="transition-colors duration-300">
-          <path d={fullTextDental} fill="currentColor" />
-          <path d={fullTextFlow} fill="#196BFB" />
+          <path d={fullTextDental} fill={white ? "#FFFFFF" : "currentColor"} />
+          <path d={fullTextFlow} fill={white ? "#FFFFFF" : "#196BFB"} />
         </g>
       </g>
     </svg>

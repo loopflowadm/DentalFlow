@@ -8,6 +8,7 @@ import DevBreakpointBadge from '../components/devtools/DevBreakpointBadge';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import Onboarding from './onboarding/Onboarding';
+import { useOnboardingTour } from '../hooks/useOnboardingTour';
 
 // Imports dos Módulos da Aplicação
 import Dashboard from './dashboard/Dashboard';
@@ -21,6 +22,7 @@ import WhatsApp from './whatsapp/WhatsApp';
 export default function ClinicApp() {
   const { currentTheme, themeMode } = useTheme();
   const { user, clinic, updateClinic } = useAuth();
+  const { startTour, resetTour } = useOnboardingTour();
 
   // Função para verificar se o onboarding já foi concluído pela clínica ou usuário
   const checkIfOnboardingDone = () => {
@@ -44,6 +46,16 @@ export default function ClinicApp() {
       setShowOnboarding(false);
     }
   }, [clinic, user]);
+
+  // Autodisparo do Tour Guiado Interativo
+  useEffect(() => {
+    if (!showOnboarding) {
+      const timer = setTimeout(() => {
+        startTour();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [showOnboarding, startTour]);
 
   const handleOnboardingComplete = async () => {
     localStorage.setItem('df_onboarding_completed', 'true');
@@ -180,7 +192,13 @@ export default function ClinicApp() {
       case 'configuracoes':
         return <Configuracoes />;
       default:
-        return <Dashboard onNavigateTab={setActiveTab} />;
+        return (
+          <Dashboard 
+            onNavigateTab={setActiveTab} 
+            onOpenNewPatientModal={() => setActiveTab('pacientes')}
+            onOpenNewAppointmentModal={() => setActiveTab('agenda')}
+          />
+        );
     }
   };
 
@@ -207,7 +225,7 @@ export default function ClinicApp() {
               {clinic.name || 'Sua Clínica'} está inativa
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              O acesso aos módulos operacionais foi pausado devido a uma pendência na assinatura do OdontoCRM.
+              O acesso aos módulos operacionais foi pausado devido a uma pendência na assinatura do DentalFlow.
             </p>
           </div>
 
@@ -224,7 +242,7 @@ export default function ClinicApp() {
 
           <div className="space-y-3 pt-2">
             <a
-              href="https://wa.me/5511999999999?text=Olá,%20gostaria%20de%20regularizar%20a%20assinatura%20da%20minha%20clínica%20no%20OdontoCRM"
+              href="https://wa.me/5511999999999?text=Olá,%20gostaria%20de%20regularizar%20a%20assinatura%20da%20minha%20clínica%20no%20DentalFlow"
               target="_blank"
               rel="noreferrer"
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs"
@@ -303,6 +321,7 @@ export default function ClinicApp() {
           onQuickAction={handleQuickAction}
           onOpenCmdPalette={() => setIsCmdPaletteOpen(true)}
           onOpenDevTools={() => setIsDevToolsOpen(true)}
+          onStartTour={resetTour}
         />
         
         <div className="flex-1 flex overflow-hidden p-0 bg-transparent">

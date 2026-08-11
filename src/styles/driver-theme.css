@@ -1,0 +1,153 @@
+/* Estilização Customizada do Driver.js — macOS Depth UI (DentalFlow) */
+
+/* Inclusão do CSS base do driver.js se necessário, envelopado com sobreposição macOS Depth */
+@import 'driver.js/dist/driver.css';
+
+/* Overlay de fundo (Backdrop Spotlight) */
+.driver-overlay {
+  opacity: 0.75 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+/* Card Principal do Popover */
+.driver-popover {
+  background-color: #0d0d0d !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #f3f4f6 !important;
+  padding: 20px !important;
+  max-width: 380px !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  z-index: 1000000000 !important;
+}
+
+/* Título do Popover */
+.driver-popover-title {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 1.125rem !important; /* 18px */
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin-bottom: 8px !important;
+  letter-spacing: -0.02em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Descrição do Popover */
+.driver-popover-description {
+  font-size: 0.875rem !important; /* 14px */
+  line-height: 1.5 !important;
+  color: #9ca3af !important;
+  margin-bottom: 16px !important;
+}
+
+/* Footer / Navegação */
+.driver-popover-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 12px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Texto de Progresso (ex: "1 de 6") */
+.driver-popover-progress-text {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  font-family: 'Outfit', sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Container de Botões no Footer */
+.driver-popover-navigation-btns {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+/* Botões do Driver.js */
+.driver-popover-btn {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.8125rem !important; /* 13px */
+  font-weight: 600 !important;
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: none !important;
+  outline: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-shadow: none !important;
+}
+
+/* Botão Próximo / Concluir (macOS Depth Button Primary) */
+.driver-popover-next-btn {
+  background: linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%) !important;
+  color: #09090b !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.driver-popover-next-btn:hover {
+  background: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25) !important;
+}
+
+.driver-popover-next-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Botão Anterior */
+.driver-popover-prev-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #d1d5db !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.driver-popover-prev-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Botão Fechar ('x') */
+.driver-popover-close-btn {
+  color: #6b7280 !important;
+  font-size: 1.25rem !important;
+  top: 14px !important;
+  right: 14px !important;
+  transition: color 0.15s ease !important;
+}
+
+.driver-popover-close-btn:hover {
+  color: #ffffff !important;
+}
+
+/* Flechas do Popover */
+.driver-popover-arrow-side-top {
+  border-top-color: #0d0d0d !important;
+}
+
+.driver-popover-arrow-side-bottom {
+  border-bottom-color: #0d0d0d !important;
+}
+
+.driver-popover-arrow-side-left {
+  border-left-color: #0d0d0d !important;
+}
+
+.driver-popover-arrow-side-right {
+  border-right-color: #0d0d0d !important;
+}

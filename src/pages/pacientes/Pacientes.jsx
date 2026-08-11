@@ -2762,7 +2762,7 @@ export default function Pacientes({ selectedPatient: propSelectedPatient, setSel
               <div className="bg-slate-50 dark:bg-black border border-slate-200/50 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-inner text-slate-800 dark:text-slate-200">
                 <div className="flex justify-between items-start pb-4 border-b border-slate-200/40 dark:border-slate-800/60">
                   <div className="space-y-1">
-                    <h4 className="text-sm font-black font-title text-slate-900 dark:text-white uppercase tracking-wider">{clinic?.name || 'FlowDent Clinic'}</h4>
+                    <h4 className="text-sm font-black font-title text-slate-900 dark:text-white uppercase tracking-wider">{clinic?.name || 'DentalFlow Clinic'}</h4>
                     <span className="text-[10px] text-slate-400 font-bold block">INTEGRIDADE CLÍNICA • CFO</span>
                   </div>
                   <Activity className="w-6 h-6 text-secondary" />

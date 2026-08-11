@@ -305,7 +305,7 @@ export const TransferNode = memo(({ id, data, isSelected }) => {
       {/* Conteúdo */}
       <div className="p-3 space-y-2 text-left">
         <p className={`text-xs leading-relaxed ${isDark ? 'text-red-200/90' : 'text-red-800'}`}>
-          Silencia a IA para este paciente e notifica a recepção no painel do OdontoCRM e WhatsApp.
+          Silencia a IA para este paciente e notifica a recepção no painel do DentalFlow e WhatsApp.
         </p>
         <input
           type="text"

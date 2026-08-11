@@ -48,10 +48,11 @@ function AnimatedSection({ children, className = '', delay = 0 }) {
 
 /* ── Brand Logo ── */
 const BrandLogo = ({ className = '', variant = 'dark' }) => {
-  const fillClass = variant === 'light' ? 'landing-logo--light' : 'landing-logo--dark';
+  const isWhite = variant === 'all-white' || variant === 'white';
+  const fillClass = isWhite ? 'landing-logo--white' : (variant === 'light' ? 'landing-logo--light' : 'landing-logo--dark');
   return (
     <div className={`landing-brand-logo ${fillClass} ${className}`}>
-      <Logo collapsed={false} className="landing-brand-logo__svg" />
+      <Logo collapsed={false} className="landing-brand-logo__svg" white={isWhite} />
     </div>
   );
 };
@@ -1140,7 +1141,7 @@ export default function LandingPage({ onLogin, onRegister }) {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10 border-b border-slate-800">
             {/* Brand column */}
             <div className="md:col-span-2 space-y-3">
-              <BrandLogo variant="light" />
+              <BrandLogo variant="all-white" />
               <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
                 Gestão inteligente para clínicas que querem crescer com organização.
               </p>
@@ -1167,12 +1168,19 @@ export default function LandingPage({ onLogin, onRegister }) {
             {/* Suporte & Fale Conosco */}
             <div className="space-y-2 text-xs">
               <h4 className="font-bold text-white uppercase text-[11px] tracking-wider mb-2">Suporte</h4>
+              <div><a href="#ia" className="hover:text-white transition-colors text-blue-400 font-medium flex items-center gap-1.5"><Bot className="w-3.5 h-3.5" /> Agente de IA (Suporte 24/7)</a></div>
               <div><a href="#faq" className="hover:text-white transition-colors">Central de ajuda</a></div>
               <div><a href="#faq" className="hover:text-white transition-colors">Dúvidas frequentes</a></div>
               <div><a href="#" className="hover:text-white transition-colors">Status do sistema</a></div>
-              <div className="pt-2 text-[11px] text-slate-400">
-                <span>📞 WhatsApp: (11) 97234-5678</span><br />
-                <span>✉️ contato@dentalflow.com.br</span>
+              <div className="pt-2.5 text-[11px] text-slate-400 space-y-1 border-t border-slate-800/80 mt-2">
+                <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+                  <Bot className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>Suporte via Agente de IA 24/7</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="shrink-0">✉️</span>
+                  <span>contato@dentalflow.com.br</span>
+                </div>
               </div>
             </div>
           </div>

@@ -93,6 +93,11 @@
   transition: color 0.3s ease;
 }
 
+.landing-logo--white {
+  color: #ffffff;
+  transition: color 0.3s ease;
+}
+
 /* Brand icon sizing contexts */
 .landing-hero__phone-brand-icon {
   height: 18px;

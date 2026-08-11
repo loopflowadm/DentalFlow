@@ -171,7 +171,7 @@ export default function AIModule({ onClose }) {
 
   // States do Simulator Chat
   const [simMessages, setSimMessages] = useState([
-    { sender: 'BOT', text: `Olá! Sou a Sofia, assistente virtual da clínica ${clinic?.name || 'OdontoCRM'}. Como posso ajudar?`, time: '10:00' }
+    { sender: 'BOT', text: `Olá! Sou a Sofia, assistente virtual da clínica ${clinic?.name || 'DentalFlow'}. Como posso ajudar?`, time: '10:00' }
   ]);
   const [simInput, setSimInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -339,7 +339,7 @@ export default function AIModule({ onClose }) {
       else if (lower.includes('agendar') || lower.includes('marcar') || lower.includes('consulta') || lower.includes('horario') || lower.includes('1.')) {
         intent = 'Agendamento de Consulta';
         confidence = '99%';
-        responseText = `Perfeito! Tenho horários livres na agenda da clínica ${clinic?.name || 'OdontoCRM'}:\n\n1. Amanhã às 14:30 (Dr. Lucas)\n2. Sexta-feira às 10:00 (Dra. Juliana)\n\nQual desses horários prefere para a sua consulta?`;
+        responseText = `Perfeito! Tenho horários livres na agenda da clínica ${clinic?.name || 'DentalFlow'}:\n\n1. Amanhã às 14:30 (Dr. Lucas)\n2. Sexta-feira às 10:00 (Dra. Juliana)\n\nQual desses horários prefere para a sua consulta?`;
         action = 'Oferecer horários disponíveis e aguardar confirmação.';
         activeNode = 'Agenda Node';
         options = ['Confirmar amanhã 14:30', 'Confirmar sexta 10:00', 'Ver outros horários'];
@@ -404,7 +404,7 @@ export default function AIModule({ onClose }) {
     setSimMessages([
       { 
         sender: 'BOT', 
-        text: `Olá! Sou a Sofia, assistente virtual da clínica ${clinic?.name || 'OdontoCRM'}. Como posso ajudar?`, 
+        text: `Olá! Sou a Sofia, assistente virtual da clínica ${clinic?.name || 'DentalFlow'}. Como posso ajudar?`, 
         time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         options: ['1. Agendar consulta', '2. Preços e tratamentos', '3. Endereço da clínica', '4. Urgência / Dor forte', '5. Falar com atendente']
       }
